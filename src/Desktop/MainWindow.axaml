@@ -1,0 +1,14 @@
+<Window xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="clr-namespace:Desktop"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+    x:Class="Desktop.MainWindow"
+    x:DataType="local:MainWindow"
+    Title="Desktop">
+    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
+        <TextBlock Name="ClickCountLabel" Text="{Binding ClickCountText}" HorizontalAlignment="Center" />
+        <Button Name="ClickMeButton" Content="click me" Width="100" Height="40" HorizontalAlignment="Center" Click="ClickMeButton_Click" />
+    </StackPanel>
+</Window>
