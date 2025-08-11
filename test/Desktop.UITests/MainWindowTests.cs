@@ -1,37 +1,104 @@
 using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
 using NUnit.Framework;
-using Desktop;
+using Desktop.Views;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Desktop.Configuration;
+using Desktop.Services;
+using Desktop.Models;
+using System.Threading.Tasks;
 
 namespace Desktop.UITests;
 
 public class MainWindowTests
 {
-    [AvaloniaTest]
-    public void MainWindow_Should_Open()
+    private class MockFileService : IFileService
     {
-        var window = new MainWindow();
-        window.Show();
-        Assert.That(window, Is.Not.Null);
+        public Task<FileSystemItem?> GetFileStructureAsync()
+        {
+            return Task.FromResult<FileSystemItem?>(new FileSystemItem
+            {
+                Name = "test-project",
+                FullPath = "/test/path",
+                IsDirectory = true,
+                Children = new List<FileSystemItem>
+                {
+                    new FileSystemItem { Name = "src", IsDirectory = true },
+                    new FileSystemItem { Name = "test", IsDirectory = true },
+                    new FileSystemItem { Name = "README.md", IsDirectory = false }
+                }
+            });
+        }
+
+        public Task<FileSystemItem?> GetFileStructureAsync(string folderPath)
+        {
+            return GetFileStructureAsync();
+        }
+
+        public bool IsValidFolder(string folderPath)
+        {
+            return true;
+        }
+    }
+
+    private MainWindow CreateMainWindow()
+    {
+        var logger = new LoggerFactory().CreateLogger<MainWindow>();
+        var options = Options.Create(new ApplicationOptions());
+        var fileService = new MockFileService();
+        return new MainWindow(logger, options, fileService);
     }
 
     [AvaloniaTest]
-    public void ClickMeButton_Should_Increment_Counter()
+    public void MainWindow_Should_Open()
     {
-        var window = new MainWindow();
+        var window = CreateMainWindow();
+        window.Show();
+        Assert.That(window, Is.Not.Null);
+        Assert.That(window.Title, Is.EqualTo("Project Documentation Manager"));
+    }
+
+    [AvaloniaTest]
+    public void MainWindow_Should_Have_Menu_Bar()
+    {
+        var window = CreateMainWindow();
         window.Show();
 
-        // Find the button and label
-        var button = window.FindControl<Avalonia.Controls.Button>("ClickMeButton");
-        var label = window.FindControl<Avalonia.Controls.TextBlock>("ClickCountLabel");
+        var menu = window.FindControl<Menu>("MainMenu");
+        Assert.That(menu, Is.Not.Null, "Main menu not found");
+    }
 
-        Assert.That(button, Is.Not.Null, "Button not found");
-        Assert.That(label, Is.Not.Null, "Label not found");
-        Assert.That(label!.Text, Is.EqualTo("button clicked 0 times"));
+    [AvaloniaTest]
+    public void MainWindow_Should_Have_File_Explorer()
+    {
+        var window = CreateMainWindow();
+        window.Show();
 
-        // Simulate button click using Click event
-        button!.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Avalonia.Controls.Button.ClickEvent));
+        var fileExplorer = window.FindControl<TreeView>("FileExplorer");
+        Assert.That(fileExplorer, Is.Not.Null, "File explorer not found");
+    }
 
-        Assert.That(label.Text, Is.EqualTo("button clicked 1 times"));
+    [AvaloniaTest]
+    public void MainWindow_Should_Have_Document_Editor()
+    {
+        var window = CreateMainWindow();
+        window.Show();
+
+        var documentEditor = window.FindControl<TextBox>("DocumentEditor");
+        Assert.That(documentEditor, Is.Not.Null, "Document editor not found");
+        Assert.That(documentEditor!.AcceptsReturn, Is.True, "Editor should accept return");
+        Assert.That(documentEditor.AcceptsTab, Is.True, "Editor should accept tab");
+    }
+
+    [AvaloniaTest]
+    public void MainWindow_Should_Have_Welcome_Tab()
+    {
+        var window = CreateMainWindow();
+        window.Show();
+
+        var welcomeTab = window.FindControl<Button>("WelcomeTab");
+        Assert.That(welcomeTab, Is.Not.Null, "Welcome tab not found");
+        Assert.That(welcomeTab!.Content, Is.EqualTo("Welcome"));
     }
 }

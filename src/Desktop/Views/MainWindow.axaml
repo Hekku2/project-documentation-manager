@@ -1,0 +1,91 @@
+<Window xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="clr-namespace:Desktop.Views"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+    x:Class="Desktop.Views.MainWindow"
+    x:DataType="local:MainWindow"
+    Title="Project Documentation Manager">
+    <DockPanel>
+        <!-- Menu Bar -->
+        <Menu DockPanel.Dock="Top" Name="MainMenu">
+            <MenuItem Header="File">
+                <MenuItem Header="New" />
+                <MenuItem Header="Open" />
+                <MenuItem Header="Save" />
+                <Separator />
+                <MenuItem Header="Exit" />
+            </MenuItem>
+            <MenuItem Header="Edit">
+                <MenuItem Header="Cut" />
+                <MenuItem Header="Copy" />
+                <MenuItem Header="Paste" />
+            </MenuItem>
+            <MenuItem Header="View">
+                <MenuItem Header="Explorer" />
+                <MenuItem Header="Terminal" />
+            </MenuItem>
+        </Menu>
+        
+        <!-- Main Content Area -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <!-- Sidebar -->
+                <ColumnDefinition Width="250" />
+                <!-- Splitter -->
+                <ColumnDefinition Width="5" />
+                <!-- Editor Area -->
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            
+            <!-- Sidebar/Explorer -->
+            <Border Grid.Column="0" Background="#252526" BorderBrush="#3E3E42" BorderThickness="0,0,1,0">
+                <StackPanel Margin="10">
+                    <TextBlock Text="EXPLORER" Foreground="#CCCCCC" FontSize="11" FontWeight="Bold" Margin="0,0,0,10" />
+                    <TreeView Name="FileExplorer" Background="Transparent" Foreground="#CCCCCC">
+                        <!-- File structure will be populated dynamically -->
+                    </TreeView>
+                </StackPanel>
+            </Border>
+            
+            <!-- Splitter -->
+            <GridSplitter Grid.Column="1" Background="#3E3E42" HorizontalAlignment="Stretch" />
+            
+            <!-- Editor Area -->
+            <Border Grid.Column="2" Background="#1E1E1E">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <!-- Tab Bar -->
+                        <RowDefinition Height="35" />
+                        <!-- Editor Content -->
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    
+                    <!-- Tab Bar -->
+                    <Border Grid.Row="0" Background="#2D2D30" BorderBrush="#3E3E42" BorderThickness="0,0,0,1">
+                        <StackPanel Orientation="Horizontal" Margin="5,0">
+                            <Button Name="WelcomeTab" Content="Welcome" Background="#2D2D30" Foreground="#CCCCCC" 
+                                    BorderThickness="0" Padding="15,8" />
+                        </StackPanel>
+                    </Border>
+                    
+                    <!-- Editor Content -->
+                    <ScrollViewer Grid.Row="1" Name="EditorScrollViewer">
+                        <TextBox Name="DocumentEditor" 
+                                Background="Transparent" 
+                                Foreground="#D4D4D4"
+                                FontFamily="Consolas, 'Courier New', monospace"
+                                FontSize="14"
+                                AcceptsReturn="True"
+                                AcceptsTab="True"
+                                TextWrapping="Wrap"
+                                BorderThickness="0"
+                                Margin="20"
+                                Watermark="Start typing or open a file..." />
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
+    </DockPanel>
+</Window>
