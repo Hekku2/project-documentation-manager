@@ -1,12 +1,12 @@
 <Window xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="clr-namespace:Desktop.Views"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+    xmlns:vm="clr-namespace:Desktop.ViewModels"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
     x:Class="Desktop.Views.MainWindow"
-    x:DataType="local:MainWindow"
-    Title="Project Documentation Manager">
+    x:DataType="vm:MainWindowViewModel"
+    Title="{Binding Title}">
     <DockPanel>
         <!-- Menu Bar -->
         <Menu DockPanel.Dock="Top" Name="MainMenu">
@@ -43,8 +43,32 @@
             <Border Grid.Column="0" Background="#252526" BorderBrush="#3E3E42" BorderThickness="0,0,1,0">
                 <StackPanel Margin="10">
                     <TextBlock Text="EXPLORER" Foreground="#CCCCCC" FontSize="11" FontWeight="Bold" Margin="0,0,0,10" />
-                    <TreeView Name="FileExplorer" Background="Transparent" Foreground="#CCCCCC">
-                        <!-- File structure will be populated dynamically -->
+                    
+                    <!-- Loading indicator -->
+                    <TextBlock Text="Loading..." 
+                               Foreground="#CCCCCC" 
+                               IsVisible="{Binding IsLoading}" 
+                               HorizontalAlignment="Center" 
+                               Margin="0,20" />
+                    
+                    <!-- File Explorer TreeView -->
+                    <TreeView ItemsSource="{Binding FileSystemItems}" 
+                              Background="Transparent" 
+                              Foreground="#CCCCCC"
+                              IsVisible="{Binding !IsLoading}">
+                        <TreeView.ItemTemplate>
+                            <TreeDataTemplate ItemsSource="{Binding Children}" x:DataType="vm:FileSystemItemViewModel">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding Name}" Foreground="#CCCCCC" />
+                                </StackPanel>
+                            </TreeDataTemplate>
+                        </TreeView.ItemTemplate>
+                        <TreeView.Styles>
+                            <Style Selector="TreeViewItem" x:DataType="vm:FileSystemItemViewModel">
+                                <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                                <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                            </Style>
+                        </TreeView.Styles>
                     </TreeView>
                 </StackPanel>
             </Border>

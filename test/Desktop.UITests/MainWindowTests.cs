@@ -2,12 +2,16 @@ using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
 using NUnit.Framework;
 using Desktop.Views;
+using Desktop.ViewModels;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Desktop.Configuration;
 using Desktop.Services;
 using Desktop.Models;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Linq;
+using Avalonia.VisualTree;
 
 namespace Desktop.UITests;
 
@@ -44,10 +48,11 @@ public class MainWindowTests
 
     private MainWindow CreateMainWindow()
     {
-        var logger = new LoggerFactory().CreateLogger<MainWindow>();
+        var vmLogger = new LoggerFactory().CreateLogger<MainWindowViewModel>();
         var options = Options.Create(new ApplicationOptions());
         var fileService = new MockFileService();
-        return new MainWindow(logger, options, fileService);
+        var viewModel = new MainWindowViewModel(vmLogger, options, fileService);
+        return new MainWindow(viewModel);
     }
 
     [AvaloniaTest]
@@ -75,8 +80,9 @@ public class MainWindowTests
         var window = CreateMainWindow();
         window.Show();
 
-        var fileExplorer = window.FindControl<TreeView>("FileExplorer");
-        Assert.That(fileExplorer, Is.Not.Null, "File explorer not found");
+        // Find TreeView by traversing the visual tree
+        var treeViews = window.GetVisualDescendants().OfType<TreeView>().ToList();
+        Assert.That(treeViews.Count, Is.GreaterThan(0), "File explorer TreeView not found");
     }
 
     [AvaloniaTest]

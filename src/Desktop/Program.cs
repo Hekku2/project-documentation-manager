@@ -48,6 +48,9 @@ class Program
                 services.Configure<Desktop.Configuration.ApplicationOptions>(
                     context.Configuration.GetSection(nameof(Desktop.Configuration.ApplicationOptions)));
                 
+                // Register ViewModels
+                services.AddScoped<Desktop.ViewModels.MainWindowViewModel>();
+                
                 // Register services here
                 services.AddSingleton<Desktop.Views.MainWindow>();
                 services.AddLogging(builder => builder.AddConsole());
