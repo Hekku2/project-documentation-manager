@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading.Tasks;
 using Desktop.Models;
 
 namespace Desktop.ViewModels;
@@ -8,20 +9,31 @@ public class FileSystemItemViewModel : ViewModelBase
 {
     private bool _isExpanded;
     private bool _isSelected;
+    private bool _isLoading;
+    private bool _childrenLoaded;
 
-    public FileSystemItemViewModel(FileSystemItem item)
+    public FileSystemItemViewModel(FileSystemItem item, bool isRoot = false)
     {
         Item = item;
         Children = new ObservableCollection<FileSystemItemViewModel>();
         
-        // Convert child items to ViewModels
-        foreach (var child in item.Children.OrderBy(c => !c.IsDirectory).ThenBy(c => c.Name))
+        // For directories, add a placeholder to show the expand icon
+        if (item.IsDirectory && item.HasChildren)
         {
-            Children.Add(new FileSystemItemViewModel(child));
+            Children.Add(new FileSystemItemViewModel(new FileSystemItem { Name = "Loading..." }));
+        }
+        else if (!item.IsDirectory)
+        {
+            // For files, mark as loaded since they don't have children
+            _childrenLoaded = true;
         }
         
-        // Auto-expand root directories
-        IsExpanded = item.IsDirectory && IsRoot(item);
+        // Auto-expand only the actual root directory
+        if (item.IsDirectory && isRoot)
+        {
+            _ = LoadChildrenAsync();
+            IsExpanded = true;
+        }
     }
 
     public FileSystemItem Item { get; }
@@ -36,7 +48,19 @@ public class FileSystemItemViewModel : ViewModelBase
     public bool IsExpanded
     {
         get => _isExpanded;
-        set => SetProperty(ref _isExpanded, value);
+        set 
+        {
+            if (SetProperty(ref _isExpanded, value) && value && !_childrenLoaded)
+            {
+                _ = LoadChildrenAsync();
+            }
+        }
+    }
+
+    public bool IsLoading
+    {
+        get => _isLoading;
+        private set => SetProperty(ref _isLoading, value);
     }
 
     public bool IsSelected
@@ -45,13 +69,40 @@ public class FileSystemItemViewModel : ViewModelBase
         set => SetProperty(ref _isSelected, value);
     }
 
-    private static bool IsRoot(FileSystemItem item)
+    private async Task LoadChildrenAsync()
     {
-        // Consider it root if it's a directory and parent path suggests it's a project root
-        return item.IsDirectory && (
-            item.Name.Contains("project") ||
-            item.FullPath.Contains("projects") ||
-            item.Children.Any(c => c.Name == "src" || c.Name == "README.md")
-        );
+        if (_childrenLoaded || IsLoading || !Item.IsDirectory)
+            return;
+
+        try
+        {
+            IsLoading = true;
+            
+            await Task.Run(() =>
+            {
+                var childViewModels = Item.Children
+                    .OrderBy(c => !c.IsDirectory)
+                    .ThenBy(c => c.Name)
+                    .Select(child => new FileSystemItemViewModel(child))
+                    .ToList();
+
+                // Update the UI on the main thread
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    Children.Clear();
+                    foreach (var childViewModel in childViewModels)
+                    {
+                        Children.Add(childViewModel);
+                    }
+                });
+            });
+
+            _childrenLoaded = true;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
+
 }

@@ -41,24 +41,51 @@
             
             <!-- Sidebar/Explorer -->
             <Border Grid.Column="0" Background="#252526" BorderBrush="#3E3E42" BorderThickness="0,0,1,0">
-                <StackPanel Margin="10">
-                    <TextBlock Text="EXPLORER" Foreground="#CCCCCC" FontSize="11" FontWeight="Bold" Margin="0,0,0,10" />
+                <DockPanel Margin="10">
+                    <TextBlock DockPanel.Dock="Top" 
+                               Text="EXPLORER" 
+                               Foreground="#CCCCCC" 
+                               FontSize="11" 
+                               FontWeight="Bold" 
+                               Margin="0,0,0,10" />
                     
                     <!-- Loading indicator -->
-                    <TextBlock Text="Loading..." 
+                    <TextBlock DockPanel.Dock="Top"
+                               Text="Loading..." 
                                Foreground="#CCCCCC" 
                                IsVisible="{Binding IsLoading}" 
                                HorizontalAlignment="Center" 
                                Margin="0,20" />
                     
-                    <!-- File Explorer TreeView -->
+                    <!-- File Explorer TreeView - fills remaining space -->
                     <TreeView ItemsSource="{Binding FileSystemItems}" 
                               Background="Transparent" 
                               Foreground="#CCCCCC"
-                              IsVisible="{Binding !IsLoading}">
+                              IsVisible="{Binding !IsLoading}"
+                              VerticalAlignment="Stretch"
+                              HorizontalAlignment="Stretch">
                         <TreeView.ItemTemplate>
                             <TreeDataTemplate ItemsSource="{Binding Children}" x:DataType="vm:FileSystemItemViewModel">
                                 <StackPanel Orientation="Horizontal">
+                                    <!-- Directory Icon -->
+                                    <TextBlock Text="📁" 
+                                               Foreground="#CCCCCC" 
+                                               Margin="0,0,5,0"
+                                               IsVisible="{Binding IsDirectory}" />
+                                    
+                                    <!-- File Icon -->
+                                    <TextBlock Text="📄" 
+                                               Foreground="#CCCCCC" 
+                                               Margin="0,0,5,0"
+                                               IsVisible="{Binding !IsDirectory}" />
+                                    
+                                    <!-- Loading indicator for individual items -->
+                                    <TextBlock Text="⏳" 
+                                               Foreground="#CCCCCC" 
+                                               Margin="0,0,5,0"
+                                               IsVisible="{Binding IsLoading}" />
+                                    
+                                    <!-- Item name -->
                                     <TextBlock Text="{Binding Name}" Foreground="#CCCCCC" />
                                 </StackPanel>
                             </TreeDataTemplate>
@@ -70,7 +97,7 @@
                             </Style>
                         </TreeView.Styles>
                     </TreeView>
-                </StackPanel>
+                </DockPanel>
             </Border>
             
             <!-- Splitter -->

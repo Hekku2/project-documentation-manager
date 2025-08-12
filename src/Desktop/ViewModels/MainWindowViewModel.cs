@@ -63,7 +63,7 @@ public class MainWindowViewModel : ViewModelBase
             
             if (fileStructure != null)
             {
-                var rootViewModel = new FileSystemItemViewModel(fileStructure);
+                var rootViewModel = new FileSystemItemViewModel(fileStructure, isRoot: true);
                 RootItem = rootViewModel;
                 
                 FileSystemItems.Clear();
