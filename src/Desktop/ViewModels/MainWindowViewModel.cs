@@ -6,6 +6,7 @@ using Desktop.Configuration;
 using Desktop.Services;
 using System.Collections.ObjectModel;
 using System.Linq;
+using Desktop.Models;
 
 namespace Desktop.ViewModels;
 
@@ -16,6 +17,7 @@ public class MainWindowViewModel : ViewModelBase
     private readonly IFileService _fileService;
     private bool _isLoading;
     private FileSystemItemViewModel? _rootItem;
+    private EditorTabViewModel? _activeTab;
 
     public MainWindowViewModel(
         ILogger<MainWindowViewModel> logger, 
@@ -26,16 +28,22 @@ public class MainWindowViewModel : ViewModelBase
         _applicationOptions = applicationOptions.Value;
         _fileService = fileService;
         FileSystemItems = new ObservableCollection<FileSystemItemViewModel>();
+        EditorTabs = new ObservableCollection<EditorTabViewModel>();
         
         _logger.LogInformation("MainWindowViewModel initialized");
         _logger.LogInformation("Default theme: {Theme}", _applicationOptions.DefaultTheme);
         _logger.LogInformation("Default project folder: {Folder}", _applicationOptions.DefaultProjectFolder);
+        
+        // Subscribe to file selection events
+        FileSystemItemViewModel.FileSelected += OnFileSelected;
         
         // Load file structure asynchronously
         _ = LoadFileStructureAsync();
     }
 
     public ObservableCollection<FileSystemItemViewModel> FileSystemItems { get; }
+    
+    public ObservableCollection<EditorTabViewModel> EditorTabs { get; }
 
     public string Title => "Project Documentation Manager";
 
@@ -51,6 +59,14 @@ public class MainWindowViewModel : ViewModelBase
         get => _rootItem;
         private set => SetProperty(ref _rootItem, value);
     }
+
+    public EditorTabViewModel? ActiveTab
+    {
+        get => _activeTab;
+        private set => SetProperty(ref _activeTab, value);
+    }
+
+    public string? ActiveFileContent => ActiveTab?.Content;
 
     private async Task LoadFileStructureAsync()
     {
@@ -89,5 +105,118 @@ public class MainWindowViewModel : ViewModelBase
     public async Task RefreshFileStructureAsync()
     {
         await LoadFileStructureAsync();
+    }
+
+    private async void OnFileSelected(string filePath)
+    {
+        await OpenFileAsync(filePath);
+    }
+
+    public async Task OpenFileAsync(string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+            return;
+
+        // Check if tab already exists
+        var existingTab = EditorTabs.FirstOrDefault(t => t.FilePath == filePath);
+        if (existingTab != null)
+        {
+            SetActiveTab(existingTab);
+            return;
+        }
+
+        try
+        {
+            _logger.LogInformation("Opening file: {FilePath}", filePath);
+            
+            var content = await _fileService.ReadFileContentAsync(filePath);
+            if (content == null)
+            {
+                _logger.LogWarning("Failed to read file content: {FilePath}", filePath);
+                return;
+            }
+
+            var fileName = System.IO.Path.GetFileName(filePath);
+            var tab = new EditorTab
+            {
+                Id = Guid.NewGuid().ToString(),
+                Title = fileName,
+                FilePath = filePath,
+                Content = content,
+                IsModified = false,
+                IsActive = true
+            };
+
+            var tabViewModel = new EditorTabViewModel(tab);
+            EditorTabs.Add(tabViewModel);
+            SetActiveTab(tabViewModel);
+            
+            _logger.LogInformation("File opened successfully: {FilePath}", filePath);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error opening file: {FilePath}", filePath);
+        }
+    }
+
+    public void SetActiveTab(EditorTabViewModel tab)
+    {
+        // Deactivate current active tab
+        if (ActiveTab != null)
+        {
+            ActiveTab.IsActive = false;
+        }
+
+        // Set new active tab
+        tab.IsActive = true;
+        ActiveTab = tab;
+        OnPropertyChanged(nameof(ActiveFileContent));
+        
+        _logger.LogDebug("Active tab changed to: {TabTitle}", tab.Title);
+    }
+
+    public void CloseTab(EditorTabViewModel tab)
+    {
+        if (!EditorTabs.Contains(tab))
+            return;
+
+        EditorTabs.Remove(tab);
+        
+        // If this was the active tab, set a new active tab
+        if (ActiveTab == tab)
+        {
+            ActiveTab = EditorTabs.FirstOrDefault();
+            if (ActiveTab != null)
+            {
+                ActiveTab.IsActive = true;
+            }
+            OnPropertyChanged(nameof(ActiveFileContent));
+        }
+        
+        _logger.LogDebug("Tab closed: {TabTitle}", tab.Title);
+    }
+
+    public async Task SaveActiveFileAsync()
+    {
+        if (ActiveTab == null || !ActiveTab.IsModified)
+            return;
+
+        try
+        {
+            var success = await _fileService.WriteFileContentAsync(ActiveTab.FilePath, ActiveTab.Content);
+            if (success)
+            {
+                ActiveTab.IsModified = false;
+                _logger.LogInformation("File saved: {FilePath}", ActiveTab.FilePath);
+            }
+            else
+            {
+                _logger.LogWarning("Failed to save file: {FilePath}", ActiveTab.FilePath);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error saving file: {FilePath}", ActiveTab.FilePath);
+        }
     }
 }

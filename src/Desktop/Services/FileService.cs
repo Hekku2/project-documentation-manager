@@ -129,4 +129,57 @@ public class FileService : IFileService
     {
         return (attributes & (FileAttributes.Hidden | FileAttributes.System)) != 0;
     }
+
+    public async Task<string?> ReadFileContentAsync(string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            _logger.LogWarning("File path is null or empty");
+            return null;
+        }
+
+        try
+        {
+            if (!File.Exists(filePath))
+            {
+                _logger.LogWarning("File does not exist: {FilePath}", filePath);
+                return null;
+            }
+
+            _logger.LogDebug("Reading file content: {FilePath}", filePath);
+            return await File.ReadAllTextAsync(filePath);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error reading file: {FilePath}", filePath);
+            return null;
+        }
+    }
+
+    public async Task<bool> WriteFileContentAsync(string filePath, string content)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            _logger.LogWarning("File path is null or empty");
+            return false;
+        }
+
+        try
+        {
+            var directory = Path.GetDirectoryName(filePath);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            _logger.LogDebug("Writing file content: {FilePath}", filePath);
+            await File.WriteAllTextAsync(filePath, content ?? string.Empty);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error writing file: {FilePath}", filePath);
+            return false;
+        }
+    }
 }

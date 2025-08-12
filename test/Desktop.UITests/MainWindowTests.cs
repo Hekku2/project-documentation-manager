@@ -40,6 +40,7 @@ public class MainWindowTests
         fileService.GetFileStructureAsync().Returns(Task.FromResult<FileSystemItem?>(CreateSimpleTestStructure()));
         fileService.GetFileStructureAsync(Arg.Any<string>()).Returns(Task.FromResult<FileSystemItem?>(CreateSimpleTestStructure()));
         fileService.IsValidFolder(Arg.Any<string>()).Returns(true);
+        fileService.ReadFileContentAsync(Arg.Any<string>()).Returns("Mock file content");
         
         var viewModel = new MainWindowViewModel(vmLogger, options, fileService);
         return new MainWindow(viewModel);
@@ -91,14 +92,19 @@ public class MainWindowTests
     }
 
     [AvaloniaTest]
-    public void MainWindow_Should_Have_Welcome_Tab()
+    public void MainWindow_Should_Have_Tab_System()
     {
         var window = CreateMainWindow();
         window.Show();
 
-        var welcomeTab = window.FindControl<Button>("WelcomeTab");
-        Assert.That(welcomeTab, Is.Not.Null, "Welcome tab not found");
-        Assert.That(welcomeTab!.Content, Is.EqualTo("Welcome"));
+        // Check that the tab system exists (ItemsControl for tabs)
+        var tabContainer = window.GetVisualDescendants().OfType<ItemsControl>()
+            .FirstOrDefault(ic => ic.ItemsSource != null);
+        Assert.That(tabContainer, Is.Not.Null, "Tab container not found");
+
+        // Check that the main window has EditorTabs collection
+        var viewModel = window.DataContext as MainWindowViewModel;
+        Assert.That(viewModel?.EditorTabs, Is.Not.Null, "EditorTabs collection not found");
     }
 
     private static FileSystemItem CreateNestedTestStructure() => new()
@@ -144,6 +150,7 @@ public class MainWindowTests
         fileService.GetFileStructureAsync().Returns(Task.FromResult<FileSystemItem?>(CreateNestedTestStructure()));
         fileService.GetFileStructureAsync(Arg.Any<string>()).Returns(Task.FromResult<FileSystemItem?>(CreateNestedTestStructure()));
         fileService.IsValidFolder(Arg.Any<string>()).Returns(true);
+        fileService.ReadFileContentAsync(Arg.Any<string>()).Returns("Mock file content");
         
         var viewModel = new MainWindowViewModel(vmLogger, options, fileService);
         return new MainWindow(viewModel);
@@ -317,6 +324,58 @@ public class MainWindowTests
             Assert.That(integrationFolder, Is.Not.Null, "integration folder should be loaded");
             Assert.That(unitFolder!.IsDirectory, Is.True, "unit should be a directory");
             Assert.That(integrationFolder!.IsDirectory, Is.True, "integration should be a directory");
+        });
+    }
+
+    [AvaloniaTest]
+    public async Task MainWindow_Should_Open_File_When_Selected_From_TreeView()
+    {
+        var window = CreateMainWindowWithNestedStructure();
+        window.Show();
+
+        await Task.Delay(500);
+
+        var viewModel = window.DataContext as MainWindowViewModel;
+        Assert.That(viewModel?.RootItem, Is.Not.Null);
+
+        // Wait for file structure to load
+        var maxWait = 50;
+        var waitCount = 0;
+        while (viewModel!.RootItem == null && waitCount < maxWait)
+        {
+            await Task.Delay(100);
+            waitCount++;
+        }
+
+        // Expand the root to get the README.md file
+        viewModel.RootItem!.IsExpanded = true;
+        await Task.Delay(1000);
+
+        // Find and select the README.md file
+        var readmeFile = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "README.md");
+        Assert.That(readmeFile, Is.Not.Null, "README.md file should exist");
+
+        // Initially no tabs should be open
+        Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(0), "No tabs should be open initially");
+
+        // Select the file (simulating clicking in TreeView)
+        readmeFile!.IsSelected = true;
+
+        // Wait for file to load
+        await Task.Delay(1000);
+
+        Assert.Multiple(() =>
+        {
+            // A tab should now be open
+            Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(1), "One tab should be open");
+            
+            var tab = viewModel.EditorTabs.First();
+            Assert.That(tab.Title, Is.EqualTo("README.md"), "Tab title should be README.md");
+            Assert.That(tab.FilePath, Is.EqualTo("/test/path/README.md"), "Tab file path should be correct");
+            Assert.That(tab.IsActive, Is.True, "Tab should be active");
+            
+            // Active tab should be set
+            Assert.That(viewModel.ActiveTab, Is.EqualTo(tab), "Active tab should be set");
         });
     }
 }

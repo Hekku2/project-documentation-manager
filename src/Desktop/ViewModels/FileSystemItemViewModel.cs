@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Desktop.Models;
+using System;
 
 namespace Desktop.ViewModels;
 
@@ -11,6 +12,8 @@ public class FileSystemItemViewModel : ViewModelBase
     private bool _isSelected;
     private bool _isLoading;
     private bool _childrenLoaded;
+
+    public static event Action<string>? FileSelected;
 
     public FileSystemItemViewModel(FileSystemItem item, bool isRoot = false)
     {
@@ -66,7 +69,14 @@ public class FileSystemItemViewModel : ViewModelBase
     public bool IsSelected
     {
         get => _isSelected;
-        set => SetProperty(ref _isSelected, value);
+        set 
+        {
+            if (SetProperty(ref _isSelected, value) && value && !IsDirectory)
+            {
+                // File was selected, notify listeners
+                FileSelected?.Invoke(FullPath);
+            }
+        }
     }
 
     private async Task LoadChildrenAsync()

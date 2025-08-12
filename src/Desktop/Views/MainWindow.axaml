@@ -115,15 +115,42 @@
                     
                     <!-- Tab Bar -->
                     <Border Grid.Row="0" Background="#2D2D30" BorderBrush="#3E3E42" BorderThickness="0,0,0,1">
-                        <StackPanel Orientation="Horizontal" Margin="5,0">
-                            <Button Name="WelcomeTab" Content="Welcome" Background="#2D2D30" Foreground="#CCCCCC" 
-                                    BorderThickness="0" Padding="15,8" />
-                        </StackPanel>
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                            <ItemsControl ItemsSource="{Binding EditorTabs}" Margin="5,0">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:EditorTabViewModel">
+                                        <Border Background="#3E3E42" 
+                                                BorderBrush="#3E3E42" 
+                                                BorderThickness="0,0,1,0" 
+                                                Margin="0,0,0,0">
+                                            <StackPanel Orientation="Horizontal" Margin="15,8">
+                                                <TextBlock Text="{Binding DisplayTitle}" 
+                                                           Foreground="#CCCCCC" 
+                                                           VerticalAlignment="Center" />
+                                                <Button Content="×" 
+                                                        Background="Transparent" 
+                                                        Foreground="#CCCCCC" 
+                                                        BorderThickness="0" 
+                                                        Margin="8,0,0,0" 
+                                                        Padding="4" 
+                                                        FontSize="16" />
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
                     </Border>
                     
                     <!-- Editor Content -->
                     <ScrollViewer Grid.Row="1" Name="EditorScrollViewer">
                         <TextBox Name="DocumentEditor" 
+                                Text="{Binding ActiveTab.Content, Mode=TwoWay}"
                                 Background="Transparent" 
                                 Foreground="#D4D4D4"
                                 FontFamily="Consolas, 'Courier New', monospace"
