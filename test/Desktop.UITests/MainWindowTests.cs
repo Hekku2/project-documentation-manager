@@ -56,13 +56,16 @@ public class MainWindowTests
     }
 
     [AvaloniaTest]
-    public void MainWindow_Should_Have_Menu_Bar()
+    public void MainWindow_Should_Have_Menu_Bar_With_File_Menu()
     {
         var window = CreateMainWindow();
         window.Show();
 
         var menu = window.FindControl<Menu>("MainMenu");
         Assert.That(menu, Is.Not.Null, "Main menu not found");
+        
+        // Verify the simplified menu structure contains only File menu with Exit
+        Assert.That(menu.Items.Count, Is.EqualTo(1), "Menu should have only one top-level item (File)");
     }
 
     [AvaloniaTest]
@@ -979,12 +982,12 @@ public class MainWindowTests
         var viewModel = window.DataContext as MainWindowViewModel;
         Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
 
-        // Find the Exit menu item
+        // Find the main menu and verify it has the simplified structure
         var menu = window.FindControl<Menu>("MainMenu");
         Assert.That(menu, Is.Not.Null, "Main menu should exist");
+        Assert.That(menu.Items.Count, Is.EqualTo(1), "Menu should have only File menu");
 
-        // In a real UI test, we would need to navigate through the menu structure
-        // For now, we'll test that the command exists and works
+        // Test that the ExitCommand exists and works (bound to the Exit menu item)
         Assert.That(viewModel!.ExitCommand, Is.Not.Null, "ExitCommand should be available for menu binding");
         
         // Test that the command can be executed
