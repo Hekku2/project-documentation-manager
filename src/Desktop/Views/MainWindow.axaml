@@ -16,7 +16,7 @@
                 <MenuItem Header="Open" />
                 <MenuItem Header="Save" />
                 <Separator />
-                <MenuItem Header="Exit" />
+                <MenuItem Header="Exit" Command="{Binding ExitCommand}" />
             </MenuItem>
             <MenuItem Header="Edit">
                 <MenuItem Header="Cut" />

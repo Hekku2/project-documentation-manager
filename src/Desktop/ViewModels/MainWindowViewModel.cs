@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Desktop.Configuration;
@@ -29,6 +30,7 @@ public class MainWindowViewModel : ViewModelBase
         _fileService = fileService;
         FileSystemItems = new ObservableCollection<FileSystemItemViewModel>();
         EditorTabs = new ObservableCollection<EditorTabViewModel>();
+        ExitCommand = new RelayCommand(RequestApplicationExit);
         
         _logger.LogInformation("MainWindowViewModel initialized");
         _logger.LogInformation("Default theme: {Theme}", _applicationOptions.DefaultTheme);
@@ -67,6 +69,10 @@ public class MainWindowViewModel : ViewModelBase
     }
 
     public string? ActiveFileContent => ActiveTab?.Content;
+    
+    public ICommand ExitCommand { get; }
+    
+    public event EventHandler? ExitRequested;
 
     private async Task LoadFileStructureAsync()
     {
@@ -234,5 +240,11 @@ public class MainWindowViewModel : ViewModelBase
         {
             _logger.LogError(ex, "Error saving file: {FilePath}", ActiveTab.FilePath);
         }
+    }
+
+    private void RequestApplicationExit()
+    {
+        _logger.LogInformation("Application exit requested");
+        ExitRequested?.Invoke(this, EventArgs.Empty);
     }
 }
