@@ -149,6 +149,7 @@ public class MainWindowViewModel : ViewModelBase
 
             var tabViewModel = new EditorTabViewModel(tab);
             tabViewModel.CloseRequested += OnTabCloseRequested;
+            tabViewModel.SelectRequested += OnTabSelectRequested;
             EditorTabs.Add(tabViewModel);
             SetActiveTab(tabViewModel);
             
@@ -181,6 +182,11 @@ public class MainWindowViewModel : ViewModelBase
         CloseTab(tab);
     }
 
+    private void OnTabSelectRequested(EditorTabViewModel tab)
+    {
+        SetActiveTab(tab);
+    }
+
     public void CloseTab(EditorTabViewModel tab)
     {
         if (!EditorTabs.Contains(tab))
@@ -188,6 +194,7 @@ public class MainWindowViewModel : ViewModelBase
 
         // Unsubscribe from events to prevent memory leaks
         tab.CloseRequested -= OnTabCloseRequested;
+        tab.SelectRequested -= OnTabSelectRequested;
         
         EditorTabs.Remove(tab);
         

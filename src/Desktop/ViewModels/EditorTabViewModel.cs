@@ -17,6 +17,7 @@ public class EditorTabViewModel : ViewModelBase
         _isModified = tab.IsModified;
         _isActive = tab.IsActive;
         CloseCommand = new RelayCommand(() => CloseRequested?.Invoke(this));
+        SelectCommand = new RelayCommand(() => SelectRequested?.Invoke(this));
     }
 
     public EditorTab Tab { get; }
@@ -66,6 +67,8 @@ public class EditorTabViewModel : ViewModelBase
     public string DisplayTitle => IsModified ? $"{Title} •" : Title;
 
     public ICommand CloseCommand { get; }
+    public ICommand SelectCommand { get; }
 
     public event Action<EditorTabViewModel>? CloseRequested;
+    public event Action<EditorTabViewModel>? SelectRequested;
 }

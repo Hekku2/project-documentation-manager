@@ -130,20 +130,28 @@
                                                 BorderBrush="#3E3E42"
                                                 BorderThickness="0,0,1,0" 
                                                 Margin="0,0,0,0">
-                                            <StackPanel Orientation="Horizontal" Margin="15,8">
-                                                <TextBlock Name="TabTitle"
-                                                           Text="{Binding DisplayTitle}" 
-                                                           Foreground="#CCCCCC" 
-                                                           VerticalAlignment="Center" />
-                                                <Button Content="×" 
-                                                        Command="{Binding CloseCommand}"
-                                                        Background="Transparent" 
-                                                        Foreground="#CCCCCC" 
-                                                        BorderThickness="0" 
-                                                        Margin="8,0,0,0" 
-                                                        Padding="4" 
-                                                        FontSize="16" />
-                                            </StackPanel>
+                                            <Button Name="TabButton"
+                                                    Command="{Binding SelectCommand}"
+                                                    Background="Transparent"
+                                                    BorderThickness="0"
+                                                    Padding="0"
+                                                    HorizontalContentAlignment="Stretch"
+                                                    VerticalContentAlignment="Stretch">
+                                                <StackPanel Orientation="Horizontal" Margin="15,8">
+                                                    <TextBlock Name="TabTitle"
+                                                               Text="{Binding DisplayTitle}" 
+                                                               Foreground="#CCCCCC" 
+                                                               VerticalAlignment="Center" />
+                                                    <Button Content="×" 
+                                                            Command="{Binding CloseCommand}"
+                                                            Background="Transparent" 
+                                                            Foreground="#CCCCCC" 
+                                                            BorderThickness="0" 
+                                                            Margin="8,0,0,0" 
+                                                            Padding="4" 
+                                                            FontSize="16" />
+                                                </StackPanel>
+                                            </Button>
                                         </Border>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>

@@ -770,4 +770,163 @@ public class MainWindowTests
             Assert.That(viewModel.ActiveTab, Is.Null, "No active tab should exist");
         });
     }
+
+    [AvaloniaTest]
+    public async Task MainWindow_Should_Allow_File_Selection_By_Clicking_Tab()
+    {
+        var window = CreateMainWindowWithNestedStructure();
+        window.Show();
+
+        await Task.Delay(500);
+
+        var viewModel = window.DataContext as MainWindowViewModel;
+        Assert.That(viewModel?.RootItem, Is.Not.Null);
+
+        // Wait for file structure to load
+        var maxWait = 50;
+        var waitCount = 0;
+        while (viewModel!.RootItem == null && waitCount < maxWait)
+        {
+            await Task.Delay(100);
+            waitCount++;
+        }
+
+        // Expand and get files
+        viewModel.RootItem!.IsExpanded = true;
+        await Task.Delay(1000);
+
+        var srcFolder = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "src");
+        srcFolder!.IsExpanded = true;
+        await Task.Delay(1000);
+
+        var readmeFile = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "README.md");
+        var mainFile = srcFolder.Children.FirstOrDefault(c => c.Name == "main.cs");
+
+        // Open both files to create tabs
+        readmeFile!.IsSelected = true;
+        await Task.Delay(500);
+        
+        mainFile!.IsSelected = true;
+        await Task.Delay(500);
+
+        // Verify setup: 2 tabs exist, main.cs is currently active
+        Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(2), "Two tabs should be open");
+        
+        var readmeTab = viewModel.EditorTabs.FirstOrDefault(t => t.Title == "README.md");
+        var mainTab = viewModel.EditorTabs.FirstOrDefault(t => t.Title == "main.cs");
+        
+        Assert.Multiple(() =>
+        {
+            Assert.That(readmeTab, Is.Not.Null, "README tab should exist");
+            Assert.That(mainTab, Is.Not.Null, "main.cs tab should exist");
+            Assert.That(mainTab!.IsActive, Is.True, "main.cs should be active initially");
+            Assert.That(readmeTab!.IsActive, Is.False, "README should not be active initially");
+            Assert.That(viewModel.ActiveTab, Is.EqualTo(mainTab), "ActiveTab should be main.cs");
+        });
+
+        // Click on the README tab to select it
+        readmeTab!.SelectCommand.Execute(null);
+
+        Assert.Multiple(() =>
+        {
+            // README tab should now be active
+            Assert.That(readmeTab.IsActive, Is.True, "README tab should be active after click");
+            Assert.That(mainTab!.IsActive, Is.False, "main.cs tab should not be active after README click");
+            Assert.That(viewModel.ActiveTab, Is.EqualTo(readmeTab), "ActiveTab should be README after click");
+            Assert.That(viewModel.ActiveFileContent, Is.EqualTo("Mock file content"), "Active content should be from README");
+            
+            // Editor should display README content
+            var editorTextBox = window.FindControl<TextBox>("DocumentEditor");
+            Assert.That(editorTextBox?.Text, Is.EqualTo("Mock file content"), "Editor should display README content");
+        });
+
+        // Click back on the main.cs tab
+        mainTab!.SelectCommand.Execute(null);
+
+        Assert.Multiple(() =>
+        {
+            // main.cs tab should be active again
+            Assert.That(mainTab.IsActive, Is.True, "main.cs tab should be active after click");
+            Assert.That(readmeTab.IsActive, Is.False, "README tab should not be active after main.cs click");
+            Assert.That(viewModel.ActiveTab, Is.EqualTo(mainTab), "ActiveTab should be main.cs after click");
+            Assert.That(viewModel.ActiveFileContent, Is.EqualTo("Mock file content"), "Active content should be from main.cs");
+        });
+    }
+
+    [AvaloniaTest]
+    public async Task MainWindow_Should_Show_Visual_Highlighting_When_Tab_Is_Selected_Via_Click()
+    {
+        var window = CreateMainWindowWithNestedStructure();
+        window.Show();
+
+        await Task.Delay(500);
+
+        var viewModel = window.DataContext as MainWindowViewModel;
+        Assert.That(viewModel?.RootItem, Is.Not.Null);
+
+        // Wait for file structure to load
+        var maxWait = 50;
+        var waitCount = 0;
+        while (viewModel!.RootItem == null && waitCount < maxWait)
+        {
+            await Task.Delay(100);
+            waitCount++;
+        }
+
+        // Expand and get files
+        viewModel.RootItem!.IsExpanded = true;
+        await Task.Delay(1000);
+
+        var readmeFile = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "README.md");
+        
+        // Get the src folder and expand it
+        var srcFolder = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "src");
+        srcFolder!.IsExpanded = true;
+        await Task.Delay(1000);
+        
+        var mainFile = srcFolder.Children.FirstOrDefault(c => c.Name == "main.cs");
+
+        // Open three files to test multiple tab selection
+        readmeFile!.IsSelected = true;
+        await Task.Delay(500);
+        
+        mainFile!.IsSelected = true;
+        await Task.Delay(500);
+
+        // Verify setup
+        Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(2), "Two tabs should be open");
+        
+        var readmeTab = viewModel.EditorTabs.FirstOrDefault(t => t.Title == "README.md");
+        var mainTab = viewModel.EditorTabs.FirstOrDefault(t => t.Title == "main.cs");
+
+        // Initially main.cs should be active
+        Assert.That(mainTab!.IsActive, Is.True, "main.cs should be active initially");
+        Assert.That(readmeTab!.IsActive, Is.False, "README should not be active initially");
+
+        // Click README tab and verify highlighting changes
+        readmeTab.SelectCommand.Execute(null);
+
+        Assert.Multiple(() =>
+        {
+            // Only README should be highlighted/active
+            Assert.That(readmeTab.IsActive, Is.True, "README should be active after click");
+            Assert.That(mainTab.IsActive, Is.False, "main.cs should not be active after README click");
+            
+            // Verify the highlighting is applied (IsActive property drives the visual highlighting)
+            Assert.That(viewModel.ActiveTab, Is.EqualTo(readmeTab), "ActiveTab should be README");
+        });
+
+        // Click main.cs tab and verify highlighting switches
+        mainTab.SelectCommand.Execute(null);
+
+        Assert.Multiple(() =>
+        {
+            // Only main.cs should be highlighted/active
+            Assert.That(mainTab.IsActive, Is.True, "main.cs should be active after click");
+            Assert.That(readmeTab.IsActive, Is.False, "README should not be active after main.cs click");
+            
+            // Verify the highlighting is applied
+            Assert.That(viewModel.ActiveTab, Is.EqualTo(mainTab), "ActiveTab should be main.cs");
+        });
+    }
 }
