@@ -621,4 +621,153 @@ public class MainWindowTests
             Assert.That(viewModel.ActiveFileContent, Is.EqualTo("Mock file content"), "Active content should be from README");
         });
     }
+
+    [AvaloniaTest]
+    public async Task MainWindow_Should_Highlight_Active_Tab_Correctly()
+    {
+        var window = CreateMainWindowWithNestedStructure();
+        window.Show();
+
+        await Task.Delay(500);
+
+        var viewModel = window.DataContext as MainWindowViewModel;
+        Assert.That(viewModel?.RootItem, Is.Not.Null);
+
+        // Wait for file structure to load
+        var maxWait = 50;
+        var waitCount = 0;
+        while (viewModel!.RootItem == null && waitCount < maxWait)
+        {
+            await Task.Delay(100);
+            waitCount++;
+        }
+
+        // Expand and get files
+        viewModel.RootItem!.IsExpanded = true;
+        await Task.Delay(1000);
+
+        var srcFolder = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "src");
+        srcFolder!.IsExpanded = true;
+        await Task.Delay(1000);
+
+        var readmeFile = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "README.md");
+        var mainFile = srcFolder.Children.FirstOrDefault(c => c.Name == "main.cs");
+
+        // Initially no tabs
+        Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(0), "No tabs initially");
+
+        // Open first file (README.md)
+        readmeFile!.IsSelected = true;
+        await Task.Delay(500);
+
+        // Should have 1 tab and it should be active
+        Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(1), "One tab should be open");
+        var readmeTab = viewModel.EditorTabs.FirstOrDefault(t => t.Title == "README.md");
+        Assert.That(readmeTab, Is.Not.Null, "README tab should exist");
+        Assert.That(readmeTab!.IsActive, Is.True, "README tab should be active");
+        Assert.That(viewModel.ActiveTab, Is.EqualTo(readmeTab), "ActiveTab should be README");
+
+        // Open second file (main.cs)
+        mainFile!.IsSelected = true;
+        await Task.Delay(500);
+
+        // Should have 2 tabs now
+        Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(2), "Two tabs should be open");
+        var mainTab = viewModel.EditorTabs.FirstOrDefault(t => t.Title == "main.cs");
+        Assert.That(mainTab, Is.Not.Null, "main.cs tab should exist");
+
+        Assert.Multiple(() =>
+        {
+            // Only the main.cs tab should be active now
+            Assert.That(mainTab!.IsActive, Is.True, "main.cs tab should be active");
+            Assert.That(readmeTab.IsActive, Is.False, "README tab should NOT be active");
+            Assert.That(viewModel.ActiveTab, Is.EqualTo(mainTab), "ActiveTab should be main.cs");
+        });
+
+        // Switch active tab back to README by clicking it (simulate tab selection)
+        viewModel.SetActiveTab(readmeTab);
+
+        Assert.Multiple(() =>
+        {
+            // Now only the README tab should be active
+            Assert.That(readmeTab.IsActive, Is.True, "README tab should be active again");
+            Assert.That(mainTab.IsActive, Is.False, "main.cs tab should NOT be active");
+            Assert.That(viewModel.ActiveTab, Is.EqualTo(readmeTab), "ActiveTab should be README");
+        });
+    }
+
+    [AvaloniaTest]
+    public async Task MainWindow_Should_Update_Active_Tab_Highlighting_When_Tab_Is_Closed()
+    {
+        var window = CreateMainWindowWithNestedStructure();
+        window.Show();
+
+        await Task.Delay(500);
+
+        var viewModel = window.DataContext as MainWindowViewModel;
+        Assert.That(viewModel?.RootItem, Is.Not.Null);
+
+        // Wait for file structure to load
+        var maxWait = 50;
+        var waitCount = 0;
+        while (viewModel!.RootItem == null && waitCount < maxWait)
+        {
+            await Task.Delay(100);
+            waitCount++;
+        }
+
+        // Expand and get files
+        viewModel.RootItem!.IsExpanded = true;
+        await Task.Delay(1000);
+
+        var srcFolder = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "src");
+        srcFolder!.IsExpanded = true;
+        await Task.Delay(1000);
+
+        var readmeFile = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "README.md");
+        var mainFile = srcFolder.Children.FirstOrDefault(c => c.Name == "main.cs");
+
+        // Open both files
+        readmeFile!.IsSelected = true;
+        await Task.Delay(500);
+        
+        mainFile!.IsSelected = true;
+        await Task.Delay(500);
+
+        // Verify setup: 2 tabs, main.cs is active
+        Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(2), "Two tabs should be open");
+        
+        var readmeTab = viewModel.EditorTabs.FirstOrDefault(t => t.Title == "README.md");
+        var mainTab = viewModel.EditorTabs.FirstOrDefault(t => t.Title == "main.cs");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(mainTab!.IsActive, Is.True, "main.cs should be active initially");
+            Assert.That(readmeTab!.IsActive, Is.False, "README should not be active initially");
+            Assert.That(viewModel.ActiveTab, Is.EqualTo(mainTab), "ActiveTab should be main.cs");
+        });
+
+        // Close the currently active tab (main.cs)
+        mainTab!.CloseCommand.Execute(null);
+
+        Assert.Multiple(() =>
+        {
+            // Should have 1 tab remaining
+            Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(1), "One tab should remain");
+            
+            // The README tab should now be active (and highlighted)
+            Assert.That(readmeTab!.IsActive, Is.True, "README tab should now be active and highlighted");
+            Assert.That(viewModel.ActiveTab, Is.EqualTo(readmeTab), "ActiveTab should switch to README");
+        });
+
+        // Close the last tab
+        readmeTab!.CloseCommand.Execute(null);
+
+        Assert.Multiple(() =>
+        {
+            // No tabs should remain
+            Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(0), "No tabs should remain");
+            Assert.That(viewModel.ActiveTab, Is.Null, "No active tab should exist");
+        });
+    }
 }

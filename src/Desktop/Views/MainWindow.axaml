@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:vm="clr-namespace:Desktop.ViewModels"
+    xmlns:conv="clr-namespace:Desktop.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
@@ -124,12 +125,14 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="vm:EditorTabViewModel">
-                                        <Border Background="#3E3E42" 
-                                                BorderBrush="#3E3E42" 
+                                        <Border Name="TabBorder"
+                                                Background="{Binding IsActive, Converter={x:Static conv:BoolToColorConverter.Instance}}"
+                                                BorderBrush="#3E3E42"
                                                 BorderThickness="0,0,1,0" 
                                                 Margin="0,0,0,0">
                                             <StackPanel Orientation="Horizontal" Margin="15,8">
-                                                <TextBlock Text="{Binding DisplayTitle}" 
+                                                <TextBlock Name="TabTitle"
+                                                           Text="{Binding DisplayTitle}" 
                                                            Foreground="#CCCCCC" 
                                                            VerticalAlignment="Center" />
                                                 <Button Content="×" 
