@@ -1,3 +1,5 @@
+using System;
+using System.Windows.Input;
 using Desktop.Models;
 
 namespace Desktop.ViewModels;
@@ -14,6 +16,7 @@ public class EditorTabViewModel : ViewModelBase
         _content = tab.Content;
         _isModified = tab.IsModified;
         _isActive = tab.IsActive;
+        CloseCommand = new RelayCommand(() => CloseRequested?.Invoke(this));
     }
 
     public EditorTab Tab { get; }
@@ -61,4 +64,8 @@ public class EditorTabViewModel : ViewModelBase
     }
 
     public string DisplayTitle => IsModified ? $"{Title} •" : Title;
+
+    public ICommand CloseCommand { get; }
+
+    public event Action<EditorTabViewModel>? CloseRequested;
 }

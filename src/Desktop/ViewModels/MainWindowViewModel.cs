@@ -148,6 +148,7 @@ public class MainWindowViewModel : ViewModelBase
             };
 
             var tabViewModel = new EditorTabViewModel(tab);
+            tabViewModel.CloseRequested += OnTabCloseRequested;
             EditorTabs.Add(tabViewModel);
             SetActiveTab(tabViewModel);
             
@@ -175,11 +176,19 @@ public class MainWindowViewModel : ViewModelBase
         _logger.LogDebug("Active tab changed to: {TabTitle}", tab.Title);
     }
 
+    private void OnTabCloseRequested(EditorTabViewModel tab)
+    {
+        CloseTab(tab);
+    }
+
     public void CloseTab(EditorTabViewModel tab)
     {
         if (!EditorTabs.Contains(tab))
             return;
 
+        // Unsubscribe from events to prevent memory leaks
+        tab.CloseRequested -= OnTabCloseRequested;
+        
         EditorTabs.Remove(tab);
         
         // If this was the active tab, set a new active tab

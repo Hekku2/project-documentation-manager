@@ -133,6 +133,7 @@
                                                            Foreground="#CCCCCC" 
                                                            VerticalAlignment="Center" />
                                                 <Button Content="×" 
+                                                        Command="{Binding CloseCommand}"
                                                         Background="Transparent" 
                                                         Foreground="#CCCCCC" 
                                                         BorderThickness="0" 
