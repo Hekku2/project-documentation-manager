@@ -155,8 +155,11 @@
                     <ScrollViewer Grid.Row="1" Name="EditorScrollViewer">
                         <TextBox Name="DocumentEditor" 
                                 Text="{Binding ActiveTab.Content, Mode=TwoWay}"
-                                Background="Transparent" 
+                                Background="#1E1E1E" 
                                 Foreground="#D4D4D4"
+                                CaretBrush="#FFFFFF"
+                                SelectionBrush="#264F78"
+                                SelectionForegroundBrush="#FFFFFF"
                                 FontFamily="Consolas, 'Courier New', monospace"
                                 FontSize="14"
                                 AcceptsReturn="True"
@@ -164,7 +167,22 @@
                                 TextWrapping="Wrap"
                                 BorderThickness="0"
                                 Margin="20"
-                                Watermark="Start typing or open a file..." />
+                                Watermark="Start typing or open a file...">
+                            <TextBox.Styles>
+                                <!-- Remove hover highlighting -->
+                                <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
+                                    <Setter Property="Background" Value="#1E1E1E" />
+                                    <Setter Property="BorderBrush" Value="Transparent" />
+                                    <Setter Property="BorderThickness" Value="0" />
+                                </Style>
+                                <!-- Keep focus highlighting -->
+                                <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+                                    <Setter Property="Background" Value="#1E1E1E" />
+                                    <Setter Property="BorderBrush" Value="#007ACC" />
+                                    <Setter Property="BorderThickness" Value="1" />
+                                </Style>
+                            </TextBox.Styles>
+                        </TextBox>
                     </ScrollViewer>
                 </Grid>
             </Border>
