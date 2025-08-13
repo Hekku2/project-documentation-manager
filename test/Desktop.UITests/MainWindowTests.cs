@@ -56,7 +56,7 @@ public class MainWindowTests
     }
 
     [AvaloniaTest]
-    public void MainWindow_Should_Have_Menu_Bar_With_File_Menu()
+    public void MainWindow_Should_Have_Menu_Bar_With_File_And_Build_Menus()
     {
         var window = CreateMainWindow();
         window.Show();
@@ -64,8 +64,8 @@ public class MainWindowTests
         var menu = window.FindControl<Menu>("MainMenu");
         Assert.That(menu, Is.Not.Null, "Main menu not found");
         
-        // Verify the simplified menu structure contains only File menu with Exit
-        Assert.That(menu.Items.Count, Is.EqualTo(1), "Menu should have only one top-level item (File)");
+        // Verify the menu structure contains File and Build menus
+        Assert.That(menu.Items.Count, Is.EqualTo(2), "Menu should have two top-level items (File and Build)");
     }
 
     [AvaloniaTest]
@@ -982,10 +982,10 @@ public class MainWindowTests
         var viewModel = window.DataContext as MainWindowViewModel;
         Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
 
-        // Find the main menu and verify it has the simplified structure
+        // Find the main menu and verify it has the updated structure
         var menu = window.FindControl<Menu>("MainMenu");
         Assert.That(menu, Is.Not.Null, "Main menu should exist");
-        Assert.That(menu.Items.Count, Is.EqualTo(1), "Menu should have only File menu");
+        Assert.That(menu.Items.Count, Is.EqualTo(2), "Menu should have File and Build menus");
 
         // Test that the ExitCommand exists and works (bound to the Exit menu item)
         Assert.That(viewModel!.ExitCommand, Is.Not.Null, "ExitCommand should be available for menu binding");
@@ -1002,5 +1002,41 @@ public class MainWindowTests
         viewModel.ExitCommand.Execute(null);
         
         Assert.That(exitRequested, Is.True, "Exit should be requested when command is executed");
+    }
+
+    [AvaloniaTest]
+    public void MainWindow_Should_Have_BuildDocumentation_Command_That_Is_Disabled()
+    {
+        var window = CreateMainWindow();
+        var viewModel = window.DataContext as MainWindowViewModel;
+        
+        Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
+        Assert.That(viewModel!.BuildDocumentationCommand, Is.Not.Null, "BuildDocumentationCommand should exist");
+        
+        // Test that the command exists but is disabled as requested
+        bool canExecute = viewModel.BuildDocumentationCommand.CanExecute(null);
+        Assert.That(canExecute, Is.False, "BuildDocumentationCommand should be disabled");
+    }
+
+    [AvaloniaTest]
+    public void MainWindow_Should_Have_Build_Menu_Item_With_Command_Binding()
+    {
+        var window = CreateMainWindow();
+        window.Show();
+
+        var viewModel = window.DataContext as MainWindowViewModel;
+        Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
+
+        // Find the main menu and verify it has Build menu
+        var menu = window.FindControl<Menu>("MainMenu");
+        Assert.That(menu, Is.Not.Null, "Main menu should exist");
+        Assert.That(menu.Items.Count, Is.EqualTo(2), "Menu should have File and Build menus");
+
+        // Test that the BuildDocumentationCommand exists and is bound to the Build menu item
+        Assert.That(viewModel!.BuildDocumentationCommand, Is.Not.Null, "BuildDocumentationCommand should be available for menu binding");
+        
+        // Test that the command is disabled as requested
+        bool canExecute = viewModel.BuildDocumentationCommand.CanExecute(null);
+        Assert.That(canExecute, Is.False, "BuildDocumentationCommand should be disabled");
     }
 }

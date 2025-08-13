@@ -31,10 +31,12 @@ public class MainWindowViewModel : ViewModelBase
         FileSystemItems = new ObservableCollection<FileSystemItemViewModel>();
         EditorTabs = new ObservableCollection<EditorTabViewModel>();
         ExitCommand = new RelayCommand(RequestApplicationExit);
+        BuildDocumentationCommand = new RelayCommand(BuildDocumentation, CanBuildDocumentation);
         
         _logger.LogInformation("MainWindowViewModel initialized");
         _logger.LogInformation("Default theme: {Theme}", _applicationOptions.DefaultTheme);
         _logger.LogInformation("Default project folder: {Folder}", _applicationOptions.DefaultProjectFolder);
+        _logger.LogInformation("Default output folder: {OutputFolder}", _applicationOptions.DefaultOutputFolder);
         
         // Subscribe to file selection events
         FileSystemItemViewModel.FileSelected += OnFileSelected;
@@ -71,6 +73,8 @@ public class MainWindowViewModel : ViewModelBase
     public string? ActiveFileContent => ActiveTab?.Content;
     
     public ICommand ExitCommand { get; }
+    
+    public ICommand BuildDocumentationCommand { get; }
     
     public event EventHandler? ExitRequested;
 
@@ -246,5 +250,17 @@ public class MainWindowViewModel : ViewModelBase
     {
         _logger.LogInformation("Application exit requested");
         ExitRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void BuildDocumentation()
+    {
+        _logger.LogInformation("Build documentation requested");
+        // TODO: Implement build documentation functionality
+    }
+
+    private bool CanBuildDocumentation()
+    {
+        // For now, always disabled as requested
+        return false;
     }
 }

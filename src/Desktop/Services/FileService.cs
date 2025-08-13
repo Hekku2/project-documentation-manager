@@ -9,22 +9,15 @@ using Microsoft.Extensions.Options;
 
 namespace Desktop.Services;
 
-public class FileService : IFileService
+public class FileService(ILogger<FileService> logger, IOptions<ApplicationOptions> options) : IFileService
 {
-    private readonly ILogger<FileService> _logger;
-    private readonly ApplicationOptions _options;
-
-    public FileService(ILogger<FileService> logger, IOptions<ApplicationOptions> options)
-    {
-        _logger = logger;
-        _options = options.Value;
-    }
+    private readonly ApplicationOptions _options = options.Value;
 
     public async Task<FileSystemItem?> GetFileStructureAsync()
     {
         if (string.IsNullOrEmpty(_options.DefaultProjectFolder))
         {
-            _logger.LogWarning("DefaultProjectFolder is not configured in ApplicationOptions");
+            logger.LogWarning("DefaultProjectFolder is not configured in ApplicationOptions");
             return null;
         }
 
@@ -35,18 +28,18 @@ public class FileService : IFileService
     {
         if (!IsValidFolder(folderPath))
         {
-            _logger.LogWarning("Folder path is invalid or inaccessible: {FolderPath}", folderPath);
+            logger.LogWarning("Folder path is invalid or inaccessible: {FolderPath}", folderPath);
             return null;
         }
 
         try
         {
-            _logger.LogInformation("Building file structure for: {FolderPath}", folderPath);
+            logger.LogInformation("Building file structure for: {FolderPath}", folderPath);
             return await Task.Run(() => BuildFileStructure(folderPath));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error building file structure for: {FolderPath}", folderPath);
+            logger.LogError(ex, "Error building file structure for: {FolderPath}", folderPath);
             return null;
         }
     }
@@ -62,7 +55,7 @@ public class FileService : IFileService
         }
         catch (Exception ex)
         {
-            _logger.LogDebug(ex, "Error checking folder validity: {FolderPath}", folderPath);
+            logger.LogDebug(ex, "Error checking folder validity: {FolderPath}", folderPath);
             return false;
         }
     }
@@ -110,16 +103,16 @@ public class FileService : IFileService
                 item.Children.Add(fileItem);
             }
 
-            _logger.LogDebug("Built structure for {Path}: {DirectoryCount} directories, {FileCount} files", 
+            logger.LogDebug("Built structure for {Path}: {DirectoryCount} directories, {FileCount} files", 
                 path, directories.Count(), files.Count());
         }
         catch (UnauthorizedAccessException ex)
         {
-            _logger.LogWarning(ex, "Access denied to directory: {Path}", path);
+            logger.LogWarning(ex, "Access denied to directory: {Path}", path);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing directory: {Path}", path);
+            logger.LogError(ex, "Error processing directory: {Path}", path);
         }
 
         return item;
@@ -134,7 +127,7 @@ public class FileService : IFileService
     {
         if (string.IsNullOrWhiteSpace(filePath))
         {
-            _logger.LogWarning("File path is null or empty");
+            logger.LogWarning("File path is null or empty");
             return null;
         }
 
@@ -142,16 +135,16 @@ public class FileService : IFileService
         {
             if (!File.Exists(filePath))
             {
-                _logger.LogWarning("File does not exist: {FilePath}", filePath);
+                logger.LogWarning("File does not exist: {FilePath}", filePath);
                 return null;
             }
 
-            _logger.LogDebug("Reading file content: {FilePath}", filePath);
+            logger.LogDebug("Reading file content: {FilePath}", filePath);
             return await File.ReadAllTextAsync(filePath);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error reading file: {FilePath}", filePath);
+            logger.LogError(ex, "Error reading file: {FilePath}", filePath);
             return null;
         }
     }
@@ -160,7 +153,7 @@ public class FileService : IFileService
     {
         if (string.IsNullOrWhiteSpace(filePath))
         {
-            _logger.LogWarning("File path is null or empty");
+            logger.LogWarning("File path is null or empty");
             return false;
         }
 
@@ -172,13 +165,13 @@ public class FileService : IFileService
                 Directory.CreateDirectory(directory);
             }
 
-            _logger.LogDebug("Writing file content: {FilePath}", filePath);
+            logger.LogDebug("Writing file content: {FilePath}", filePath);
             await File.WriteAllTextAsync(filePath, content ?? string.Empty);
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error writing file: {FilePath}", filePath);
+            logger.LogError(ex, "Error writing file: {FilePath}", filePath);
             return false;
         }
     }

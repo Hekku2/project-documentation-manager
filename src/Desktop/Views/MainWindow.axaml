@@ -14,6 +14,9 @@
             <MenuItem Header="File">
                 <MenuItem Header="Exit" Command="{Binding ExitCommand}" />
             </MenuItem>
+            <MenuItem Header="Build">
+                <MenuItem Header="Build documentation" Command="{Binding BuildDocumentationCommand}" />
+            </MenuItem>
         </Menu>
         
         <!-- Main Content Area -->
