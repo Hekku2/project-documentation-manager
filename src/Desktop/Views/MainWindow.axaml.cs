@@ -51,4 +51,12 @@ public partial class MainWindow : Window
         var dialog = new BuildConfirmationDialog(dialogViewModel);
         dialog.ShowDialog(this);
     }
+
+    private void OnLogTabCloseClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (DataContext is MainWindowViewModel viewModel)
+        {
+            viewModel.CloseLogOutputCommand.Execute(null);
+        }
+    }
 }

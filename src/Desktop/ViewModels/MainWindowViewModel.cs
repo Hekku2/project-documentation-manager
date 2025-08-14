@@ -21,6 +21,7 @@ public class MainWindowViewModel : ViewModelBase
     private bool _isLoading;
     private FileSystemItemViewModel? _rootItem;
     private EditorTabViewModel? _activeTab;
+    private bool _isLogOutputVisible = true;
 
     public MainWindowViewModel(
         ILogger<MainWindowViewModel> logger, 
@@ -36,6 +37,7 @@ public class MainWindowViewModel : ViewModelBase
         EditorTabs = new ObservableCollection<EditorTabViewModel>();
         ExitCommand = new RelayCommand(RequestApplicationExit);
         BuildDocumentationCommand = new RelayCommand(BuildDocumentation, CanBuildDocumentation);
+        CloseLogOutputCommand = new RelayCommand(CloseLogOutput);
         
         _logger.LogInformation("MainWindowViewModel initialized");
         _logger.LogInformation("Default theme: {Theme}", _applicationOptions.DefaultTheme);
@@ -75,10 +77,18 @@ public class MainWindowViewModel : ViewModelBase
     }
 
     public string? ActiveFileContent => ActiveTab?.Content;
+
+    public bool IsLogOutputVisible
+    {
+        get => _isLogOutputVisible;
+        set => SetProperty(ref _isLogOutputVisible, value);
+    }
     
     public ICommand ExitCommand { get; }
     
     public ICommand BuildDocumentationCommand { get; }
+    
+    public ICommand CloseLogOutputCommand { get; }
     
     public event EventHandler? ExitRequested;
     public event EventHandler<BuildConfirmationDialogViewModel>? ShowBuildConfirmationDialog;
@@ -271,5 +281,11 @@ public class MainWindowViewModel : ViewModelBase
     private bool CanBuildDocumentation()
     {
         return true;
+    }
+
+    private void CloseLogOutput()
+    {
+        IsLogOutputVisible = false;
+        _logger.LogInformation("Log output panel closed");
     }
 }

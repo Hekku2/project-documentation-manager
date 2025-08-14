@@ -186,7 +186,7 @@
                     </ScrollViewer>
                     
                     <!-- Log Output -->
-                    <Border Grid.Row="2" Background="#0E0E0E" BorderBrush="#3E3E42" BorderThickness="0,1,0,0">
+                    <Border Grid.Row="2" Background="#0E0E0E" BorderBrush="#3E3E42" BorderThickness="0,1,0,0" IsVisible="{Binding IsLogOutputVisible}">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <!-- Log Tab Bar -->
@@ -210,6 +210,15 @@
                                                            Text="Log Output" 
                                                            Foreground="#CCCCCC" 
                                                            VerticalAlignment="Center" />
+                                                <Button Name="LogTabCloseButton"
+                                                        Content="×" 
+                                                        Click="OnLogTabCloseClick"
+                                                        Background="Transparent" 
+                                                        Foreground="#CCCCCC" 
+                                                        BorderThickness="0" 
+                                                        Margin="8,0,0,0" 
+                                                        Padding="4" 
+                                                        FontSize="16" />
                                             </StackPanel>
                                         </Border>
                                     </StackPanel>

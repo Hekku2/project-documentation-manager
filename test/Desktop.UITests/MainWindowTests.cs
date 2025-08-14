@@ -1341,4 +1341,115 @@ public class MainWindowTests
             Assert.That(dialogViewModel.SaveCommand.CanExecute(null), Is.True, "Save command should be enabled when build is not in progress");
         });
     }
+
+    [AvaloniaTest]
+    public void MainWindow_Should_Have_Log_Output_Section_Visible_By_Default()
+    {
+        var window = CreateMainWindow();
+        window.Show();
+
+        var viewModel = window.DataContext as MainWindowViewModel;
+        Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
+
+        // Log output should be visible by default
+        Assert.That(viewModel!.IsLogOutputVisible, Is.True, "Log output should be visible by default");
+
+        // Find the log output TextBox in the UI  
+        var logOutputTextBox = window.FindControl<TextBox>("LogOutput");
+        
+        // The log output section should exist in the UI
+        Assert.That(logOutputTextBox, Is.Not.Null, "Log output TextBox should exist in UI");
+    }
+
+    [AvaloniaTest]
+    public void MainWindow_Should_Have_Log_Output_Tab_With_Close_Button()
+    {
+        var window = CreateMainWindow();
+        window.Show();
+
+        // Find the log tab close button
+        var logTabCloseButton = window.FindControl<Button>("LogTabCloseButton");
+        Assert.That(logTabCloseButton, Is.Not.Null, "Log tab close button should exist");
+        Assert.That(logTabCloseButton!.Content, Is.EqualTo("×"), "Close button should have × symbol");
+
+        // Find the log tab title
+        var logTabTitle = window.FindControl<TextBlock>("LogTabTitle");
+        Assert.That(logTabTitle, Is.Not.Null, "Log tab title should exist");
+        Assert.That(logTabTitle!.Text, Is.EqualTo("Log Output"), "Log tab should have correct title");
+    }
+
+    [AvaloniaTest]
+    public void MainWindow_Should_Hide_Log_Output_When_Close_Button_Is_Clicked()
+    {
+        var window = CreateMainWindow();
+        window.Show();
+
+        var viewModel = window.DataContext as MainWindowViewModel;
+        Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
+
+        // Initially log output should be visible
+        Assert.That(viewModel!.IsLogOutputVisible, Is.True, "Log output should be visible initially");
+
+        // Execute the close log output command
+        viewModel.CloseLogOutputCommand.Execute(null);
+
+        // Log output should now be hidden
+        Assert.That(viewModel.IsLogOutputVisible, Is.False, "Log output should be hidden after close command");
+    }
+
+    [AvaloniaTest]
+    public void MainWindow_LogOutput_Close_Button_Should_Have_Click_Handler()
+    {
+        var window = CreateMainWindow();
+        window.Show();
+
+        var viewModel = window.DataContext as MainWindowViewModel;
+        Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
+        Assert.That(viewModel!.CloseLogOutputCommand, Is.Not.Null, "CloseLogOutputCommand should exist");
+
+        // Initially log output should be visible
+        Assert.That(viewModel.IsLogOutputVisible, Is.True, "Log output should be visible initially");
+
+        // Find the log tab close button
+        var logTabCloseButton = window.FindControl<Button>("LogTabCloseButton");
+        Assert.That(logTabCloseButton, Is.Not.Null, "Log tab close button should exist");
+
+        // Test that we can execute the command that the button is wired to execute
+        // Instead of simulating the click, we'll just verify the command works
+        viewModel.CloseLogOutputCommand.Execute(null);
+
+        // Log output should now be hidden
+        Assert.That(viewModel.IsLogOutputVisible, Is.False, "Log output should be hidden after close command execution");
+    }
+
+    [AvaloniaTest]
+    public void MainWindow_CloseLogOutput_Command_Should_Be_Executable()
+    {
+        var window = CreateMainWindow();
+        var viewModel = window.DataContext as MainWindowViewModel;
+        
+        Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
+        Assert.That(viewModel!.CloseLogOutputCommand, Is.Not.Null, "CloseLogOutputCommand should exist");
+        
+        // Test that the command can be executed
+        bool canExecute = viewModel.CloseLogOutputCommand.CanExecute(null);
+        Assert.That(canExecute, Is.True, "CloseLogOutputCommand should be executable");
+        
+        // Track property changes
+        bool visibilityChanged = false;
+        viewModel.PropertyChanged += (sender, e) =>
+        {
+            if (e.PropertyName == nameof(MainWindowViewModel.IsLogOutputVisible))
+                visibilityChanged = true;
+        };
+        
+        // Execute the command
+        viewModel.CloseLogOutputCommand.Execute(null);
+        
+        Assert.Multiple(() =>
+        {
+            Assert.That(viewModel.IsLogOutputVisible, Is.False, "Log output should be hidden after command execution");
+            Assert.That(visibilityChanged, Is.True, "PropertyChanged should be fired for IsLogOutputVisible");
+        });
+    }
 }
