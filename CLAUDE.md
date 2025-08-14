@@ -17,11 +17,13 @@ This is a C# project for creating a tool to manage project documentation. The ma
 
 ## Project Structure
 
-The solution follows a standard .NET structure:
-- `src/Desktop/` - Main Avalonia desktop application
-- `test/Desktop.UITests/` - UI tests using Avalonia.Headless and NUnit
+The solution follows a standard .NET structure with clear separation of concerns:
+- `src/Desktop/` - Main Avalonia desktop application with MVVM architecture
+- `src/Business/` - Core business logic for markdown processing
+- `test/Desktop.UITests/` - UI tests using Avalonia.Headless and NUnit  
+- `test/Business.Tests/` - Unit tests for business logic
 - `doc/` - Design documentation and project structure
-- Solution file manages both source and test projects
+- `example-projects/` - Sample projects demonstrating markdown template features
 
 ## Common Commands
 
@@ -48,11 +50,17 @@ dotnet test
 # Run UI tests specifically
 dotnet test test/Desktop.UITests/Desktop.UITests.csproj
 
+# Run business logic tests
+dotnet test test/Business.Tests/Business.Tests.csproj
+
 # Run specific test by name
 dotnet test --filter "TestMethodName"
 
 # Run tests with specific pattern
 dotnet test --filter "MainWindow_Should_Allow_Folder_Expansion"
+
+# Run log-related tests
+dotnet test --filter "FullyQualifiedName~Log"
 ```
 
 ### Development
@@ -72,12 +80,21 @@ The application uses Microsoft.Extensions.Hosting for DI container and configura
 - `appsettings.json` contains application configuration including `ApplicationOptions`
 - Services are registered in `Program.CreateHostBuilder()` and accessed via DI
 - `App.ServiceProvider` provides access to services from the Avalonia application
+- Hybrid hosting model: .NET Host + Avalonia UI integration with shared service provider
+
+### Business Logic Architecture
+The `Business` project contains the core markdown processing functionality:
+- **Services Layer**: `IMarkdownFileCollectorService`, `IMarkdownCombinationService`, `IMarkdownDocumentFileWriterService`
+- **Models**: `MarkdownDocument` for representing markdown files
+- **Template System**: Processes `.mdext` template files with `.mdsrc` source inclusions
+- **File Processing**: Collects, combines, and writes processed markdown documentation
 
 ### MVVM Pattern
 - **ViewModels**: All inherit from `ViewModelBase` which implements `INotifyPropertyChanged`
 - **Views**: AXAML files with code-behind, use compiled bindings for performance
-- **Models**: Simple data classes like `FileSystemItem`
+- **Models**: Simple data classes like `FileSystemItem`, `EditorTab`
 - **Services**: Business logic layer (e.g., `IFileService`, `FileService`)
+- **Commands**: `RelayCommand` implementation for UI actions and event handling
 
 ### File System Management
 The application features a file explorer with lazy loading:
@@ -90,7 +107,15 @@ The application features a file explorer with lazy loading:
 - `ApplicationOptions` class defines available settings
 - `appsettings.json` provides default configuration
 - Configuration bound to strongly-typed options via `IOptions<T>`
-- Current settings: `DefaultProjectFolder`, `DefaultTheme`
+- Current settings: `DefaultProjectFolder`, `DefaultTheme`, `DefaultOutputFolder`
+
+### Dynamic Logging System
+The application implements a sophisticated logging architecture:
+- **IDynamicLoggerProvider**: Allows adding logger providers after host creation
+- **UILoggerProvider**: Displays logs in the application's UI log output panel
+- **Thread-Safe UI Updates**: Uses `Dispatcher.UIThread.Post()` for UI marshaling
+- **Runtime Reconfiguration**: Logging providers can be added after host startup
+- **Dual Output**: Logs appear in both console (development) and UI (user-facing)
 
 ## Testing Strategy
 
@@ -120,6 +145,18 @@ The application features a file explorer with lazy loading:
 - Expansion triggers lazy loading of children
 - Loading state indicators (⏳) shown during background operations
 
+### Editor Tab System
+- **Multi-Tab Interface**: Similar to VS Code with tab bar and content area
+- **Active Tab Management**: Only one tab active at a time with visual highlighting
+- **File Loading**: Async file content loading with tab creation
+- **Tab Operations**: Close, select, and switch between tabs seamlessly
+
+### UI Layout Architecture
+- **Split Layout**: File explorer (left) + editor area (right) with splitter
+- **Dual Panel Editor**: File editor (top) + log output (bottom) with tabs
+- **Responsive Design**: DockPanel and Grid layouts for proper space utilization
+- **Theme Integration**: Dark theme with consistent color scheme throughout
+
 ## Development Guidelines
 
 - The project emphasizes learning Avalonia UI framework
@@ -128,3 +165,9 @@ The application features a file explorer with lazy loading:
 - Ensure comprehensive end-to-end test coverage for major features
 - Use NSubstitute for mocking in tests rather than custom mock classes
 - Follow MVVM pattern with proper separation of concerns
+
+## important-instruction-reminders
+Do what has been asked; nothing more, nothing less.
+NEVER create files unless they're absolutely necessary for achieving your goal.
+ALWAYS prefer editing an existing file to creating a new one.
+NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.
