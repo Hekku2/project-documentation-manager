@@ -94,11 +94,14 @@ public class MainWindowViewModel : ViewModelBase
             
             if (fileStructure != null)
             {
-                var rootViewModel = new FileSystemItemViewModel(fileStructure, isRoot: true);
+                var rootViewModel = new FileSystemItemViewModel(fileStructure, isRoot: true, fileService: _fileService);
                 RootItem = rootViewModel;
                 
                 FileSystemItems.Clear();
                 FileSystemItems.Add(rootViewModel);
+                
+                // Start file system monitoring
+                _fileService.StartFileSystemMonitoring();
                 
                 _logger.LogInformation("File structure loaded successfully");
             }

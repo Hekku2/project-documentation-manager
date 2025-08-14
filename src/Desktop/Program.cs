@@ -57,7 +57,7 @@ class Program
                 services.AddLogging(builder => builder.AddConsole());
                 
                 // Register application services
-                services.AddScoped<Desktop.Services.IFileService, Desktop.Services.FileService>();
+                services.AddSingleton<Desktop.Services.IFileService, Desktop.Services.FileService>();
                 
                 // Register business services
                 services.AddScoped<Business.Services.IMarkdownCombinationService, Business.Services.MarkdownCombinationService>();

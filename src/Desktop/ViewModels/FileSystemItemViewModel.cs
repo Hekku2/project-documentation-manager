@@ -2,7 +2,9 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Desktop.Models;
+using Desktop.Services;
 using System;
+using System.IO;
 
 namespace Desktop.ViewModels;
 
@@ -15,10 +17,13 @@ public class FileSystemItemViewModel : ViewModelBase
 
     public static event Action<string>? FileSelected;
 
-    public FileSystemItemViewModel(FileSystemItem item, bool isRoot = false)
+    private readonly IFileService? _fileService;
+
+    public FileSystemItemViewModel(FileSystemItem item, bool isRoot = false, IFileService? fileService = null)
     {
         Item = item;
         Children = new ObservableCollection<FileSystemItemViewModel>();
+        _fileService = fileService;
         
         // For directories, add a placeholder to show the expand icon
         if (item.IsDirectory && item.HasChildren)
@@ -29,6 +34,12 @@ public class FileSystemItemViewModel : ViewModelBase
         {
             // For files, mark as loaded since they don't have children
             _childrenLoaded = true;
+        }
+        
+        // Subscribe to file system changes if we have a file service and this is the root
+        if (isRoot && _fileService != null)
+        {
+            _fileService.FileSystemChanged += OnFileSystemChanged;
         }
         
         // Auto-expand only the actual root directory
@@ -93,7 +104,7 @@ public class FileSystemItemViewModel : ViewModelBase
                 var childViewModels = Item.Children
                     .OrderBy(c => !c.IsDirectory)
                     .ThenBy(c => c.Name)
-                    .Select(child => new FileSystemItemViewModel(child))
+                    .Select(child => new FileSystemItemViewModel(child, false, _fileService))
                     .ToList();
 
                 // Update the UI on the main thread
@@ -113,6 +124,194 @@ public class FileSystemItemViewModel : ViewModelBase
         {
             IsLoading = false;
         }
+    }
+
+    private void OnFileSystemChanged(object? sender, FileSystemChangedEventArgs e)
+    {
+        // Handle file system changes on the UI thread
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            HandleFileSystemChange(e);
+        });
+    }
+
+    private void HandleFileSystemChange(FileSystemChangedEventArgs e)
+    {
+        // Find the parent folder that should contain this item
+        var parentViewModel = FindParentForPath(e.Path);
+        if (parentViewModel == null)
+            return;
+
+        switch (e.ChangeType)
+        {
+            case FileSystemChangeType.Created:
+                HandleItemCreated(parentViewModel, e.Path, e.IsDirectory);
+                break;
+            case FileSystemChangeType.Deleted:
+                HandleItemDeleted(parentViewModel, e.Path);
+                break;
+            case FileSystemChangeType.Renamed:
+                if (!string.IsNullOrEmpty(e.OldPath))
+                {
+                    HandleItemDeleted(parentViewModel, e.OldPath);
+                    HandleItemCreated(parentViewModel, e.Path, e.IsDirectory);
+                }
+                break;
+            case FileSystemChangeType.Changed:
+                HandleItemChanged(e.Path);
+                break;
+        }
+    }
+
+    private FileSystemItemViewModel? FindParentForPath(string filePath)
+    {
+        var parentPath = Path.GetDirectoryName(filePath);
+        if (string.IsNullOrEmpty(parentPath))
+            return null;
+
+        return FindViewModelByPath(parentPath);
+    }
+
+    private FileSystemItemViewModel? FindViewModelByPath(string path)
+    {
+        if (string.Equals(Item.FullPath, path, StringComparison.OrdinalIgnoreCase))
+            return this;
+
+        if (!_childrenLoaded || !IsExpanded)
+            return null;
+
+        foreach (var child in Children)
+        {
+            var result = child.FindViewModelByPath(path);
+            if (result != null)
+                return result;
+        }
+
+        return null;
+    }
+
+    private void HandleItemCreated(FileSystemItemViewModel parentViewModel, string itemPath, bool isDirectory)
+    {
+        // Only handle if the parent is expanded and loaded
+        if (!parentViewModel.IsExpanded || !parentViewModel._childrenLoaded)
+            return;
+
+        // Check if item already exists
+        var fileName = Path.GetFileName(itemPath);
+        if (parentViewModel.Children.Any(c => string.Equals(c.Name, fileName, StringComparison.OrdinalIgnoreCase)))
+            return;
+
+        // Create the new file system item
+        var newItem = new FileSystemItem
+        {
+            Name = fileName,
+            FullPath = itemPath,
+            IsDirectory = isDirectory
+        };
+
+        // Try to get file/directory properties, but don't fail if they're not accessible
+        try
+        {
+            newItem.LastModified = isDirectory ? Directory.GetLastWriteTime(itemPath) : File.GetLastWriteTime(itemPath);
+            newItem.Size = isDirectory ? 0 : new FileInfo(itemPath).Length;
+        }
+        catch
+        {
+            // Use default values if file system access fails (e.g., during testing)
+            newItem.LastModified = DateTime.Now;
+            newItem.Size = 0;
+        }
+
+        // If it's a directory, populate its children for the lazy loading
+        if (isDirectory)
+        {
+            try
+            {
+                var dirInfo = new DirectoryInfo(itemPath);
+                var hasChildren = dirInfo.GetDirectories().Any(d => !IsHiddenOrSystem(d.Attributes)) ||
+                                 dirInfo.GetFiles().Any(f => !IsHiddenOrSystem(f.Attributes));
+                
+                if (hasChildren)
+                {
+                    // Add a placeholder child to indicate it has children
+                    newItem.Children.Add(new FileSystemItem { Name = "Placeholder" });
+                }
+            }
+            catch
+            {
+                // Ignore errors when checking for children
+            }
+        }
+
+        var newViewModel = new FileSystemItemViewModel(newItem, false, _fileService);
+
+        // Find the correct position to insert (directories first, then alphabetical)
+        var insertIndex = 0;
+        for (int i = 0; i < parentViewModel.Children.Count; i++)
+        {
+            var existingChild = parentViewModel.Children[i];
+            
+            // Skip the loading placeholder
+            if (existingChild.Name == "Loading...")
+                continue;
+
+            // Directories come before files
+            if (isDirectory && !existingChild.IsDirectory)
+                break;
+            if (!isDirectory && existingChild.IsDirectory)
+            {
+                insertIndex = i + 1;
+                continue;
+            }
+
+            // Within the same type, sort alphabetically
+            if (string.Compare(fileName, existingChild.Name, StringComparison.OrdinalIgnoreCase) < 0)
+                break;
+
+            insertIndex = i + 1;
+        }
+
+        parentViewModel.Children.Insert(insertIndex, newViewModel);
+    }
+
+    private void HandleItemDeleted(FileSystemItemViewModel parentViewModel, string itemPath)
+    {
+        var fileName = Path.GetFileName(itemPath);
+        var itemToRemove = parentViewModel.Children.FirstOrDefault(c => 
+            string.Equals(c.Name, fileName, StringComparison.OrdinalIgnoreCase));
+        
+        if (itemToRemove != null)
+        {
+            parentViewModel.Children.Remove(itemToRemove);
+        }
+    }
+
+    private void HandleItemChanged(string itemPath)
+    {
+        var itemViewModel = FindViewModelByPath(itemPath);
+        if (itemViewModel != null && !itemViewModel.IsDirectory)
+        {
+            // Update last modified time if needed
+            try
+            {
+                var lastModified = File.GetLastWriteTime(itemPath);
+                if (itemViewModel.Item.LastModified != lastModified)
+                {
+                    itemViewModel.Item.LastModified = lastModified;
+                    itemViewModel.Item.Size = new FileInfo(itemPath).Length;
+                    // Trigger property change notifications if needed
+                }
+            }
+            catch
+            {
+                // Ignore errors when updating file info
+            }
+        }
+    }
+
+    private static bool IsHiddenOrSystem(FileAttributes attributes)
+    {
+        return (attributes & (FileAttributes.Hidden | FileAttributes.System)) != 0;
     }
 
 }
