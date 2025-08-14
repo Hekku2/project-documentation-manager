@@ -312,4 +312,62 @@ public class MarkdownCombinationServiceTests
         var ubuntuFeatures = result.First(r => r.FileName == "ubuntu-features.md");
         Assert.That(ubuntuFeatures.Content, Is.EqualTo(" * linux feature\n  * common feature"));
     }
+
+    [Test]
+    public void BuildDocumentation_Should_Log_Source_Documents_Without_Errors()
+    {
+        // Arrange
+        var logger = Substitute.For<ILogger<MarkdownCombinationService>>();
+        var service = new MarkdownCombinationService(logger);
+
+        var templateDocuments = new[]
+        {
+            new MarkdownDocument("template.md", "# Template\n<insert source1.md>\n<insert source2.md>")
+        };
+
+        var sourceDocuments = new[]
+        {
+            new MarkdownDocument("source1.md", "Source 1 content"),
+            new MarkdownDocument("source2.md", "Source 2 content"),
+            new MarkdownDocument("source3.md", "Source 3 content") // This one won't be used
+        };
+
+        // Act & Assert - Should not throw any exceptions
+        Assert.DoesNotThrow(() =>
+        {
+            var result = service.BuildDocumentation(templateDocuments, sourceDocuments);
+            var resultList = result.ToList(); // Force enumeration
+            
+            // Verify the functionality still works correctly
+            Assert.That(resultList, Has.Count.EqualTo(1));
+            Assert.That(resultList[0].Content, Does.Contain("Source 1 content"));
+            Assert.That(resultList[0].Content, Does.Contain("Source 2 content"));
+        });
+    }
+
+    [Test]
+    public void BuildDocumentation_Should_Handle_Empty_Source_Documents_Without_Errors()
+    {
+        // Arrange
+        var logger = Substitute.For<ILogger<MarkdownCombinationService>>();
+        var service = new MarkdownCombinationService(logger);
+
+        var templateDocuments = new[]
+        {
+            new MarkdownDocument("template.md", "# Template with no inserts")
+        };
+
+        var sourceDocuments = new MarkdownDocument[0]; // Empty array
+
+        // Act & Assert - Should not throw any exceptions
+        Assert.DoesNotThrow(() =>
+        {
+            var result = service.BuildDocumentation(templateDocuments, sourceDocuments);
+            var resultList = result.ToList(); // Force enumeration
+            
+            // Verify the functionality still works correctly
+            Assert.That(resultList, Has.Count.EqualTo(1));
+            Assert.That(resultList[0].Content, Is.EqualTo("# Template with no inserts"));
+        });
+    }
 }

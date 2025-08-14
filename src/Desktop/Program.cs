@@ -58,6 +58,11 @@ class Program
                 
                 // Register application services
                 services.AddScoped<Desktop.Services.IFileService, Desktop.Services.FileService>();
+                
+                // Register business services
+                services.AddScoped<Business.Services.IMarkdownCombinationService, Business.Services.MarkdownCombinationService>();
+                services.AddScoped<Business.Services.IMarkdownDocumentFileWriterService, Business.Services.MarkdownDocumentFileWriterService>();
+                services.AddScoped<Business.Services.IMarkdownFileCollectorService, Business.Services.MarkdownFileCollectorService>();
             });
 
     // Avalonia configuration, don't remove; also used by visual designer.

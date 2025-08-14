@@ -15,6 +15,8 @@ using Avalonia.VisualTree;
 using NSubstitute;
 using System;
 using Microsoft.Extensions.DependencyInjection;
+using Business.Services;
+using Business.Models;
 
 namespace Desktop.UITests;
 
@@ -1052,8 +1054,13 @@ public class MainWindowTests
         var fileService = Substitute.For<IFileService>();
         var serviceProvider = Substitute.For<IServiceProvider>();
         
-        // Setup mock service provider to return a BuildConfirmationDialogViewModel
-        var mockDialogViewModel = new BuildConfirmationDialogViewModel(options);
+        // Setup mock services for BuildConfirmationDialogViewModel
+        var mockFileCollector = Substitute.For<IMarkdownFileCollectorService>();
+        var mockCombination = Substitute.For<IMarkdownCombinationService>();
+        var mockFileWriter = Substitute.For<IMarkdownDocumentFileWriterService>();
+        var mockLogger = Substitute.For<ILogger<BuildConfirmationDialogViewModel>>();
+        
+        var mockDialogViewModel = new BuildConfirmationDialogViewModel(options, mockFileCollector, mockCombination, mockFileWriter, mockLogger);
         serviceProvider.GetService(typeof(BuildConfirmationDialogViewModel)).Returns(mockDialogViewModel);
         
         fileService.GetFileStructureAsync().Returns(Task.FromResult<FileSystemItem?>(CreateSimpleTestStructure()));
@@ -1088,9 +1095,12 @@ public class MainWindowTests
             DefaultProjectFolder = "/test/project",
             DefaultOutputFolder = "test-output" 
         });
-        var serviceProvider = Substitute.For<IServiceProvider>();
+        var mockFileCollector = Substitute.For<IMarkdownFileCollectorService>();
+        var mockCombination = Substitute.For<IMarkdownCombinationService>();
+        var mockFileWriter = Substitute.For<IMarkdownDocumentFileWriterService>();
+        var mockLogger = Substitute.For<ILogger<BuildConfirmationDialogViewModel>>();
         
-        var dialogViewModel = new BuildConfirmationDialogViewModel(options);
+        var dialogViewModel = new BuildConfirmationDialogViewModel(options, mockFileCollector, mockCombination, mockFileWriter, mockLogger);
         
         Assert.Multiple(() =>
         {
@@ -1105,16 +1115,19 @@ public class MainWindowTests
     public void BuildConfirmationDialog_Should_Have_Cancel_And_Save_Commands()
     {
         var options = Options.Create(new ApplicationOptions());
-        var serviceProvider = Substitute.For<IServiceProvider>();
+        var mockFileCollector = Substitute.For<IMarkdownFileCollectorService>();
+        var mockCombination = Substitute.For<IMarkdownCombinationService>();
+        var mockFileWriter = Substitute.For<IMarkdownDocumentFileWriterService>();
+        var mockLogger = Substitute.For<ILogger<BuildConfirmationDialogViewModel>>();
         
-        var dialogViewModel = new BuildConfirmationDialogViewModel(options);
+        var dialogViewModel = new BuildConfirmationDialogViewModel(options, mockFileCollector, mockCombination, mockFileWriter, mockLogger);
         
         Assert.Multiple(() =>
         {
             Assert.That(dialogViewModel.CancelCommand, Is.Not.Null, "Cancel command should exist");
             Assert.That(dialogViewModel.SaveCommand, Is.Not.Null, "Save command should exist");
             Assert.That(dialogViewModel.CancelCommand.CanExecute(null), Is.True, "Cancel command should be executable");
-            Assert.That(dialogViewModel.SaveCommand.CanExecute(null), Is.False, "Save command should be disabled as requested");
+            Assert.That(dialogViewModel.SaveCommand.CanExecute(null), Is.True, "Save command should be enabled when not building");
         });
     }
 
@@ -1122,9 +1135,12 @@ public class MainWindowTests
     public void BuildConfirmationDialog_Should_Trigger_DialogClosed_Event_On_Cancel()
     {
         var options = Options.Create(new ApplicationOptions());
-        var serviceProvider = Substitute.For<IServiceProvider>();
+        var mockFileCollector = Substitute.For<IMarkdownFileCollectorService>();
+        var mockCombination = Substitute.For<IMarkdownCombinationService>();
+        var mockFileWriter = Substitute.For<IMarkdownDocumentFileWriterService>();
+        var mockLogger = Substitute.For<ILogger<BuildConfirmationDialogViewModel>>();
         
-        var dialogViewModel = new BuildConfirmationDialogViewModel(options);
+        var dialogViewModel = new BuildConfirmationDialogViewModel(options, mockFileCollector, mockCombination, mockFileWriter, mockLogger);
         
         // Track if dialog closed event was triggered
         bool dialogClosed = false;
@@ -1134,5 +1150,195 @@ public class MainWindowTests
         dialogViewModel.CancelCommand.Execute(null);
         
         Assert.That(dialogClosed, Is.True, "DialogClosed event should be triggered when Cancel command is executed");
+    }
+
+    [AvaloniaTest]
+    public async Task BuildConfirmationDialog_Should_Execute_Build_Process_When_Save_Is_Called()
+    {
+        // Arrange
+        var options = Options.Create(new ApplicationOptions
+        {
+            DefaultProjectFolder = "/test/project",
+            DefaultOutputFolder = "output"
+        });
+
+        var mockFileCollector = Substitute.For<IMarkdownFileCollectorService>();
+        var mockCombination = Substitute.For<IMarkdownCombinationService>();
+        var mockFileWriter = Substitute.For<IMarkdownDocumentFileWriterService>();
+        var mockLogger = Substitute.For<ILogger<BuildConfirmationDialogViewModel>>();
+
+        // Setup mock return values
+        var templateFiles = new[]
+        {
+            new MarkdownDocument("template1.mdext", "# Template 1\n<insert source1.mdsrc>"),
+            new MarkdownDocument("template2.mdext", "# Template 2")
+        };
+        
+        var sourceFiles = new[]
+        {
+            new MarkdownDocument("source1.mdsrc", "Source 1 content")
+        };
+
+        var processedDocuments = new[]
+        {
+            new MarkdownDocument("template1.md", "# Template 1\nSource 1 content"),
+            new MarkdownDocument("template2.md", "# Template 2")
+        };
+
+        mockFileCollector.CollectAllMarkdownFilesAsync("/test/project")
+            .Returns((templateFiles, sourceFiles));
+        mockCombination.BuildDocumentation(templateFiles, sourceFiles)
+            .Returns(processedDocuments);
+        mockFileWriter.WriteDocumentsToFolderAsync(processedDocuments, "/test/project/output")
+            .Returns(Task.CompletedTask);
+
+        var dialogViewModel = new BuildConfirmationDialogViewModel(options, mockFileCollector, mockCombination, mockFileWriter, mockLogger);
+
+        // Act
+        dialogViewModel.SaveCommand.Execute(null);
+        
+        // Wait for async build to complete
+        await Task.Delay(500);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(dialogViewModel.CanBuild, Is.True, "Should be able to build again after completion");
+            Assert.That(dialogViewModel.BuildStatus, Does.Contain("completed"), "Should show completion status");
+
+            // Verify services were called correctly
+            mockFileCollector.Received(1).CollectAllMarkdownFilesAsync("/test/project");
+            mockCombination.Received(1).BuildDocumentation(templateFiles, sourceFiles);
+            mockFileWriter.Received(1).WriteDocumentsToFolderAsync(processedDocuments, "/test/project/output");
+        });
+    }
+
+    [AvaloniaTest]
+    public async Task BuildConfirmationDialog_Should_Handle_Build_Errors_Gracefully()
+    {
+        // Arrange
+        var options = Options.Create(new ApplicationOptions
+        {
+            DefaultProjectFolder = "/test/project",
+            DefaultOutputFolder = "output"
+        });
+
+        var mockFileCollector = Substitute.For<IMarkdownFileCollectorService>();
+        var mockCombination = Substitute.For<IMarkdownCombinationService>();
+        var mockFileWriter = Substitute.For<IMarkdownDocumentFileWriterService>();
+        var mockLogger = Substitute.For<ILogger<BuildConfirmationDialogViewModel>>();
+
+        // Setup mock to throw exception
+        mockFileCollector.CollectAllMarkdownFilesAsync("/test/project")
+            .Returns(Task.FromException<(IEnumerable<MarkdownDocument>, IEnumerable<MarkdownDocument>)>(
+                new DirectoryNotFoundException("Test directory not found")));
+
+        var dialogViewModel = new BuildConfirmationDialogViewModel(options, mockFileCollector, mockCombination, mockFileWriter, mockLogger);
+
+        // Act
+        dialogViewModel.SaveCommand.Execute(null);
+        
+        // Wait for async build to complete
+        await Task.Delay(500);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(dialogViewModel.CanBuild, Is.True, "Should be able to build again after error");
+            Assert.That(dialogViewModel.BuildStatus, Does.Contain("failed"), "Should show failure status");
+            Assert.That(dialogViewModel.BuildStatus, Does.Contain("Test directory not found"), "Should show error message");
+
+            // Verify only file collector was called
+            mockFileCollector.Received(1).CollectAllMarkdownFilesAsync("/test/project");
+            mockCombination.DidNotReceive().BuildDocumentation(Arg.Any<IEnumerable<MarkdownDocument>>(), Arg.Any<IEnumerable<MarkdownDocument>>());
+            mockFileWriter.DidNotReceive().WriteDocumentsToFolderAsync(Arg.Any<IEnumerable<MarkdownDocument>>(), Arg.Any<string>());
+        });
+    }
+
+    [AvaloniaTest]
+    public void BuildConfirmationDialog_Should_Disable_Build_During_Build_Process()
+    {
+        // Arrange
+        var options = Options.Create(new ApplicationOptions
+        {
+            DefaultProjectFolder = "/test/project",
+            DefaultOutputFolder = "output"
+        });
+
+        var mockFileCollector = Substitute.For<IMarkdownFileCollectorService>();
+        var mockCombination = Substitute.For<IMarkdownCombinationService>();
+        var mockFileWriter = Substitute.For<IMarkdownDocumentFileWriterService>();
+        var mockLogger = Substitute.For<ILogger<BuildConfirmationDialogViewModel>>();
+
+        var dialogViewModel = new BuildConfirmationDialogViewModel(options, mockFileCollector, mockCombination, mockFileWriter, mockLogger);
+
+        // Act
+        dialogViewModel.IsBuildInProgress = true;
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(dialogViewModel.CanBuild, Is.False, "Should not be able to build when build is in progress");
+            Assert.That(dialogViewModel.SaveCommand.CanExecute(null), Is.False, "Save command should be disabled during build");
+        });
+    }
+
+    [AvaloniaTest]
+    public void BuildConfirmationDialog_Should_Update_Build_Status_Property()
+    {
+        // Arrange
+        var options = Options.Create(new ApplicationOptions());
+        var mockFileCollector = Substitute.For<IMarkdownFileCollectorService>();
+        var mockCombination = Substitute.For<IMarkdownCombinationService>();
+        var mockFileWriter = Substitute.For<IMarkdownDocumentFileWriterService>();
+        var mockLogger = Substitute.For<ILogger<BuildConfirmationDialogViewModel>>();
+
+        var dialogViewModel = new BuildConfirmationDialogViewModel(options, mockFileCollector, mockCombination, mockFileWriter, mockLogger);
+
+        // Track property changes
+        string? capturedStatus = null;
+        dialogViewModel.PropertyChanged += (sender, args) =>
+        {
+            if (args.PropertyName == nameof(dialogViewModel.BuildStatus))
+            {
+                capturedStatus = dialogViewModel.BuildStatus;
+            }
+        };
+
+        // Act
+        dialogViewModel.BuildStatus = "Test status message";
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(dialogViewModel.BuildStatus, Is.EqualTo("Test status message"), "Build status should be updated");
+            Assert.That(capturedStatus, Is.EqualTo("Test status message"), "PropertyChanged should be raised for BuildStatus");
+        });
+    }
+
+    [AvaloniaTest]
+    public void BuildConfirmationDialog_Save_Button_Should_Be_Enabled_When_Build_Not_In_Progress()
+    {
+        // Arrange
+        var options = Options.Create(new ApplicationOptions
+        {
+            DefaultProjectFolder = "/test/project",
+            DefaultOutputFolder = "output"
+        });
+
+        var mockFileCollector = Substitute.For<IMarkdownFileCollectorService>();
+        var mockCombination = Substitute.For<IMarkdownCombinationService>();
+        var mockFileWriter = Substitute.For<IMarkdownDocumentFileWriterService>();
+        var mockLogger = Substitute.For<ILogger<BuildConfirmationDialogViewModel>>();
+
+        var dialogViewModel = new BuildConfirmationDialogViewModel(options, mockFileCollector, mockCombination, mockFileWriter, mockLogger);
+
+        // Act & Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(dialogViewModel.IsBuildInProgress, Is.False, "Build should not be in progress initially");
+            Assert.That(dialogViewModel.CanBuild, Is.True, "Should be able to build when not in progress");
+            Assert.That(dialogViewModel.SaveCommand.CanExecute(null), Is.True, "Save command should be enabled when build is not in progress");
+        });
     }
 }

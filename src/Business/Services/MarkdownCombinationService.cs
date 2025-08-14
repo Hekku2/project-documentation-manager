@@ -30,6 +30,17 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
         logger.LogInformation("Building documentation for {TemplateCount} templates using {SourceCount} source documents", 
             templateList.Count, sourceDictionary.Count);
 
+        // Log all source documents for debugging
+        if (sourceDictionary.Count > 0)
+        {
+            logger.LogInformation("Available source documents: {SourceDocuments}", 
+                string.Join(", ", sourceDictionary.Keys));
+        }
+        else
+        {
+            logger.LogDebug("No source documents provided");
+        }
+
         var results = new List<MarkdownDocument>();
 
         foreach (var template in templateList)

@@ -59,8 +59,7 @@
             <Button Content="Save" 
                     Command="{Binding SaveCommand}" 
                     Width="80" 
-                    Height="32" 
-                    IsEnabled="False" />
+                    Height="32" />
         </StackPanel>
     </Grid>
 </Window>
