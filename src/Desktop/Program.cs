@@ -50,6 +50,7 @@ class Program
                 
                 // Register ViewModels
                 services.AddScoped<Desktop.ViewModels.MainWindowViewModel>();
+                services.AddScoped<Desktop.ViewModels.BuildConfirmationDialogViewModel>();
                 
                 // Register services here
                 services.AddSingleton<Desktop.Views.MainWindow>();

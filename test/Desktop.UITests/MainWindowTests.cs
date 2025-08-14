@@ -13,6 +13,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Avalonia.VisualTree;
 using NSubstitute;
+using System;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Desktop.UITests;
 
@@ -36,13 +38,14 @@ public class MainWindowTests
         var vmLogger = new LoggerFactory().CreateLogger<MainWindowViewModel>();
         var options = Options.Create(new ApplicationOptions());
         var fileService = Substitute.For<IFileService>();
+        var serviceProvider = Substitute.For<IServiceProvider>();
         
         fileService.GetFileStructureAsync().Returns(Task.FromResult<FileSystemItem?>(CreateSimpleTestStructure()));
         fileService.GetFileStructureAsync(Arg.Any<string>()).Returns(Task.FromResult<FileSystemItem?>(CreateSimpleTestStructure()));
         fileService.IsValidFolder(Arg.Any<string>()).Returns(true);
         fileService.ReadFileContentAsync(Arg.Any<string>()).Returns("Mock file content");
         
-        var viewModel = new MainWindowViewModel(vmLogger, options, fileService);
+        var viewModel = new MainWindowViewModel(vmLogger, options, fileService, serviceProvider);
         return new MainWindow(viewModel);
     }
 
@@ -149,13 +152,14 @@ public class MainWindowTests
         var vmLogger = new LoggerFactory().CreateLogger<MainWindowViewModel>();
         var options = Options.Create(new ApplicationOptions());
         var fileService = Substitute.For<IFileService>();
+        var serviceProvider = Substitute.For<IServiceProvider>();
         
         fileService.GetFileStructureAsync().Returns(Task.FromResult<FileSystemItem?>(CreateNestedTestStructure()));
         fileService.GetFileStructureAsync(Arg.Any<string>()).Returns(Task.FromResult<FileSystemItem?>(CreateNestedTestStructure()));
         fileService.IsValidFolder(Arg.Any<string>()).Returns(true);
         fileService.ReadFileContentAsync(Arg.Any<string>()).Returns("Mock file content");
         
-        var viewModel = new MainWindowViewModel(vmLogger, options, fileService);
+        var viewModel = new MainWindowViewModel(vmLogger, options, fileService, serviceProvider);
         return new MainWindow(viewModel);
     }
 
@@ -1005,7 +1009,7 @@ public class MainWindowTests
     }
 
     [AvaloniaTest]
-    public void MainWindow_Should_Have_BuildDocumentation_Command_That_Is_Disabled()
+    public void MainWindow_Should_Have_BuildDocumentation_Command_That_Is_Enabled()
     {
         var window = CreateMainWindow();
         var viewModel = window.DataContext as MainWindowViewModel;
@@ -1013,9 +1017,9 @@ public class MainWindowTests
         Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
         Assert.That(viewModel!.BuildDocumentationCommand, Is.Not.Null, "BuildDocumentationCommand should exist");
         
-        // Test that the command exists but is disabled as requested
+        // Test that the command exists and is enabled
         bool canExecute = viewModel.BuildDocumentationCommand.CanExecute(null);
-        Assert.That(canExecute, Is.False, "BuildDocumentationCommand should be disabled");
+        Assert.That(canExecute, Is.True, "BuildDocumentationCommand should be enabled");
     }
 
     [AvaloniaTest]
@@ -1035,8 +1039,100 @@ public class MainWindowTests
         // Test that the BuildDocumentationCommand exists and is bound to the Build menu item
         Assert.That(viewModel!.BuildDocumentationCommand, Is.Not.Null, "BuildDocumentationCommand should be available for menu binding");
         
-        // Test that the command is disabled as requested
+        // Test that the command is enabled
         bool canExecute = viewModel.BuildDocumentationCommand.CanExecute(null);
-        Assert.That(canExecute, Is.False, "BuildDocumentationCommand should be disabled");
+        Assert.That(canExecute, Is.True, "BuildDocumentationCommand should be enabled");
+    }
+
+    [AvaloniaTest]
+    public void MainWindow_Should_Trigger_BuildConfirmationDialog_Event_When_Build_Command_Executed()
+    {
+        var vmLogger = new LoggerFactory().CreateLogger<MainWindowViewModel>();
+        var options = Options.Create(new ApplicationOptions());
+        var fileService = Substitute.For<IFileService>();
+        var serviceProvider = Substitute.For<IServiceProvider>();
+        
+        // Setup mock service provider to return a BuildConfirmationDialogViewModel
+        var mockDialogViewModel = new BuildConfirmationDialogViewModel(options);
+        serviceProvider.GetService(typeof(BuildConfirmationDialogViewModel)).Returns(mockDialogViewModel);
+        
+        fileService.GetFileStructureAsync().Returns(Task.FromResult<FileSystemItem?>(CreateSimpleTestStructure()));
+        fileService.GetFileStructureAsync(Arg.Any<string>()).Returns(Task.FromResult<FileSystemItem?>(CreateSimpleTestStructure()));
+        fileService.IsValidFolder(Arg.Any<string>()).Returns(true);
+        fileService.ReadFileContentAsync(Arg.Any<string>()).Returns("Mock file content");
+        
+        var viewModel = new MainWindowViewModel(vmLogger, options, fileService, serviceProvider);
+        
+        Assert.That(viewModel.BuildDocumentationCommand, Is.Not.Null, "BuildDocumentationCommand should exist");
+        
+        // Track if dialog event was triggered
+        BuildConfirmationDialogViewModel? dialogViewModel = null;
+        viewModel.ShowBuildConfirmationDialog += (sender, e) => dialogViewModel = e;
+        
+        // Execute the build command
+        viewModel.BuildDocumentationCommand.Execute(null);
+        
+        Assert.Multiple(() =>
+        {
+            Assert.That(dialogViewModel, Is.Not.Null, "ShowBuildConfirmationDialog event should be triggered");
+            Assert.That(dialogViewModel!.OutputLocation, Is.Not.Null.And.Not.Empty, "Dialog should have output location");
+            Assert.That(dialogViewModel.OutputLocation, Does.EndWith("output"), "Output location should end with 'output' folder");
+        });
+    }
+
+    [AvaloniaTest]
+    public void BuildConfirmationDialog_Should_Show_Combined_Project_And_Output_Path()
+    {
+        var options = Options.Create(new ApplicationOptions 
+        { 
+            DefaultProjectFolder = "/test/project",
+            DefaultOutputFolder = "test-output" 
+        });
+        var serviceProvider = Substitute.For<IServiceProvider>();
+        
+        var dialogViewModel = new BuildConfirmationDialogViewModel(options);
+        
+        Assert.Multiple(() =>
+        {
+            Assert.That(dialogViewModel.OutputLocation, Is.Not.Null.And.Not.Empty, "Output location should be set");
+            Assert.That(dialogViewModel.OutputLocation, Is.EqualTo("/test/project/test-output"), "Should combine project folder and output folder");
+            Assert.That(dialogViewModel.OutputLocation, Does.StartWith("/test/project"), "Should start with project folder");
+            Assert.That(dialogViewModel.OutputLocation, Does.EndWith("test-output"), "Should end with output folder");
+        });
+    }
+
+    [AvaloniaTest]
+    public void BuildConfirmationDialog_Should_Have_Cancel_And_Save_Commands()
+    {
+        var options = Options.Create(new ApplicationOptions());
+        var serviceProvider = Substitute.For<IServiceProvider>();
+        
+        var dialogViewModel = new BuildConfirmationDialogViewModel(options);
+        
+        Assert.Multiple(() =>
+        {
+            Assert.That(dialogViewModel.CancelCommand, Is.Not.Null, "Cancel command should exist");
+            Assert.That(dialogViewModel.SaveCommand, Is.Not.Null, "Save command should exist");
+            Assert.That(dialogViewModel.CancelCommand.CanExecute(null), Is.True, "Cancel command should be executable");
+            Assert.That(dialogViewModel.SaveCommand.CanExecute(null), Is.False, "Save command should be disabled as requested");
+        });
+    }
+
+    [AvaloniaTest]
+    public void BuildConfirmationDialog_Should_Trigger_DialogClosed_Event_On_Cancel()
+    {
+        var options = Options.Create(new ApplicationOptions());
+        var serviceProvider = Substitute.For<IServiceProvider>();
+        
+        var dialogViewModel = new BuildConfirmationDialogViewModel(options);
+        
+        // Track if dialog closed event was triggered
+        bool dialogClosed = false;
+        dialogViewModel.DialogClosed += (sender, e) => dialogClosed = true;
+        
+        // Execute the cancel command
+        dialogViewModel.CancelCommand.Execute(null);
+        
+        Assert.That(dialogClosed, Is.True, "DialogClosed event should be triggered when Cancel command is executed");
     }
 }

@@ -8,6 +8,7 @@ using Desktop.Services;
 using System.Collections.ObjectModel;
 using System.Linq;
 using Desktop.Models;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Desktop.ViewModels;
 
@@ -16,6 +17,7 @@ public class MainWindowViewModel : ViewModelBase
     private readonly ILogger<MainWindowViewModel> _logger;
     private readonly ApplicationOptions _applicationOptions;
     private readonly IFileService _fileService;
+    private readonly IServiceProvider _serviceProvider;
     private bool _isLoading;
     private FileSystemItemViewModel? _rootItem;
     private EditorTabViewModel? _activeTab;
@@ -23,11 +25,13 @@ public class MainWindowViewModel : ViewModelBase
     public MainWindowViewModel(
         ILogger<MainWindowViewModel> logger, 
         IOptions<ApplicationOptions> applicationOptions, 
-        IFileService fileService)
+        IFileService fileService,
+        IServiceProvider serviceProvider)
     {
         _logger = logger;
         _applicationOptions = applicationOptions.Value;
         _fileService = fileService;
+        _serviceProvider = serviceProvider;
         FileSystemItems = new ObservableCollection<FileSystemItemViewModel>();
         EditorTabs = new ObservableCollection<EditorTabViewModel>();
         ExitCommand = new RelayCommand(RequestApplicationExit);
@@ -77,6 +81,7 @@ public class MainWindowViewModel : ViewModelBase
     public ICommand BuildDocumentationCommand { get; }
     
     public event EventHandler? ExitRequested;
+    public event EventHandler<BuildConfirmationDialogViewModel>? ShowBuildConfirmationDialog;
 
     private async Task LoadFileStructureAsync()
     {
@@ -255,12 +260,13 @@ public class MainWindowViewModel : ViewModelBase
     private void BuildDocumentation()
     {
         _logger.LogInformation("Build documentation requested");
-        // TODO: Implement build documentation functionality
+        
+        var dialogViewModel = _serviceProvider.GetRequiredService<BuildConfirmationDialogViewModel>();
+        ShowBuildConfirmationDialog?.Invoke(this, dialogViewModel);
     }
 
     private bool CanBuildDocumentation()
     {
-        // For now, always disabled as requested
-        return false;
+        return true;
     }
 }
