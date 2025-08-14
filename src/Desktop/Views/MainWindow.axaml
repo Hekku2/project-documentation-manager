@@ -158,7 +158,7 @@
                                 CaretBrush="#FFFFFF"
                                 SelectionBrush="#264F78"
                                 SelectionForegroundBrush="#FFFFFF"
-                                FontFamily="Consolas, 'Courier New', monospace"
+                                FontFamily="monospace"
                                 FontSize="14"
                                 AcceptsReturn="True"
                                 AcceptsTab="True"
