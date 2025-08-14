@@ -15,7 +15,7 @@ public class MarkdownFileCollectorService(ILogger<MarkdownFileCollectorService> 
     {
         ValidateDirectoryPath(directoryPath);
         
-        logger.LogInformation("Collecting template files (.mdext) from directory: {DirectoryPath}", directoryPath);
+        logger.LogDebug("Collecting template files (.mdext) from directory: {DirectoryPath}", directoryPath);
         
         return await CollectFilesByExtensionAsync(directoryPath, TemplateFileExtension);
     }
@@ -24,7 +24,7 @@ public class MarkdownFileCollectorService(ILogger<MarkdownFileCollectorService> 
     {
         ValidateDirectoryPath(directoryPath);
         
-        logger.LogInformation("Collecting source files (.mdsrc) from directory: {DirectoryPath}", directoryPath);
+        logger.LogDebug("Collecting source files (.mdsrc) from directory: {DirectoryPath}", directoryPath);
         
         return await CollectFilesByExtensionAsync(directoryPath, SourceFileExtension);
     }
@@ -33,7 +33,7 @@ public class MarkdownFileCollectorService(ILogger<MarkdownFileCollectorService> 
     {
         ValidateDirectoryPath(directoryPath);
         
-        logger.LogInformation("Collecting all markdown files (.mdext and .mdsrc) from directory: {DirectoryPath}", directoryPath);
+        logger.LogDebug("Collecting all markdown files (.mdext and .mdsrc) from directory: {DirectoryPath}", directoryPath);
         
         var templateFilesTask = CollectTemplateFilesAsync(directoryPath);
         var sourceFilesTask = CollectSourceFilesAsync(directoryPath);

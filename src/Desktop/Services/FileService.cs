@@ -40,7 +40,7 @@ public class FileService(ILogger<FileService> logger, IOptions<ApplicationOption
 
         try
         {
-            logger.LogInformation("Building file structure for: {FolderPath}", folderPath);
+            logger.LogDebug("Building file structure for: {FolderPath}", folderPath);
             return await Task.Run(() => BuildFileStructure(folderPath));
         }
         catch (Exception ex)

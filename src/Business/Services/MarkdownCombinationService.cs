@@ -33,7 +33,7 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
         // Log all source documents for debugging
         if (sourceDictionary.Count > 0)
         {
-            logger.LogInformation("Available source documents: {SourceDocuments}", 
+            logger.LogDebug("Available source documents: {SourceDocuments}", 
                 string.Join(", ", sourceDictionary.Keys));
         }
         else

@@ -145,7 +145,7 @@ public class MainWindowViewModel : ViewModelBase
 
         try
         {
-            _logger.LogInformation("Opening file: {FilePath}", filePath);
+            _logger.LogDebug("Opening file: {FilePath}", filePath);
             
             var content = await _fileService.ReadFileContentAsync(filePath);
             if (content == null)
@@ -171,7 +171,7 @@ public class MainWindowViewModel : ViewModelBase
             EditorTabs.Add(tabViewModel);
             SetActiveTab(tabViewModel);
             
-            _logger.LogInformation("File opened successfully: {FilePath}", filePath);
+            _logger.LogDebug("File opened successfully: {FilePath}", filePath);
         }
         catch (Exception ex)
         {
