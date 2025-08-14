@@ -5,6 +5,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
+using Desktop.Logging;
 
 namespace Desktop;
 
@@ -54,7 +55,15 @@ class Program
                 
                 // Register services here
                 services.AddSingleton<Desktop.Views.MainWindow>();
-                services.AddLogging(builder => builder.AddConsole());
+                
+                // Register dynamic logging provider
+                services.AddSingleton<IDynamicLoggerProvider, DynamicLoggerProvider>();
+                services.AddLogging(builder => 
+                {
+                    builder.AddConsole();
+                    builder.Services.AddSingleton<ILoggerProvider>(provider => 
+                        provider.GetRequiredService<IDynamicLoggerProvider>());
+                });
                 
                 // Register application services
                 services.AddSingleton<Desktop.Services.IFileService, Desktop.Services.FileService>();

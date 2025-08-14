@@ -102,6 +102,8 @@
                         <RowDefinition Height="35" />
                         <!-- Editor Content -->
                         <RowDefinition Height="*" />
+                        <!-- Log Output -->
+                        <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
                     
                     <!-- Tab Bar -->
@@ -182,6 +184,68 @@
                             </TextBox.Styles>
                         </TextBox>
                     </ScrollViewer>
+                    
+                    <!-- Log Output -->
+                    <Border Grid.Row="2" Background="#0E0E0E" BorderBrush="#3E3E42" BorderThickness="0,1,0,0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <!-- Log Tab Bar -->
+                                <RowDefinition Height="35" />
+                                <!-- Log Content -->
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            
+                            <!-- Log Tab Bar -->
+                            <Border Grid.Row="0" Background="#2D2D30" BorderBrush="#3E3E42" BorderThickness="0,0,0,1">
+                                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                                    <StackPanel Orientation="Horizontal" Margin="5,0">
+                                        <!-- Default Log Tab -->
+                                        <Border Name="LogTabBorder"
+                                                Background="#1E1E1E"
+                                                BorderBrush="#3E3E42"
+                                                BorderThickness="0,0,1,0" 
+                                                Margin="0,0,0,0">
+                                            <StackPanel Orientation="Horizontal" Margin="15,8">
+                                                <TextBlock Name="LogTabTitle"
+                                                           Text="Log Output" 
+                                                           Foreground="#CCCCCC" 
+                                                           VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </Border>
+                            
+                            <!-- Log Content -->
+                            <ScrollViewer Grid.Row="1" Name="LogScrollViewer">
+                                <TextBox Name="LogOutput" 
+                                        Text=""
+                                        Background="#0E0E0E" 
+                                        Foreground="#CCCCCC"
+                                        FontFamily="monospace"
+                                        FontSize="12"
+                                        IsReadOnly="True"
+                                        AcceptsReturn="True"
+                                        TextWrapping="Wrap"
+                                        BorderThickness="0"
+                                        Margin="20">
+                                    <TextBox.Styles>
+                                        <!-- Remove all highlighting for read-only -->
+                                        <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
+                                            <Setter Property="Background" Value="#0E0E0E" />
+                                            <Setter Property="BorderBrush" Value="Transparent" />
+                                            <Setter Property="BorderThickness" Value="0" />
+                                        </Style>
+                                        <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+                                            <Setter Property="Background" Value="#0E0E0E" />
+                                            <Setter Property="BorderBrush" Value="Transparent" />
+                                            <Setter Property="BorderThickness" Value="0" />
+                                        </Style>
+                                    </TextBox.Styles>
+                                </TextBox>
+                            </ScrollViewer>
+                        </Grid>
+                    </Border>
                 </Grid>
             </Border>
         </Grid>
