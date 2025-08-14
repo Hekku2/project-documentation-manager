@@ -155,7 +155,7 @@ public class MarkdownFileCollectorServiceTests
             
             var fileNames = templateFiles.Select(t => t.FileName).ToList();
             Assert.That(fileNames, Contains.Item("template1.mdext"), "Should contain root level file");
-            Assert.That(fileNames, Contains.Item("template2.mdext"), "Should contain subdirectory file");
+            Assert.That(fileNames, Contains.Item("subdirectory/template2.mdext"), "Should contain subdirectory file with relative path");
         });
     }
 
@@ -212,5 +212,42 @@ public class MarkdownFileCollectorServiceTests
 
         // Assert - Should still collect the file, but with error handling
         Assert.That(templateFiles.Count, Is.EqualTo(1), "Should still collect files even if read errors occur");
+    }
+
+    [Test]
+    public async Task CollectSourceFilesAsync_Should_Preserve_Relative_Directory_Paths()
+    {
+        // Arrange
+        var level1Dir = Path.Combine(_testDirectory, "level1");
+        var level2Dir = Path.Combine(level1Dir, "level2");
+        Directory.CreateDirectory(level2Dir);
+
+        var rootFile = Path.Combine(_testDirectory, "root.mdsrc");
+        var level1File = Path.Combine(level1Dir, "level1.mdsrc");
+        var level2File = Path.Combine(level2Dir, "level2.mdsrc");
+
+        await File.WriteAllTextAsync(rootFile, "Root content");
+        await File.WriteAllTextAsync(level1File, "Level 1 content");
+        await File.WriteAllTextAsync(level2File, "Level 2 content");
+
+        // Act
+        var result = await _service.CollectSourceFilesAsync(_testDirectory);
+        var sourceFiles = result.ToList();
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(sourceFiles.Count, Is.EqualTo(3), "Should collect all source files");
+
+            var fileNames = sourceFiles.Select(s => s.FileName).OrderBy(name => name).ToList();
+            
+            Assert.That(fileNames[0], Is.EqualTo("level1/level1.mdsrc"), "Should preserve level1 relative path");
+            Assert.That(fileNames[1], Is.EqualTo("level1/level2/level2.mdsrc"), "Should preserve level2 relative path");
+            Assert.That(fileNames[2], Is.EqualTo("root.mdsrc"), "Should have simple name for root level file");
+
+            // Verify content is still correct
+            var level2Source = sourceFiles.FirstOrDefault(s => s.FileName == "level1/level2/level2.mdsrc");
+            Assert.That(level2Source?.Content, Is.EqualTo("Level 2 content"), "Should preserve content with relative paths");
+        });
     }
 }
