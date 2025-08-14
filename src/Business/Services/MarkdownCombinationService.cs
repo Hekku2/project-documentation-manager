@@ -50,7 +50,8 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
                 logger.LogDebug("Processing template: {TemplateFileName}", template.FileName);
                 
                 var processedContent = ProcessTemplate(template.Content, sourceDictionary, template.FileName);
-                var resultDocument = new MarkdownDocument(template.FileName, processedContent);
+                var outputFileName = Path.ChangeExtension(template.FileName, ".md");
+                var resultDocument = new MarkdownDocument(outputFileName, processedContent);
                 
                 results.Add(resultDocument);
                 
@@ -59,8 +60,9 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error processing template: {TemplateFileName}", template.FileName);
-                // Add the template with original content on error
-                results.Add(new MarkdownDocument(template.FileName, template.Content));
+                // Add the template with original content on error, but with .md extension
+                var outputFileName = Path.ChangeExtension(template.FileName, ".md");
+                results.Add(new MarkdownDocument(outputFileName, template.Content));
             }
         }
 

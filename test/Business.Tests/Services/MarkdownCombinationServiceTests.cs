@@ -370,4 +370,68 @@ public class MarkdownCombinationServiceTests
             Assert.That(resultList[0].Content, Is.EqualTo("# Template with no inserts"));
         });
     }
+
+    [Test]
+    public void BuildDocumentation_Should_Change_Mdext_Extension_To_Md()
+    {
+        // Arrange
+        var logger = Substitute.For<ILogger<MarkdownCombinationService>>();
+        var service = new MarkdownCombinationService(logger);
+
+        var templateDocuments = new[]
+        {
+            new MarkdownDocument("template1.mdext", "# Template 1"),
+            new MarkdownDocument("subfolder/template2.mdext", "# Template 2\n<insert source.mdsrc>")
+        };
+
+        var sourceDocuments = new[]
+        {
+            new MarkdownDocument("source.mdsrc", "Source content")
+        };
+
+        // Act
+        var result = service.BuildDocumentation(templateDocuments, sourceDocuments);
+        var resultList = result.ToList();
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(resultList.Count, Is.EqualTo(2), "Should process both templates");
+            
+            // Verify file extensions are changed to .md
+            Assert.That(resultList[0].FileName, Is.EqualTo("template1.md"), "First template should have .md extension");
+            Assert.That(resultList[1].FileName, Is.EqualTo("subfolder/template2.md"), "Second template should have .md extension with preserved path");
+            
+            // Verify content is processed correctly
+            Assert.That(resultList[0].Content, Is.EqualTo("# Template 1"), "First template content should be unchanged");
+            Assert.That(resultList[1].Content, Is.EqualTo("# Template 2\nSource content"), "Second template should have processed content");
+        });
+    }
+
+    [Test]
+    public void BuildDocumentation_Should_Change_Extension_To_Md_Even_On_Processing_Error()
+    {
+        // Arrange
+        var logger = Substitute.For<ILogger<MarkdownCombinationService>>();
+        var service = new MarkdownCombinationService(logger);
+
+        var templateDocuments = new[]
+        {
+            new MarkdownDocument("error-template.mdext", "# Template\n<insert missing.mdsrc>")
+        };
+
+        var sourceDocuments = new MarkdownDocument[0]; // Empty - will cause missing source
+
+        // Act
+        var result = service.BuildDocumentation(templateDocuments, sourceDocuments);
+        var resultList = result.ToList();
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(resultList.Count, Is.EqualTo(1), "Should still process template despite missing source");
+            Assert.That(resultList[0].FileName, Is.EqualTo("error-template.md"), "Should change extension to .md even when processing encounters missing sources");
+            Assert.That(resultList[0].Content, Does.Contain("<!-- Missing source: missing.mdsrc -->"), "Should contain missing source comment");
+        });
+    }
 }
