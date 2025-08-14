@@ -184,8 +184,7 @@ public class FileService(ILogger<FileService> logger, IOptions<ApplicationOption
 
     public void StartFileSystemMonitoring()
     {
-        if (_disposed)
-            throw new ObjectDisposedException(nameof(FileService));
+        ObjectDisposedException.ThrowIf(_disposed, this);
 
         if (IsMonitoringFileSystem)
         {
@@ -263,7 +262,7 @@ public class FileService(ILogger<FileService> logger, IOptions<ApplicationOption
             IsDirectory = isDirectory
         };
 
-        logger.LogInformation("File system change detected: {ChangeType} {Path} (IsDirectory: {IsDirectory})", 
+        logger.LogDebug("File system change detected: {ChangeType} {Path} (IsDirectory: {IsDirectory})", 
             changeType, e.FullPath, isDirectory);
 
         FileSystemChanged?.Invoke(this, args);
@@ -284,13 +283,13 @@ public class FileService(ILogger<FileService> logger, IOptions<ApplicationOption
             IsDirectory = isDirectory
         };
 
-        logger.LogInformation("File system rename detected: {OldPath} -> {NewPath} (IsDirectory: {IsDirectory})", 
+        logger.LogDebug("File system rename detected: {OldPath} -> {NewPath} (IsDirectory: {IsDirectory})", 
             e.OldFullPath, e.FullPath, isDirectory);
 
         FileSystemChanged?.Invoke(this, args);
     }
 
-    private bool IsHiddenOrSystemPath(string path)
+    private static bool IsHiddenOrSystemPath(string path)
     {
         try
         {
