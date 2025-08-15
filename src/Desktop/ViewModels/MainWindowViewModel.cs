@@ -9,6 +9,8 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using Desktop.Models;
 using Microsoft.Extensions.DependencyInjection;
+using Business.Services;
+using Business.Models;
 
 namespace Desktop.ViewModels;
 
@@ -18,25 +20,33 @@ public class MainWindowViewModel : ViewModelBase
     private readonly ApplicationOptions _applicationOptions;
     private readonly IFileService _fileService;
     private readonly IServiceProvider _serviceProvider;
+    private readonly IMarkdownCombinationService _markdownCombinationService;
+    private readonly IMarkdownFileCollectorService _markdownFileCollectorService;
     private bool _isLoading;
     private FileSystemItemViewModel? _rootItem;
     private EditorTabViewModel? _activeTab;
     private bool _isLogOutputVisible = true;
+    private ValidationResult? _currentValidationResult;
 
     public MainWindowViewModel(
         ILogger<MainWindowViewModel> logger, 
         IOptions<ApplicationOptions> applicationOptions, 
         IFileService fileService,
-        IServiceProvider serviceProvider)
+        IServiceProvider serviceProvider,
+        IMarkdownCombinationService markdownCombinationService,
+        IMarkdownFileCollectorService markdownFileCollectorService)
     {
         _logger = logger;
         _applicationOptions = applicationOptions.Value;
         _fileService = fileService;
         _serviceProvider = serviceProvider;
+        _markdownCombinationService = markdownCombinationService;
+        _markdownFileCollectorService = markdownFileCollectorService;
         FileSystemItems = new ObservableCollection<FileSystemItemViewModel>();
         EditorTabs = new ObservableCollection<EditorTabViewModel>();
         ExitCommand = new RelayCommand(RequestApplicationExit);
         BuildDocumentationCommand = new RelayCommand(BuildDocumentation, CanBuildDocumentation);
+        ValidateCommand = new RelayCommand(ValidateDocumentation, CanValidateDocumentation);
         CloseLogOutputCommand = new RelayCommand(CloseLogOutput);
         
         _logger.LogInformation("MainWindowViewModel initialized");
@@ -83,10 +93,18 @@ public class MainWindowViewModel : ViewModelBase
         get => _isLogOutputVisible;
         set => SetProperty(ref _isLogOutputVisible, value);
     }
+
+    public ValidationResult? CurrentValidationResult
+    {
+        get => _currentValidationResult;
+        private set => SetProperty(ref _currentValidationResult, value);
+    }
     
     public ICommand ExitCommand { get; }
     
     public ICommand BuildDocumentationCommand { get; }
+    
+    public ICommand ValidateCommand { get; }
     
     public ICommand CloseLogOutputCommand { get; }
     
@@ -202,6 +220,12 @@ public class MainWindowViewModel : ViewModelBase
         ActiveTab = tab;
         OnPropertyChanged(nameof(ActiveFileContent));
         
+        // Clear validation results when switching files
+        CurrentValidationResult = null;
+        
+        // Update command states
+        ((RelayCommand)ValidateCommand).RaiseCanExecuteChanged();
+        
         _logger.LogDebug("Active tab changed to: {TabTitle}", tab.Title);
     }
 
@@ -235,6 +259,9 @@ public class MainWindowViewModel : ViewModelBase
                 ActiveTab.IsActive = true;
             }
             OnPropertyChanged(nameof(ActiveFileContent));
+            
+            // Update command states when active tab changes
+            ((RelayCommand)ValidateCommand).RaiseCanExecuteChanged();
         }
         
         _logger.LogDebug("Tab closed: {TabTitle}", tab.Title);
@@ -281,6 +308,76 @@ public class MainWindowViewModel : ViewModelBase
     private bool CanBuildDocumentation()
     {
         return true;
+    }
+
+    private async void ValidateDocumentation()
+    {
+        if (ActiveTab == null)
+        {
+            _logger.LogWarning("Validate requested but no active file");
+            return;
+        }
+        
+        _logger.LogInformation("Validating file: {FilePath}", ActiveTab.FilePath);
+
+        try
+        {
+            // Get the directory containing the file to find source documents
+            var fileDirectory = System.IO.Path.GetDirectoryName(ActiveTab.FilePath);
+            if (string.IsNullOrEmpty(fileDirectory))
+            {
+                _logger.LogError("Could not determine directory for file: {FilePath}", ActiveTab.FilePath);
+                return;
+            }
+
+            // Create MarkdownDocument for the active file
+            var activeFileContent = ActiveTab.Content ?? string.Empty;
+            var fileName = System.IO.Path.GetFileName(ActiveTab.FilePath);
+            var templateDocument = new MarkdownDocument
+            {
+                FileName = fileName,
+                Content = activeFileContent
+            };
+
+            // Collect source documents from the same directory
+            var sourceDocuments = await _markdownFileCollectorService.CollectSourceFilesAsync(fileDirectory);
+            
+            // Validate the template document
+            var validationResult = _markdownCombinationService.Validate(templateDocument, sourceDocuments);
+            
+            // Store validation results for UI highlighting
+            CurrentValidationResult = validationResult;
+            
+            // Log validation results
+            if (validationResult.IsValid)
+            {
+                _logger.LogInformation("Validation successful for file: {FilePath}", ActiveTab.FilePath);
+            }
+            else
+            {
+                _logger.LogWarning("Validation failed for file: {FilePath}. Found {ErrorCount} errors and {WarningCount} warnings.", 
+                    ActiveTab.FilePath, validationResult.Errors.Count, validationResult.Warnings.Count);
+                    
+                foreach (var error in validationResult.Errors)
+                {
+                    _logger.LogError("Validation error: {Message} at line {LineNumber}", error.Message, error.LineNumber);
+                }
+                
+                foreach (var warning in validationResult.Warnings)
+                {
+                    _logger.LogWarning("Validation warning: {Message} at line {LineNumber}", warning.Message, warning.LineNumber);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during validation of file: {FilePath}", ActiveTab.FilePath);
+        }
+    }
+
+    private bool CanValidateDocumentation()
+    {
+        return ActiveTab != null;
     }
 
     private void CloseLogOutput()

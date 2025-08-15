@@ -2,6 +2,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:vm="clr-namespace:Desktop.ViewModels"
     xmlns:conv="clr-namespace:Desktop.Converters"
+    xmlns:behaviors="clr-namespace:Desktop.Behaviors"
+    xmlns:controls="clr-namespace:Desktop.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
@@ -16,6 +18,7 @@
             </MenuItem>
             <MenuItem Header="Build">
                 <MenuItem Header="Build documentation" Command="{Binding BuildDocumentationCommand}" />
+                <MenuItem Header="Validate" Command="{Binding ValidateCommand}" />
             </MenuItem>
         </Menu>
         
@@ -153,36 +156,44 @@
                     
                     <!-- Editor Content -->
                     <ScrollViewer Grid.Row="1" Name="EditorScrollViewer">
-                        <TextBox Name="DocumentEditor" 
-                                Text="{Binding ActiveTab.Content, Mode=TwoWay}"
-                                Background="#1E1E1E" 
-                                Foreground="#D4D4D4"
-                                CaretBrush="#FFFFFF"
-                                SelectionBrush="#264F78"
-                                SelectionForegroundBrush="#FFFFFF"
-                                FontFamily="monospace"
-                                FontSize="14"
-                                AcceptsReturn="True"
-                                AcceptsTab="True"
-                                TextWrapping="Wrap"
-                                BorderThickness="0"
-                                Margin="20"
-                                Watermark="Start typing or open a file...">
-                            <TextBox.Styles>
-                                <!-- Remove hover highlighting -->
-                                <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
-                                    <Setter Property="Background" Value="#1E1E1E" />
-                                    <Setter Property="BorderBrush" Value="Transparent" />
-                                    <Setter Property="BorderThickness" Value="0" />
-                                </Style>
-                                <!-- Keep focus highlighting -->
-                                <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
-                                    <Setter Property="Background" Value="#1E1E1E" />
-                                    <Setter Property="BorderBrush" Value="#007ACC" />
-                                    <Setter Property="BorderThickness" Value="1" />
-                                </Style>
-                            </TextBox.Styles>
-                        </TextBox>
+                        <Grid>
+                            <TextBox Name="DocumentEditor" 
+                                    Text="{Binding ActiveTab.Content, Mode=TwoWay}"
+                                    Background="#1E1E1E" 
+                                    Foreground="#D4D4D4"
+                                    CaretBrush="#FFFFFF"
+                                    SelectionBrush="#264F78"
+                                    SelectionForegroundBrush="#FFFFFF"
+                                    FontFamily="monospace"
+                                    FontSize="14"
+                                    AcceptsReturn="True"
+                                    AcceptsTab="True"
+                                    TextWrapping="Wrap"
+                                    BorderThickness="0"
+                                    Margin="20"
+                                    Watermark="Start typing or open a file...">
+                                <TextBox.Styles>
+                                    <!-- Remove hover highlighting -->
+                                    <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
+                                        <Setter Property="Background" Value="#1E1E1E" />
+                                        <Setter Property="BorderBrush" Value="Transparent" />
+                                        <Setter Property="BorderThickness" Value="0" />
+                                    </Style>
+                                    <!-- Keep focus highlighting -->
+                                    <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+                                        <Setter Property="Background" Value="#1E1E1E" />
+                                        <Setter Property="BorderBrush" Value="#007ACC" />
+                                        <Setter Property="BorderThickness" Value="1" />
+                                    </Style>
+                                </TextBox.Styles>
+                            </TextBox>
+                            
+                            <!-- Validation Error Overlay -->
+                            <controls:ValidationErrorOverlay 
+                                ValidationResult="{Binding CurrentValidationResult}"
+                                TargetTextBox="{Binding #DocumentEditor}"
+                                IsHitTestVisible="False" />
+                        </Grid>
                     </ScrollViewer>
                     
                     <!-- Log Output -->

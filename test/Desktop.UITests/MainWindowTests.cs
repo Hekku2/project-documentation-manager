@@ -41,13 +41,15 @@ public class MainWindowTests
         var options = Options.Create(new ApplicationOptions());
         var fileService = Substitute.For<IFileService>();
         var serviceProvider = Substitute.For<IServiceProvider>();
+        var markdownCombinationService = Substitute.For<IMarkdownCombinationService>();
+        var markdownFileCollectorService = Substitute.For<IMarkdownFileCollectorService>();
         
         fileService.GetFileStructureAsync().Returns(Task.FromResult<FileSystemItem?>(CreateSimpleTestStructure()));
         fileService.GetFileStructureAsync(Arg.Any<string>()).Returns(Task.FromResult<FileSystemItem?>(CreateSimpleTestStructure()));
         fileService.IsValidFolder(Arg.Any<string>()).Returns(true);
         fileService.ReadFileContentAsync(Arg.Any<string>()).Returns("Mock file content");
         
-        var viewModel = new MainWindowViewModel(vmLogger, options, fileService, serviceProvider);
+        var viewModel = new MainWindowViewModel(vmLogger, options, fileService, serviceProvider, markdownCombinationService, markdownFileCollectorService);
         return new MainWindow(viewModel);
     }
 
@@ -155,13 +157,15 @@ public class MainWindowTests
         var options = Options.Create(new ApplicationOptions());
         var fileService = Substitute.For<IFileService>();
         var serviceProvider = Substitute.For<IServiceProvider>();
+        var markdownCombinationService = Substitute.For<IMarkdownCombinationService>();
+        var markdownFileCollectorService = Substitute.For<IMarkdownFileCollectorService>();
         
         fileService.GetFileStructureAsync().Returns(Task.FromResult<FileSystemItem?>(CreateNestedTestStructure()));
         fileService.GetFileStructureAsync(Arg.Any<string>()).Returns(Task.FromResult<FileSystemItem?>(CreateNestedTestStructure()));
         fileService.IsValidFolder(Arg.Any<string>()).Returns(true);
         fileService.ReadFileContentAsync(Arg.Any<string>()).Returns("Mock file content");
         
-        var viewModel = new MainWindowViewModel(vmLogger, options, fileService, serviceProvider);
+        var viewModel = new MainWindowViewModel(vmLogger, options, fileService, serviceProvider, markdownCombinationService, markdownFileCollectorService);
         return new MainWindow(viewModel);
     }
 
@@ -1068,7 +1072,10 @@ public class MainWindowTests
         fileService.IsValidFolder(Arg.Any<string>()).Returns(true);
         fileService.ReadFileContentAsync(Arg.Any<string>()).Returns("Mock file content");
         
-        var viewModel = new MainWindowViewModel(vmLogger, options, fileService, serviceProvider);
+        var markdownCombinationService = Substitute.For<IMarkdownCombinationService>();
+        var markdownFileCollectorService = Substitute.For<IMarkdownFileCollectorService>();
+        
+        var viewModel = new MainWindowViewModel(vmLogger, options, fileService, serviceProvider, markdownCombinationService, markdownFileCollectorService);
         
         Assert.That(viewModel.BuildDocumentationCommand, Is.Not.Null, "BuildDocumentationCommand should exist");
         

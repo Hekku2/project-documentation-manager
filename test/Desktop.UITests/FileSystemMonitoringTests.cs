@@ -14,6 +14,7 @@ using System.Linq;
 using NSubstitute;
 using System;
 using Microsoft.Extensions.DependencyInjection;
+using Business.Services;
 
 namespace Desktop.UITests;
 
@@ -53,7 +54,10 @@ public class FileSystemMonitoringTests
         fileService.ReadFileContentAsync(Arg.Any<string>()).Returns("Mock file content");
         fileService.IsMonitoringFileSystem.Returns(false);
         
-        var viewModel = new MainWindowViewModel(vmLogger, options, fileService, serviceProvider);
+        var markdownCombinationService = Substitute.For<IMarkdownCombinationService>();
+        var markdownFileCollectorService = Substitute.For<IMarkdownFileCollectorService>();
+        
+        var viewModel = new MainWindowViewModel(vmLogger, options, fileService, serviceProvider, markdownCombinationService, markdownFileCollectorService);
         var window = new MainWindow(viewModel);
         
         return (window, fileService, viewModel);
