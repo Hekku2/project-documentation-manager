@@ -18,4 +18,14 @@ public interface IMarkdownCombinationService
     IEnumerable<MarkdownDocument> BuildDocumentation(
         IEnumerable<MarkdownDocument> templateDocuments,
         IEnumerable<MarkdownDocument> sourceDocuments);
+
+    /// <summary>
+    /// Validates template documents for insert directive correctness
+    /// </summary>
+    /// <param name="templateDocument">Template document to validate</param>
+    /// <param name="sourceDocuments">Available source documents for validation</param>
+    /// <returns>Validation result with errors and warnings</returns>
+    ValidationResult Validate(
+        MarkdownDocument templateDocument,
+        IEnumerable<MarkdownDocument> sourceDocuments);
 }

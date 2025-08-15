@@ -9,7 +9,7 @@ namespace Business.Services;
 /// </summary>
 public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logger) : IMarkdownCombinationService
 {
-    private static readonly Regex InsertDirectiveRegex = new(@"<insert\s+([^>]+)>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex InsertDirectiveRegex = new(@"<insert\s+([^>]*)>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     public IEnumerable<MarkdownDocument> BuildDocumentation(
         IEnumerable<MarkdownDocument> templateDocuments,
@@ -135,5 +135,148 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
         }
 
         return processedContent;
+    }
+
+    public ValidationResult Validate(MarkdownDocument templateDocument, IEnumerable<MarkdownDocument> sourceDocuments)
+    {
+        if (templateDocument == null)
+            throw new ArgumentNullException(nameof(templateDocument));
+        
+        if (sourceDocuments == null)
+            throw new ArgumentNullException(nameof(sourceDocuments));
+
+        var result = new ValidationResult();
+        var sourceDictionary = sourceDocuments.ToDictionary(
+            doc => doc.FileName, 
+            doc => doc.Content, 
+            StringComparer.OrdinalIgnoreCase);
+
+        if (string.IsNullOrEmpty(templateDocument.Content))
+        {
+            return result; // Empty content is valid
+        }
+
+        ValidateInsertDirectives(templateDocument, sourceDictionary, result);
+        
+        return result;
+    }
+
+    private void ValidateInsertDirectives(MarkdownDocument templateDocument, Dictionary<string, string> sourceDictionary, ValidationResult result)
+    {
+        var content = templateDocument.Content;
+        var lines = content.Split('\n');
+        var processedDirectives = new HashSet<string>();
+        var currentDirectives = new HashSet<string>();
+        
+        for (int lineIndex = 0; lineIndex < lines.Length; lineIndex++)
+        {
+            var line = lines[lineIndex];
+            var matches = InsertDirectiveRegex.Matches(line);
+            
+            foreach (Match match in matches)
+            {
+                var fullDirective = match.Value;
+                var fileName = match.Groups[1].Value.Trim();
+                var lineNumber = lineIndex + 1;
+                
+                // Check for malformed directive
+                if (string.IsNullOrWhiteSpace(fileName))
+                {
+                    result.Errors.Add(new ValidationIssue
+                    {
+                        Message = "Insert directive is missing filename",
+                        DirectivePath = fullDirective,
+                        LineNumber = lineNumber,
+                        SourceContext = line.Trim()
+                    });
+                    continue;
+                }
+
+                // Check for invalid characters in path (allow forward slash for paths)
+                var invalidChars = Path.GetInvalidFileNameChars().Where(c => c != '/').ToArray();
+                if (fileName.IndexOfAny(invalidChars) >= 0)
+                {
+                    result.Errors.Add(new ValidationIssue
+                    {
+                        Message = $"Insert directive contains invalid filename characters: '{fileName}'",
+                        DirectivePath = fileName,
+                        LineNumber = lineNumber,
+                        SourceContext = line.Trim()
+                    });
+                    continue;
+                }
+
+                // Check if source file exists
+                if (!sourceDictionary.ContainsKey(fileName))
+                {
+                    result.Errors.Add(new ValidationIssue
+                    {
+                        Message = $"Source document not found: '{fileName}'",
+                        DirectivePath = fileName,
+                        LineNumber = lineNumber,
+                        SourceContext = line.Trim()
+                    });
+                    continue;
+                }
+
+                // Check for duplicate directives in the same template
+                if (processedDirectives.Contains(fullDirective))
+                {
+                    result.Warnings.Add(new ValidationIssue
+                    {
+                        Message = $"Duplicate insert directive found: '{fullDirective}'",
+                        DirectivePath = fileName,
+                        LineNumber = lineNumber,
+                        SourceContext = line.Trim()
+                    });
+                }
+                else
+                {
+                    processedDirectives.Add(fullDirective);
+                }
+
+                // Track directives for potential circular reference detection
+                currentDirectives.Add(fileName);
+            }
+        }
+
+        // Check for potential circular references by validating nested directives
+        ValidateCircularReferences(templateDocument.FileName, currentDirectives, sourceDictionary, result, new HashSet<string>());
+    }
+
+    private void ValidateCircularReferences(string currentFileName, HashSet<string> currentDirectives, 
+        Dictionary<string, string> sourceDictionary, ValidationResult result, HashSet<string> visitedFiles)
+    {
+        if (visitedFiles.Contains(currentFileName))
+        {
+            result.Warnings.Add(new ValidationIssue
+            {
+                Message = $"Potential circular reference detected involving file: '{currentFileName}'",
+                DirectivePath = currentFileName
+            });
+            return;
+        }
+
+        visitedFiles.Add(currentFileName);
+
+        foreach (var directive in currentDirectives)
+        {
+            if (sourceDictionary.TryGetValue(directive, out var sourceContent))
+            {
+                var nestedMatches = InsertDirectiveRegex.Matches(sourceContent);
+                var nestedDirectives = new HashSet<string>();
+                
+                foreach (Match match in nestedMatches)
+                {
+                    var nestedFileName = match.Groups[1].Value.Trim();
+                    nestedDirectives.Add(nestedFileName);
+                }
+
+                if (nestedDirectives.Count > 0)
+                {
+                    ValidateCircularReferences(directive, nestedDirectives, sourceDictionary, result, new HashSet<string>(visitedFiles));
+                }
+            }
+        }
     }
 }

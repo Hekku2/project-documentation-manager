@@ -434,4 +434,331 @@ public class MarkdownCombinationServiceTests
             Assert.That(resultList[0].Content, Does.Contain("<!-- Missing source: missing.mdsrc -->"), "Should contain missing source comment");
         });
     }
+
+    #region Validation Tests
+
+    [Test]
+    public void Validate_WithNullTemplateDocument_ThrowsArgumentNullException()
+    {
+        // Arrange
+        var sourceDocuments = new List<MarkdownDocument>();
+
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() => 
+            _service.Validate(null!, sourceDocuments));
+    }
+
+    [Test]
+    public void Validate_WithNullSourceDocuments_ThrowsArgumentNullException()
+    {
+        // Arrange
+        var templateDocument = new MarkdownDocument("template.md", "content");
+
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() => 
+            _service.Validate(templateDocument, null!));
+    }
+
+    [Test]
+    public void Validate_WithEmptyContent_ReturnsValidResult()
+    {
+        // Arrange
+        var templateDocument = new MarkdownDocument("template.md", "");
+        var sourceDocuments = new List<MarkdownDocument>();
+
+        // Act
+        var result = _service.Validate(templateDocument, sourceDocuments);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsValid, Is.True);
+            Assert.That(result.Errors, Is.Empty);
+            Assert.That(result.Warnings, Is.Empty);
+        });
+    }
+
+    [Test]
+    public void Validate_WithNullContent_ReturnsValidResult()
+    {
+        // Arrange
+        var templateDocument = new MarkdownDocument("template.md", null!);
+        var sourceDocuments = new List<MarkdownDocument>();
+
+        // Act
+        var result = _service.Validate(templateDocument, sourceDocuments);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsValid, Is.True);
+            Assert.That(result.Errors, Is.Empty);
+            Assert.That(result.Warnings, Is.Empty);
+        });
+    }
+
+    [Test]
+    public void Validate_WithValidInsertDirective_ReturnsValidResult()
+    {
+        // Arrange
+        var templateDocument = new MarkdownDocument("template.mdext", "# Title\n\n<insert common/common.mdsrc>");
+        var sourceDocuments = new List<MarkdownDocument>
+        {
+            new("common/common.mdsrc", "Common content")
+        };
+
+        // Act
+        var result = _service.Validate(templateDocument, sourceDocuments);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsValid, Is.True);
+            Assert.That(result.Errors, Is.Empty);
+            Assert.That(result.Warnings, Is.Empty);
+        });
+    }
+
+    [Test]
+    public void Validate_WithMissingSourceFile_ReturnsErrorResult()
+    {
+        // Arrange
+        var templateDocument = new MarkdownDocument("template.mdext", "# Title\n\n<insert missing.mdsrc>");
+        var sourceDocuments = new List<MarkdownDocument>();
+
+        // Act
+        var result = _service.Validate(templateDocument, sourceDocuments);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsValid, Is.False);
+            Assert.That(result.Errors, Has.Count.EqualTo(1));
+            Assert.That(result.Errors[0].Message, Is.EqualTo("Source document not found: 'missing.mdsrc'"));
+            Assert.That(result.Errors[0].DirectivePath, Is.EqualTo("missing.mdsrc"));
+            Assert.That(result.Errors[0].LineNumber, Is.EqualTo(3));
+            Assert.That(result.Errors[0].SourceContext, Is.EqualTo("<insert missing.mdsrc>"));
+            Assert.That(result.Warnings, Is.Empty);
+        });
+    }
+
+    [Test]
+    public void Validate_WithEmptyFilename_ReturnsErrorResult()
+    {
+        // Arrange
+        var templateDocument = new MarkdownDocument("template.mdext", "# Title\n\n<insert >");
+        var sourceDocuments = new List<MarkdownDocument>();
+
+        // Act
+        var result = _service.Validate(templateDocument, sourceDocuments);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsValid, Is.False);
+            Assert.That(result.Errors, Has.Count.EqualTo(1));
+            Assert.That(result.Errors[0].Message, Is.EqualTo("Insert directive is missing filename"));
+            Assert.That(result.Errors[0].DirectivePath, Is.EqualTo("<insert >"));
+            Assert.That(result.Errors[0].LineNumber, Is.EqualTo(3));
+            Assert.That(result.Warnings, Is.Empty);
+        });
+    }
+
+    [Test]
+    public void Validate_WithInvalidFilenameCharacters_ReturnsErrorResult()
+    {
+        // Arrange - Use a null character which is definitely invalid
+        var templateDocument = new MarkdownDocument("template.mdext", "# Title\n\n<insert invalid\0file.mdsrc>");
+        var sourceDocuments = new List<MarkdownDocument>();
+
+        // Act
+        var result = _service.Validate(templateDocument, sourceDocuments);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsValid, Is.False);
+            Assert.That(result.Errors, Has.Count.EqualTo(1));
+            Assert.That(result.Errors[0].Message, Does.StartWith("Insert directive contains invalid filename characters:"));
+            Assert.That(result.Errors[0].DirectivePath, Does.Contain("invalid"));
+            Assert.That(result.Errors[0].LineNumber, Is.EqualTo(3));
+            Assert.That(result.Warnings, Is.Empty);
+        });
+    }
+
+    [Test]
+    public void Validate_WithDuplicateDirectives_ReturnsWarningResult()
+    {
+        // Arrange
+        var templateDocument = new MarkdownDocument("template.mdext", 
+            "# Title\n\n<insert common.mdsrc>\n\nSome content\n\n<insert common.mdsrc>");
+        var sourceDocuments = new List<MarkdownDocument>
+        {
+            new("common.mdsrc", "Common content")
+        };
+
+        // Act
+        var result = _service.Validate(templateDocument, sourceDocuments);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsValid, Is.True);
+            Assert.That(result.Errors, Is.Empty);
+            Assert.That(result.Warnings, Has.Count.EqualTo(1));
+            Assert.That(result.Warnings[0].Message, Is.EqualTo("Duplicate insert directive found: '<insert common.mdsrc>'"));
+            Assert.That(result.Warnings[0].DirectivePath, Is.EqualTo("common.mdsrc"));
+            Assert.That(result.Warnings[0].LineNumber, Is.EqualTo(7));
+        });
+    }
+
+    [Test]
+    public void Validate_WithMultipleDirectivesOnSameLine_ValidatesEach()
+    {
+        // Arrange
+        var templateDocument = new MarkdownDocument("template.mdext", 
+            "# Title\n\n<insert valid.mdsrc> and <insert missing.mdsrc>");
+        var sourceDocuments = new List<MarkdownDocument>
+        {
+            new("valid.mdsrc", "Valid content")
+        };
+
+        // Act
+        var result = _service.Validate(templateDocument, sourceDocuments);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsValid, Is.False);
+            Assert.That(result.Errors, Has.Count.EqualTo(1));
+            Assert.That(result.Errors[0].Message, Is.EqualTo("Source document not found: 'missing.mdsrc'"));
+            Assert.That(result.Errors[0].LineNumber, Is.EqualTo(3));
+            Assert.That(result.Warnings, Is.Empty);
+        });
+    }
+
+    [Test]
+    public void Validate_WithCaseInsensitiveFilenames_ValidatesCorrectly()
+    {
+        // Arrange
+        var templateDocument = new MarkdownDocument("template.mdext", "# Title\n\n<insert COMMON.MDSRC>");
+        var sourceDocuments = new List<MarkdownDocument>
+        {
+            new("common.mdsrc", "Common content")
+        };
+
+        // Act
+        var result = _service.Validate(templateDocument, sourceDocuments);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsValid, Is.True);
+            Assert.That(result.Errors, Is.Empty);
+            Assert.That(result.Warnings, Is.Empty);
+        });
+    }
+
+    [Test]
+    public void Validate_WithDirectiveWithSpaces_ValidatesCorrectly()
+    {
+        // Arrange
+        var templateDocument = new MarkdownDocument("template.mdext", "# Title\n\n<insert   common.mdsrc   >");
+        var sourceDocuments = new List<MarkdownDocument>
+        {
+            new("common.mdsrc", "Common content")
+        };
+
+        // Act
+        var result = _service.Validate(templateDocument, sourceDocuments);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsValid, Is.True);
+            Assert.That(result.Errors, Is.Empty);
+            Assert.That(result.Warnings, Is.Empty);
+        });
+    }
+
+    [Test]
+    public void Validate_WithCircularReference_ReturnsWarningResult()
+    {
+        // Arrange
+        var templateDocument = new MarkdownDocument("template.mdext", "# Title\n\n<insert circular1.mdsrc>");
+        var sourceDocuments = new List<MarkdownDocument>
+        {
+            new("circular1.mdsrc", "Content <insert circular2.mdsrc>"),
+            new("circular2.mdsrc", "Content <insert circular1.mdsrc>")
+        };
+
+        // Act
+        var result = _service.Validate(templateDocument, sourceDocuments);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsValid, Is.True);
+            Assert.That(result.Errors, Is.Empty);
+            Assert.That(result.Warnings, Has.Count.EqualTo(1));
+            Assert.That(result.Warnings[0].Message, Does.StartWith("Potential circular reference detected"));
+        });
+    }
+
+    [Test]
+    public void Validate_WithNestedValidDirectives_ReturnsValidResult()
+    {
+        // Arrange
+        var templateDocument = new MarkdownDocument("template.mdext", "# Title\n\n<insert level1.mdsrc>");
+        var sourceDocuments = new List<MarkdownDocument>
+        {
+            new("level1.mdsrc", "Level 1 <insert level2.mdsrc>"),
+            new("level2.mdsrc", "Level 2 content")
+        };
+
+        // Act
+        var result = _service.Validate(templateDocument, sourceDocuments);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsValid, Is.True);
+            Assert.That(result.Errors, Is.Empty);
+            Assert.That(result.Warnings, Is.Empty);
+        });
+    }
+
+    [Test]
+    public void Validate_WithMixedValidAndInvalidDirectives_ReturnsAppropriateResults()
+    {
+        // Arrange
+        var templateDocument = new MarkdownDocument("template.mdext", 
+            "# Title\n\n<insert valid.mdsrc>\n<insert missing.mdsrc>\n<insert valid.mdsrc>\n<insert >");
+        var sourceDocuments = new List<MarkdownDocument>
+        {
+            new("valid.mdsrc", "Valid content")
+        };
+
+        // Act
+        var result = _service.Validate(templateDocument, sourceDocuments);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsValid, Is.False);
+            Assert.That(result.Errors, Has.Count.EqualTo(2));
+            
+            // Check for missing file error
+            Assert.That(result.Errors.Any(e => e.Message.Contains("Source document not found: 'missing.mdsrc'")), Is.True);
+            
+            // Check for empty filename error
+            Assert.That(result.Errors.Any(e => e.Message.Contains("Insert directive is missing filename")), Is.True);
+            
+            // Check for duplicate warning
+            Assert.That(result.Warnings, Has.Count.EqualTo(1));
+            Assert.That(result.Warnings[0].Message, Is.EqualTo("Duplicate insert directive found: '<insert valid.mdsrc>'"));
+        });
+    }
+
+    #endregion
 }
