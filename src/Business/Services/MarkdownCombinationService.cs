@@ -9,7 +9,7 @@ namespace Business.Services;
 /// </summary>
 public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logger) : IMarkdownCombinationService
 {
-    private static readonly Regex InsertDirectiveRegex = new(@"<insert\s+([^>]*)>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex InsertDirectiveRegex = new(@"<MarkDownExtension\s+operation=""insert""\s+file=""([^""]*)""\s*/>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     public IEnumerable<MarkdownDocument> BuildDocumentation(
         IEnumerable<MarkdownDocument> templateDocuments,
@@ -93,8 +93,8 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
 
             foreach (Match match in matches)
             {
-                var fullDirective = match.Value; // e.g., "<insert common-features.md>"
-                var fileName = match.Groups[1].Value.Trim(); // e.g., "common-features.md"
+                var fullDirective = match.Value; // e.g., "<MarkDownExtension operation="insert" file="common-features.mdsrc" />"
+                var fileName = match.Groups[1].Value.Trim(); // e.g., "common-features.mdsrc"
 
                 // Skip if we've already processed this directive in this iteration
                 if (processedDirectives.Contains(fullDirective))
@@ -184,7 +184,7 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
                 {
                     result.Errors.Add(new ValidationIssue
                     {
-                        Message = "Insert directive is missing filename",
+                        Message = "MarkDownExtension directive is missing filename",
                         DirectivePath = fullDirective,
                         LineNumber = lineNumber,
                         SourceContext = line.Trim()
@@ -198,7 +198,7 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
                 {
                     result.Errors.Add(new ValidationIssue
                     {
-                        Message = $"Insert directive contains invalid filename characters: '{fileName}'",
+                        Message = $"MarkDownExtension directive contains invalid filename characters: '{fileName}'",
                         DirectivePath = fileName,
                         LineNumber = lineNumber,
                         SourceContext = line.Trim()
@@ -224,7 +224,7 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
                 {
                     result.Warnings.Add(new ValidationIssue
                     {
-                        Message = $"Duplicate insert directive found: '{fullDirective}'",
+                        Message = $"Duplicate MarkDownExtension directive found: '{fullDirective}'",
                         DirectivePath = fileName,
                         LineNumber = lineNumber,
                         SourceContext = line.Trim()

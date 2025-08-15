@@ -3,4 +3,4 @@
 File 1 contents
 
  * File 1 feature
-<insert common/common.mdsrc>
+<MarkDownExtension operation="insert" file="common/common.mdsrc" />

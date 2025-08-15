@@ -12,19 +12,19 @@ Following example explains the idea
 
 Inputs
 
-File: windows-features.md
+File: windows-features.mdext
 ```markdown
  * windows feature
- <insert common-features.md>
+ <MarkDownExtension operation="insert" file="common-features.mdsrc" />
 ```
 
-File: ubuntu-features.md
+File: ubuntu-features.mdext
 ```markdown
  * linux feature
- <insert common-features.md>
+ <MarkDownExtension operation="insert" file="common-features.mdsrc" />
 ```
 
-File: common-features.md
+File: common-features.mdsrc
 ```markdown
  * common feature
 ```
