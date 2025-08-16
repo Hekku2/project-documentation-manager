@@ -1,4 +1,5 @@
 ﻿using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -23,8 +24,30 @@ class Program
         
         try
         {
-            BuildAvaloniaApp()
-                .StartWithClassicDesktopLifetime(args);
+            // Run Avalonia app with host cancellation token integration
+            var app = BuildAvaloniaApp();
+            var lifetime = new ClassicDesktopStyleApplicationLifetime()
+            {
+                Args = args,
+                ShutdownMode = Avalonia.Controls.ShutdownMode.OnMainWindowClose
+            };
+            
+            app.SetupWithLifetime(lifetime);
+            
+            // Connect host cancellation to Avalonia shutdown
+            var hostLifetime = host.Services.GetRequiredService<IHostApplicationLifetime>();
+            hostLifetime.ApplicationStopping.Register(() =>
+            {
+                if (lifetime.MainWindow != null)
+                {
+                    Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                    {
+                        lifetime.MainWindow.Close();
+                    });
+                }
+            });
+            
+            lifetime.Start(args);
         }
         finally
         {
