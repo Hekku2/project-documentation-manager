@@ -17,7 +17,7 @@
                 <MenuItem Header="Exit" Command="{Binding ExitCommand}" />
             </MenuItem>
             <MenuItem Header="View">
-                <!-- Empty menu for now -->
+                <MenuItem Header="Logs" Command="{Binding ShowLogsCommand}" />
             </MenuItem>
             <MenuItem Header="Build">
                 <MenuItem Header="Build documentation" Command="{Binding BuildDocumentationCommand}" />

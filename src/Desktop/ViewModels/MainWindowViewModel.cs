@@ -48,6 +48,7 @@ public class MainWindowViewModel : ViewModelBase
         BuildDocumentationCommand = new RelayCommand(BuildDocumentation, CanBuildDocumentation);
         ValidateCommand = new RelayCommand(ValidateDocumentation, CanValidateDocumentation);
         CloseLogOutputCommand = new RelayCommand(CloseLogOutput);
+        ShowLogsCommand = new RelayCommand(ShowLogOutput);
         
         _logger.LogInformation("MainWindowViewModel initialized");
         _logger.LogInformation("Default theme: {Theme}", _applicationOptions.DefaultTheme);
@@ -107,6 +108,8 @@ public class MainWindowViewModel : ViewModelBase
     public ICommand ValidateCommand { get; }
     
     public ICommand CloseLogOutputCommand { get; }
+    
+    public ICommand ShowLogsCommand { get; }
     
     public event EventHandler? ExitRequested;
     public event EventHandler<BuildConfirmationDialogViewModel>? ShowBuildConfirmationDialog;
@@ -384,5 +387,11 @@ public class MainWindowViewModel : ViewModelBase
     {
         IsLogOutputVisible = false;
         _logger.LogInformation("Log output panel closed");
+    }
+    
+    private void ShowLogOutput()
+    {
+        IsLogOutputVisible = true;
+        _logger.LogInformation("Log output panel shown");
     }
 }
