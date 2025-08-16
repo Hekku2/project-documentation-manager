@@ -72,7 +72,7 @@ public class MainWindowTests
         Assert.That(menu, Is.Not.Null, "Main menu not found");
         
         // Verify the menu structure contains File and Build menus
-        Assert.That(menu.Items.Count, Is.EqualTo(2), "Menu should have two top-level items (File and Build)");
+        Assert.That(menu.Items.Count, Is.EqualTo(3), "Menu should have three top-level items (File, View, and Build)");
     }
 
     [AvaloniaTest]
@@ -995,7 +995,7 @@ public class MainWindowTests
         // Find the main menu and verify it has the updated structure
         var menu = window.FindControl<Menu>("MainMenu");
         Assert.That(menu, Is.Not.Null, "Main menu should exist");
-        Assert.That(menu.Items.Count, Is.EqualTo(2), "Menu should have File and Build menus");
+        Assert.That(menu.Items.Count, Is.EqualTo(3), "Menu should have File, View, and Build menus");
 
         // Test that the ExitCommand exists and works (bound to the Exit menu item)
         Assert.That(viewModel!.ExitCommand, Is.Not.Null, "ExitCommand should be available for menu binding");
@@ -1040,7 +1040,7 @@ public class MainWindowTests
         // Find the main menu and verify it has Build menu
         var menu = window.FindControl<Menu>("MainMenu");
         Assert.That(menu, Is.Not.Null, "Main menu should exist");
-        Assert.That(menu.Items.Count, Is.EqualTo(2), "Menu should have File and Build menus");
+        Assert.That(menu.Items.Count, Is.EqualTo(3), "Menu should have File, View, and Build menus");
 
         // Test that the BuildDocumentationCommand exists and is bound to the Build menu item
         Assert.That(viewModel!.BuildDocumentationCommand, Is.Not.Null, "BuildDocumentationCommand should be available for menu binding");

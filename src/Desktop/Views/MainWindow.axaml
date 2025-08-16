@@ -16,6 +16,9 @@
             <MenuItem Header="File">
                 <MenuItem Header="Exit" Command="{Binding ExitCommand}" />
             </MenuItem>
+            <MenuItem Header="View">
+                <!-- Empty menu for now -->
+            </MenuItem>
             <MenuItem Header="Build">
                 <MenuItem Header="Build documentation" Command="{Binding BuildDocumentationCommand}" />
                 <MenuItem Header="Validate" Command="{Binding ValidateCommand}" />

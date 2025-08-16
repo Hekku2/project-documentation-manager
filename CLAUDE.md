@@ -166,6 +166,13 @@ The application implements a sophisticated logging architecture:
 - Use NSubstitute for mocking in tests rather than custom mock classes
 - Follow MVVM pattern with proper separation of concerns
 
+### Test-Driven Development Requirements
+- **CRITICAL**: After ANY code change, feature addition, or modification, ALWAYS run `dotnet test` to ensure all tests pass
+- If tests fail after code changes, fix the failing tests immediately before considering the task complete
+- Never leave broken tests - all tests must pass before marking a task as done
+- When adding new features, consider if new tests are needed and update existing tests that may be affected
+- Test failures indicate either bugs in the code or outdated test expectations that need updating
+
 ## important-instruction-reminders
 Do what has been asked; nothing more, nothing less.
 NEVER create files unless they're absolutely necessary for achieving your goal.
