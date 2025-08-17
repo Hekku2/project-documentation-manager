@@ -20,8 +20,55 @@ using Business.Models;
 
 namespace Desktop.UITests;
 
+[Parallelizable(ParallelScope.Children)]
 public class MainWindowTests
 {
+    private static async Task WaitForConditionAsync(Func<bool> condition, int timeoutMs = 2000, int intervalMs = 10)
+    {
+        var maxWait = timeoutMs / intervalMs;
+        var waitCount = 0;
+        while (!condition() && waitCount < maxWait)
+        {
+            await Task.Delay(intervalMs);
+            waitCount++;
+        }
+    }
+
+    private static async Task<MainWindowViewModel> SetupWindowAndWaitForLoadAsync(MainWindow window)
+    {
+        window.Show();
+        
+        var viewModel = window.DataContext as MainWindowViewModel;
+        Assert.That(viewModel, Is.Not.Null);
+
+        // Wait for file structure to load and root to be expanded
+        await WaitForConditionAsync(() => viewModel!.RootItem != null, 2000);
+        Assert.That(viewModel.RootItem, Is.Not.Null, "Root item should be loaded");
+        
+        // Wait for root to be auto-expanded with children
+        await WaitForConditionAsync(() => 
+            viewModel.RootItem!.IsExpanded && 
+            viewModel.RootItem.Children.Any(c => c.Name != "Loading..."), 3000);
+        
+        return viewModel;
+    }
+
+    private static async Task ExpandFolderAndWaitAsync(FileSystemItemViewModel folder)
+    {
+        folder.IsExpanded = true;
+        // Wait for children to be loaded (either already loaded or loading to complete)
+        await WaitForConditionAsync(() => 
+            folder.Children.Any() && 
+            (folder.Children.All(c => c.Name != "Loading...") || folder.Children.Count > 1), 2000);
+    }
+
+    private static async Task SelectFileAndWaitForTabAsync(FileSystemItemViewModel file, MainWindowViewModel viewModel)
+    {
+        var initialTabCount = viewModel.EditorTabs.Count;
+        file.IsSelected = true;
+        await WaitForConditionAsync(() => viewModel.EditorTabs.Count > initialTabCount, 1000);
+    }
+
     private static FileSystemItem CreateSimpleTestStructure() => new()
     {
         Name = "test-project",
@@ -173,27 +220,11 @@ public class MainWindowTests
     public async Task MainWindow_Should_Only_Expand_Root_Level_By_Default()
     {
         var window = CreateMainWindowWithNestedStructure();
-        window.Show();
-
-        // Wait a bit for the async loading to complete
-        await Task.Delay(500);
+        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
 
         // Get the TreeView
         var treeView = window.GetVisualDescendants().OfType<TreeView>().FirstOrDefault();
         Assert.That(treeView, Is.Not.Null, "TreeView not found");
-
-        // Get the ViewModel from the window's DataContext
-        var viewModel = window.DataContext as MainWindowViewModel;
-        Assert.That(viewModel, Is.Not.Null, "MainWindowViewModel not found");
-
-        // Wait for file structure to load
-        var maxWait = 50; // 5 seconds max
-        var waitCount = 0;
-        while (viewModel!.RootItem == null && waitCount < maxWait)
-        {
-            await Task.Delay(100);
-            waitCount++;
-        }
 
         Assert.That(viewModel.RootItem, Is.Not.Null, "Root item should be loaded");
         
@@ -223,24 +254,7 @@ public class MainWindowTests
     public async Task MainWindow_Should_Allow_Folder_Expansion_And_Load_Children()
     {
         var window = CreateMainWindowWithNestedStructure();
-        window.Show();
-
-        // Wait for initial load
-        await Task.Delay(500);
-
-        var viewModel = window.DataContext as MainWindowViewModel;
-        Assert.That(viewModel, Is.Not.Null);
-
-        // Wait for file structure to load
-        var maxWait = 50;
-        var waitCount = 0;
-        while (viewModel!.RootItem == null && waitCount < maxWait)
-        {
-            await Task.Delay(100);
-            waitCount++;
-        }
-
-        Assert.That(viewModel.RootItem, Is.Not.Null, "Root item should be loaded");
+        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
 
         // Get the src folder (should not be expanded initially)
         var srcFolder = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
@@ -251,11 +265,8 @@ public class MainWindowTests
         Assert.That(srcFolder.Children.Count, Is.EqualTo(1), "src folder should have placeholder child");
         Assert.That(srcFolder.Children[0].Name, Is.EqualTo("Loading..."), "Should have loading placeholder");
 
-        // Expand the src folder by setting IsExpanded to true
-        srcFolder.IsExpanded = true;
-
-        // Wait for lazy loading to complete
-        await Task.Delay(1000);
+        // Expand the src folder and wait for children to load
+        await ExpandFolderAndWaitAsync(srcFolder);
 
         // After expansion, children should be loaded
         Assert.Multiple(() =>
@@ -287,21 +298,7 @@ public class MainWindowTests
     public async Task MainWindow_Should_Allow_Multiple_Folder_Expansions()
     {
         var window = CreateMainWindowWithNestedStructure();
-        window.Show();
-
-        await Task.Delay(500);
-
-        var viewModel = window.DataContext as MainWindowViewModel;
-        Assert.That(viewModel?.RootItem, Is.Not.Null);
-
-        // Wait for file structure to load
-        var maxWait = 50;
-        var waitCount = 0;
-        while (viewModel!.RootItem == null && waitCount < maxWait)
-        {
-            await Task.Delay(100);
-            waitCount++;
-        }
+        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
 
         // Get both src and test folders
         var srcFolder = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
@@ -317,8 +314,10 @@ public class MainWindowTests
         srcFolder!.IsExpanded = true;
         testFolder!.IsExpanded = true;
 
-        // Wait for lazy loading
-        await Task.Delay(1000);
+        // Wait for lazy loading to complete
+        await WaitForConditionAsync(() => 
+            srcFolder.Children.Any(c => c.Name != "Loading...") && 
+            testFolder.Children.Any(c => c.Name != "Loading..."), 2000);
 
         Assert.Multiple(() =>
         {
@@ -344,25 +343,11 @@ public class MainWindowTests
     public async Task MainWindow_Should_Display_File_Content_In_Editor_When_File_Selected()
     {
         var window = CreateMainWindowWithNestedStructure();
-        window.Show();
-
-        await Task.Delay(500);
-
-        var viewModel = window.DataContext as MainWindowViewModel;
-        Assert.That(viewModel?.RootItem, Is.Not.Null);
-
-        // Wait for file structure to load
-        var maxWait = 50;
-        var waitCount = 0;
-        while (viewModel!.RootItem == null && waitCount < maxWait)
-        {
-            await Task.Delay(100);
-            waitCount++;
-        }
+        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
 
         // Expand the root to get the README.md file
         viewModel.RootItem!.IsExpanded = true;
-        await Task.Delay(1000);
+        await WaitForConditionAsync(() => viewModel.RootItem.Children.Any());
 
         // Find the README.md file
         var readmeFile = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "README.md");
@@ -385,7 +370,7 @@ public class MainWindowTests
         readmeFile!.IsSelected = true;
 
         // Wait for file to load
-        await Task.Delay(1000);
+        await WaitForConditionAsync(() => viewModel.EditorTabs.Count > 0, 1000);
 
         Assert.Multiple(() =>
         {
@@ -414,31 +399,15 @@ public class MainWindowTests
     public async Task MainWindow_Should_Handle_Multiple_File_Selections()
     {
         var window = CreateMainWindowWithNestedStructure();
-        window.Show();
-
-        await Task.Delay(500);
-
-        var viewModel = window.DataContext as MainWindowViewModel;
-        Assert.That(viewModel?.RootItem, Is.Not.Null);
-
-        // Wait for file structure to load
-        var maxWait = 50;
-        var waitCount = 0;
-        while (viewModel!.RootItem == null && waitCount < maxWait)
-        {
-            await Task.Delay(100);
-            waitCount++;
-        }
+        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
 
         // Expand the root and src folder to get multiple files
-        viewModel.RootItem!.IsExpanded = true;
-        await Task.Delay(1000);
+        await ExpandFolderAndWaitAsync(viewModel.RootItem!);
 
         var srcFolder = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "src");
         Assert.That(srcFolder, Is.Not.Null, "src folder should exist");
         
-        srcFolder!.IsExpanded = true;
-        await Task.Delay(1000);
+        await ExpandFolderAndWaitAsync(srcFolder!);
 
         // Get files
         var readmeFile = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "README.md");
@@ -454,12 +423,10 @@ public class MainWindowTests
         Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(0), "No tabs initially");
 
         // Select first file
-        readmeFile!.IsSelected = true;
-        await Task.Delay(500);
+        await SelectFileAndWaitForTabAsync(readmeFile!, viewModel);
 
         // Select second file
-        mainFile!.IsSelected = true;
-        await Task.Delay(500);
+        await SelectFileAndWaitForTabAsync(mainFile!, viewModel);
 
         Assert.Multiple(() =>
         {
@@ -485,31 +452,15 @@ public class MainWindowTests
     public async Task MainWindow_Should_Allow_Tab_Closing_Via_Close_Button()
     {
         var window = CreateMainWindowWithNestedStructure();
-        window.Show();
-
-        await Task.Delay(500);
-
-        var viewModel = window.DataContext as MainWindowViewModel;
-        Assert.That(viewModel?.RootItem, Is.Not.Null);
-
-        // Wait for file structure to load
-        var maxWait = 50;
-        var waitCount = 0;
-        while (viewModel!.RootItem == null && waitCount < maxWait)
-        {
-            await Task.Delay(100);
-            waitCount++;
-        }
+        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
 
         // Expand the root to get files
-        viewModel.RootItem!.IsExpanded = true;
-        await Task.Delay(1000);
+        await ExpandFolderAndWaitAsync(viewModel.RootItem!);
 
         var srcFolder = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "src");
         Assert.That(srcFolder, Is.Not.Null, "src folder should exist");
         
-        srcFolder!.IsExpanded = true;
-        await Task.Delay(1000);
+        await ExpandFolderAndWaitAsync(srcFolder!);
 
         // Get files
         var readmeFile = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "README.md");
@@ -522,11 +473,9 @@ public class MainWindowTests
         });
 
         // Open both files
-        readmeFile!.IsSelected = true;
-        await Task.Delay(500);
+        await SelectFileAndWaitForTabAsync(readmeFile!, viewModel);
         
-        mainFile!.IsSelected = true;
-        await Task.Delay(500);
+        await SelectFileAndWaitForTabAsync(mainFile!, viewModel);
 
         // Verify 2 tabs are open
         Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(2), "Two tabs should be open");
@@ -577,39 +526,21 @@ public class MainWindowTests
     public async Task MainWindow_Should_Handle_Closing_Active_Tab_And_Switch_To_Another()
     {
         var window = CreateMainWindowWithNestedStructure();
-        window.Show();
-
-        await Task.Delay(500);
-
-        var viewModel = window.DataContext as MainWindowViewModel;
-        Assert.That(viewModel?.RootItem, Is.Not.Null);
-
-        // Wait for file structure to load
-        var maxWait = 50;
-        var waitCount = 0;
-        while (viewModel!.RootItem == null && waitCount < maxWait)
-        {
-            await Task.Delay(100);
-            waitCount++;
-        }
+        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
 
         // Expand and get files
-        viewModel.RootItem!.IsExpanded = true;
-        await Task.Delay(1000);
+        await ExpandFolderAndWaitAsync(viewModel.RootItem!);
 
         var srcFolder = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "src");
-        srcFolder!.IsExpanded = true;
-        await Task.Delay(1000);
+        await ExpandFolderAndWaitAsync(srcFolder!);
 
         var readmeFile = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "README.md");
         var mainFile = srcFolder.Children.FirstOrDefault(c => c.Name == "main.cs");
 
         // Open both files
-        readmeFile!.IsSelected = true;
-        await Task.Delay(500);
+        await SelectFileAndWaitForTabAsync(readmeFile!, viewModel);
         
-        mainFile!.IsSelected = true;
-        await Task.Delay(500);
+        await SelectFileAndWaitForTabAsync(mainFile!, viewModel);
 
         // Verify setup: 2 tabs, main.cs is active
         Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(2), "Two tabs should be open");
@@ -639,29 +570,13 @@ public class MainWindowTests
     public async Task MainWindow_Should_Highlight_Active_Tab_Correctly()
     {
         var window = CreateMainWindowWithNestedStructure();
-        window.Show();
-
-        await Task.Delay(500);
-
-        var viewModel = window.DataContext as MainWindowViewModel;
-        Assert.That(viewModel?.RootItem, Is.Not.Null);
-
-        // Wait for file structure to load
-        var maxWait = 50;
-        var waitCount = 0;
-        while (viewModel!.RootItem == null && waitCount < maxWait)
-        {
-            await Task.Delay(100);
-            waitCount++;
-        }
+        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
 
         // Expand and get files
-        viewModel.RootItem!.IsExpanded = true;
-        await Task.Delay(1000);
+        await ExpandFolderAndWaitAsync(viewModel.RootItem!);
 
         var srcFolder = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "src");
-        srcFolder!.IsExpanded = true;
-        await Task.Delay(1000);
+        await ExpandFolderAndWaitAsync(srcFolder!);
 
         var readmeFile = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "README.md");
         var mainFile = srcFolder.Children.FirstOrDefault(c => c.Name == "main.cs");
@@ -670,8 +585,7 @@ public class MainWindowTests
         Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(0), "No tabs initially");
 
         // Open first file (README.md)
-        readmeFile!.IsSelected = true;
-        await Task.Delay(500);
+        await SelectFileAndWaitForTabAsync(readmeFile!, viewModel);
 
         // Should have 1 tab and it should be active
         Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(1), "One tab should be open");
@@ -681,8 +595,7 @@ public class MainWindowTests
         Assert.That(viewModel.ActiveTab, Is.EqualTo(readmeTab), "ActiveTab should be README");
 
         // Open second file (main.cs)
-        mainFile!.IsSelected = true;
-        await Task.Delay(500);
+        await SelectFileAndWaitForTabAsync(mainFile!, viewModel);
 
         // Should have 2 tabs now
         Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(2), "Two tabs should be open");
@@ -713,39 +626,21 @@ public class MainWindowTests
     public async Task MainWindow_Should_Update_Active_Tab_Highlighting_When_Tab_Is_Closed()
     {
         var window = CreateMainWindowWithNestedStructure();
-        window.Show();
-
-        await Task.Delay(500);
-
-        var viewModel = window.DataContext as MainWindowViewModel;
-        Assert.That(viewModel?.RootItem, Is.Not.Null);
-
-        // Wait for file structure to load
-        var maxWait = 50;
-        var waitCount = 0;
-        while (viewModel!.RootItem == null && waitCount < maxWait)
-        {
-            await Task.Delay(100);
-            waitCount++;
-        }
+        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
 
         // Expand and get files
-        viewModel.RootItem!.IsExpanded = true;
-        await Task.Delay(1000);
+        await ExpandFolderAndWaitAsync(viewModel.RootItem!);
 
         var srcFolder = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "src");
-        srcFolder!.IsExpanded = true;
-        await Task.Delay(1000);
+        await ExpandFolderAndWaitAsync(srcFolder!);
 
         var readmeFile = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "README.md");
         var mainFile = srcFolder.Children.FirstOrDefault(c => c.Name == "main.cs");
 
         // Open both files
-        readmeFile!.IsSelected = true;
-        await Task.Delay(500);
+        await SelectFileAndWaitForTabAsync(readmeFile!, viewModel);
         
-        mainFile!.IsSelected = true;
-        await Task.Delay(500);
+        await SelectFileAndWaitForTabAsync(mainFile!, viewModel);
 
         // Verify setup: 2 tabs, main.cs is active
         Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(2), "Two tabs should be open");
@@ -788,39 +683,21 @@ public class MainWindowTests
     public async Task MainWindow_Should_Allow_File_Selection_By_Clicking_Tab()
     {
         var window = CreateMainWindowWithNestedStructure();
-        window.Show();
-
-        await Task.Delay(500);
-
-        var viewModel = window.DataContext as MainWindowViewModel;
-        Assert.That(viewModel?.RootItem, Is.Not.Null);
-
-        // Wait for file structure to load
-        var maxWait = 50;
-        var waitCount = 0;
-        while (viewModel!.RootItem == null && waitCount < maxWait)
-        {
-            await Task.Delay(100);
-            waitCount++;
-        }
+        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
 
         // Expand and get files
-        viewModel.RootItem!.IsExpanded = true;
-        await Task.Delay(1000);
+        await ExpandFolderAndWaitAsync(viewModel.RootItem!);
 
         var srcFolder = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "src");
-        srcFolder!.IsExpanded = true;
-        await Task.Delay(1000);
+        await ExpandFolderAndWaitAsync(srcFolder!);
 
         var readmeFile = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "README.md");
         var mainFile = srcFolder.Children.FirstOrDefault(c => c.Name == "main.cs");
 
         // Open both files to create tabs
-        readmeFile!.IsSelected = true;
-        await Task.Delay(500);
+        await SelectFileAndWaitForTabAsync(readmeFile!, viewModel);
         
-        mainFile!.IsSelected = true;
-        await Task.Delay(500);
+        await SelectFileAndWaitForTabAsync(mainFile!, viewModel);
 
         // Verify setup: 2 tabs exist, main.cs is currently active
         Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(2), "Two tabs should be open");
@@ -870,41 +747,23 @@ public class MainWindowTests
     public async Task MainWindow_Should_Show_Visual_Highlighting_When_Tab_Is_Selected_Via_Click()
     {
         var window = CreateMainWindowWithNestedStructure();
-        window.Show();
-
-        await Task.Delay(500);
-
-        var viewModel = window.DataContext as MainWindowViewModel;
-        Assert.That(viewModel?.RootItem, Is.Not.Null);
-
-        // Wait for file structure to load
-        var maxWait = 50;
-        var waitCount = 0;
-        while (viewModel!.RootItem == null && waitCount < maxWait)
-        {
-            await Task.Delay(100);
-            waitCount++;
-        }
+        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
 
         // Expand and get files
-        viewModel.RootItem!.IsExpanded = true;
-        await Task.Delay(1000);
+        await ExpandFolderAndWaitAsync(viewModel.RootItem!);
 
         var readmeFile = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "README.md");
         
         // Get the src folder and expand it
         var srcFolder = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "src");
-        srcFolder!.IsExpanded = true;
-        await Task.Delay(1000);
+        await ExpandFolderAndWaitAsync(srcFolder!);
         
         var mainFile = srcFolder.Children.FirstOrDefault(c => c.Name == "main.cs");
 
         // Open three files to test multiple tab selection
-        readmeFile!.IsSelected = true;
-        await Task.Delay(500);
+        await SelectFileAndWaitForTabAsync(readmeFile!, viewModel);
         
-        mainFile!.IsSelected = true;
-        await Task.Delay(500);
+        await SelectFileAndWaitForTabAsync(mainFile!, viewModel);
 
         // Verify setup
         Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(2), "Two tabs should be open");
@@ -1205,7 +1064,7 @@ public class MainWindowTests
         dialogViewModel.SaveCommand.Execute(null);
         
         // Wait for async build to complete
-        await Task.Delay(500);
+        await WaitForConditionAsync(() => !dialogViewModel.IsBuildInProgress, 1000);
 
         // Assert
         Assert.Multiple(() =>
@@ -1246,7 +1105,7 @@ public class MainWindowTests
         dialogViewModel.SaveCommand.Execute(null);
         
         // Wait for async build to complete
-        await Task.Delay(500);
+        await WaitForConditionAsync(() => !dialogViewModel.IsBuildInProgress, 1000);
 
         // Assert
         Assert.Multiple(() =>
@@ -1549,21 +1408,8 @@ public class MainWindowTests
     public async Task MainWindow_Should_Display_Validation_Errors_In_Error_Panel()
     {
         var window = CreateMainWindow();
-        window.Show();
+        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
 
-        await Task.Delay(500);
-
-        var viewModel = window.DataContext as MainWindowViewModel;
-        Assert.That(viewModel, Is.Not.Null);
-
-        // Wait for file structure to load
-        var maxWait = 50;
-        var waitCount = 0;
-        while (viewModel!.RootItem == null && waitCount < maxWait)
-        {
-            await Task.Delay(100);
-            waitCount++;
-        }
 
         // Open a file
         await viewModel.OpenFileAsync("/test/path/README.md");
@@ -1605,7 +1451,7 @@ public class MainWindowTests
         updateMethod!.Invoke(viewModel, [mockValidationResult]);
 
 
-        await Task.Delay(500);
+        // No delay needed for direct method invocation
 
         Assert.Multiple(() =>
         {
@@ -1627,21 +1473,8 @@ public class MainWindowTests
     public async Task MainWindow_Should_Display_No_Errors_Message_When_Validation_Passes()
     {
         var window = CreateMainWindow();
-        window.Show();
+        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
 
-        await Task.Delay(500);
-
-        var viewModel = window.DataContext as MainWindowViewModel;
-        Assert.That(viewModel, Is.Not.Null);
-
-        // Wait for file structure to load
-        var maxWait = 50;
-        var waitCount = 0;
-        while (viewModel!.RootItem == null && waitCount < maxWait)
-        {
-            await Task.Delay(100);
-            waitCount++;
-        }
 
         // Open a file
         await viewModel.OpenFileAsync("/test/path/README.md");
@@ -1659,7 +1492,7 @@ public class MainWindowTests
         updateMethod!.Invoke(viewModel, [mockValidationResult]);
 
 
-        await Task.Delay(500);
+        // No delay needed for direct method invocation
 
         Assert.Multiple(() =>
         {
