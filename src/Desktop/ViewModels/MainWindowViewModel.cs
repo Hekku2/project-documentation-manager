@@ -367,6 +367,9 @@ public class MainWindowViewModel : ViewModelBase
             // Store validation results for UI highlighting
             CurrentValidationResult = validationResult;
             
+            // Update error panel with validation results
+            UpdateErrorPanelWithValidationResults(validationResult);
+            
             // Log validation results
             if (validationResult.IsValid)
             {
@@ -506,5 +509,54 @@ public class MainWindowViewModel : ViewModelBase
         var errorTab = GetOrCreateBottomTab("errors", "Errors");
         SetActiveBottomTab(errorTab);
         _logger.LogInformation("Error output tab shown");
+    }
+
+    private void UpdateErrorPanelWithValidationResults(ValidationResult validationResult)
+    {
+        var errorTab = GetOrCreateBottomTab("errors", "Errors");
+        
+        if (validationResult.IsValid)
+        {
+            errorTab.Content = "No errors found";
+        }
+        else
+        {
+            var errorContent = new System.Text.StringBuilder();
+            
+            foreach (var error in validationResult.Errors)
+            {
+                var lineInfo = error.LineNumber.HasValue ? $" (Line {error.LineNumber})" : "";
+                errorContent.AppendLine($"Error: {error.Message}{lineInfo}");
+                if (!string.IsNullOrEmpty(error.DirectivePath))
+                {
+                    errorContent.AppendLine($"  File: {error.DirectivePath}");
+                }
+                if (!string.IsNullOrEmpty(error.SourceContext))
+                {
+                    errorContent.AppendLine($"  Context: {error.SourceContext}");
+                }
+                errorContent.AppendLine();
+            }
+            
+            foreach (var warning in validationResult.Warnings)
+            {
+                var lineInfo = warning.LineNumber.HasValue ? $" (Line {warning.LineNumber})" : "";
+                errorContent.AppendLine($"Warning: {warning.Message}{lineInfo}");
+                if (!string.IsNullOrEmpty(warning.DirectivePath))
+                {
+                    errorContent.AppendLine($"  File: {warning.DirectivePath}");
+                }
+                if (!string.IsNullOrEmpty(warning.SourceContext))
+                {
+                    errorContent.AppendLine($"  Context: {warning.SourceContext}");
+                }
+                errorContent.AppendLine();
+            }
+            
+            errorTab.Content = errorContent.ToString().TrimEnd();
+        }
+        
+        // Show the error panel when validation is performed
+        SetActiveBottomTab(errorTab);
     }
 }

@@ -1544,4 +1544,133 @@ public class MainWindowTests
         Assert.That(viewModel.IsBottomPanelVisible, Is.True, "Bottom panel should be visible again");
         Assert.That(viewModel.ActiveBottomTab, Is.EqualTo(newLogTab), "Recreated tab should be active");
     }
+
+    [AvaloniaTest]
+    public async Task MainWindow_Should_Display_Validation_Errors_In_Error_Panel()
+    {
+        var window = CreateMainWindow();
+        window.Show();
+
+        await Task.Delay(500);
+
+        var viewModel = window.DataContext as MainWindowViewModel;
+        Assert.That(viewModel, Is.Not.Null);
+
+        // Wait for file structure to load
+        var maxWait = 50;
+        var waitCount = 0;
+        while (viewModel!.RootItem == null && waitCount < maxWait)
+        {
+            await Task.Delay(100);
+            waitCount++;
+        }
+
+        // Open a file
+        await viewModel.OpenFileAsync("/test/path/README.md");
+        Assert.That(viewModel.ActiveTab, Is.Not.Null, "Active tab should exist");
+
+        // Mock validation service to return errors
+        var mockValidationResult = new ValidationResult
+        {
+            Errors = 
+            [
+                new ValidationIssue 
+                { 
+                    Message = "Missing source file", 
+                    LineNumber = 5, 
+                    DirectivePath = "missing.md" 
+                },
+                new ValidationIssue 
+                { 
+                    Message = "Invalid directive format", 
+                    LineNumber = 10 
+                }
+            ],
+            Warnings = 
+            [
+                new ValidationIssue 
+                { 
+                    Message = "Unused source file", 
+                    DirectivePath = "unused.md" 
+                }
+            ]
+        };
+
+        // Manually update the current validation result to simulate validation
+        viewModel.GetType().GetProperty("CurrentValidationResult")!.SetValue(viewModel, mockValidationResult);
+        
+        // Manually call the UpdateErrorPanelWithValidationResults method
+        var updateMethod = viewModel.GetType().GetMethod("UpdateErrorPanelWithValidationResults", 
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        updateMethod!.Invoke(viewModel, [mockValidationResult]);
+
+
+        await Task.Delay(500);
+
+        Assert.Multiple(() =>
+        {
+            // Error panel should be visible
+            Assert.That(viewModel.IsBottomPanelVisible, Is.True, "Bottom panel should be visible");
+            Assert.That(viewModel.ActiveBottomTab, Is.Not.Null, "Active bottom tab should exist");
+            Assert.That(viewModel.ActiveBottomTab!.Title, Is.EqualTo("Errors"), "Error tab should be active");
+
+            // Error content should contain the validation errors
+            var errorContent = viewModel.ActiveBottomTab.Content;
+            Assert.That(errorContent, Contains.Substring("Error: Missing source file (Line 5)"), "Should contain first error");
+            Assert.That(errorContent, Contains.Substring("Error: Invalid directive format (Line 10)"), "Should contain second error");
+            Assert.That(errorContent, Contains.Substring("Warning: Unused source file"), "Should contain warning");
+            Assert.That(errorContent, Contains.Substring("File: missing.md"), "Should contain file info");
+        });
+    }
+
+    [AvaloniaTest]
+    public async Task MainWindow_Should_Display_No_Errors_Message_When_Validation_Passes()
+    {
+        var window = CreateMainWindow();
+        window.Show();
+
+        await Task.Delay(500);
+
+        var viewModel = window.DataContext as MainWindowViewModel;
+        Assert.That(viewModel, Is.Not.Null);
+
+        // Wait for file structure to load
+        var maxWait = 50;
+        var waitCount = 0;
+        while (viewModel!.RootItem == null && waitCount < maxWait)
+        {
+            await Task.Delay(100);
+            waitCount++;
+        }
+
+        // Open a file
+        await viewModel.OpenFileAsync("/test/path/README.md");
+        Assert.That(viewModel.ActiveTab, Is.Not.Null, "Active tab should exist");
+
+        // Mock validation service to return success
+        var mockValidationResult = new ValidationResult();
+
+        // Manually update the current validation result to simulate validation
+        viewModel.GetType().GetProperty("CurrentValidationResult")!.SetValue(viewModel, mockValidationResult);
+        
+        // Manually call the UpdateErrorPanelWithValidationResults method
+        var updateMethod = viewModel.GetType().GetMethod("UpdateErrorPanelWithValidationResults", 
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        updateMethod!.Invoke(viewModel, [mockValidationResult]);
+
+
+        await Task.Delay(500);
+
+        Assert.Multiple(() =>
+        {
+            // Error panel should be visible
+            Assert.That(viewModel.IsBottomPanelVisible, Is.True, "Bottom panel should be visible");
+            Assert.That(viewModel.ActiveBottomTab, Is.Not.Null, "Active bottom tab should exist");
+            Assert.That(viewModel.ActiveBottomTab!.Title, Is.EqualTo("Errors"), "Error tab should be active");
+
+            // Error content should show "No errors found"
+            var errorContent = viewModel.ActiveBottomTab.Content;
+            Assert.That(errorContent, Is.EqualTo("No errors found"), "Should show no errors message");
+        });
+    }
 }
