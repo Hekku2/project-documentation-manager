@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using Avalonia.Threading;
 using Avalonia.Controls;
 using System;
+using System.Linq;
 using System.Text;
 
 namespace Desktop.Logging;
@@ -44,9 +45,28 @@ internal class UILogger : ILogger
             {
                 try
                 {
-                    _textBox.Text += logEntry + Environment.NewLine;
+                    // Get the MainWindow and its ViewModel to access the log tab
+                    var app = Avalonia.Application.Current;
+                    var mainWindow = app?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop 
+                        ? desktop.MainWindow as Desktop.Views.MainWindow 
+                        : null;
                     
-                    // Auto-scroll to bottom
+                    if (mainWindow?.DataContext is Desktop.ViewModels.MainWindowViewModel viewModel)
+                    {
+                        // Find the log tab and update its content (create if needed)
+                        var logTab = viewModel.BottomPanelTabs.FirstOrDefault(t => t.Id == "logs");
+                        if (logTab != null)
+                        {
+                            logTab.Content += logEntry + Environment.NewLine;
+                        }
+                    }
+                    else
+                    {
+                        // Fallback to direct TextBox update
+                        _textBox.Text += logEntry + Environment.NewLine;
+                    }
+                    
+                    // Auto-scroll to bottom if TextBox is visible
                     if (_textBox.Parent is ScrollViewer scrollViewer)
                     {
                         scrollViewer.ScrollToEnd();

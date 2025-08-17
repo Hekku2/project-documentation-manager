@@ -25,7 +25,8 @@ public class MainWindowViewModel : ViewModelBase
     private bool _isLoading;
     private FileSystemItemViewModel? _rootItem;
     private EditorTabViewModel? _activeTab;
-    private bool _isLogOutputVisible = true;
+    private bool _isBottomPanelVisible = false;
+    private BottomPanelTabViewModel? _activeBottomTab;
     private ValidationResult? _currentValidationResult;
 
     public MainWindowViewModel(
@@ -44,11 +45,13 @@ public class MainWindowViewModel : ViewModelBase
         _markdownFileCollectorService = markdownFileCollectorService;
         FileSystemItems = new ObservableCollection<FileSystemItemViewModel>();
         EditorTabs = new ObservableCollection<EditorTabViewModel>();
+        BottomPanelTabs = new ObservableCollection<BottomPanelTabViewModel>();
         ExitCommand = new RelayCommand(RequestApplicationExit);
         BuildDocumentationCommand = new RelayCommand(BuildDocumentation, CanBuildDocumentation);
         ValidateCommand = new RelayCommand(ValidateDocumentation, CanValidateDocumentation);
-        CloseLogOutputCommand = new RelayCommand(CloseLogOutput);
+        CloseBottomPanelCommand = new RelayCommand(CloseBottomPanel);
         ShowLogsCommand = new RelayCommand(ShowLogOutput);
+        ShowErrorsCommand = new RelayCommand(ShowErrorOutput);
         
         _logger.LogInformation("MainWindowViewModel initialized");
         _logger.LogInformation("Default theme: {Theme}", _applicationOptions.DefaultTheme);
@@ -58,6 +61,9 @@ public class MainWindowViewModel : ViewModelBase
         // Subscribe to file selection events
         FileSystemItemViewModel.FileSelected += OnFileSelected;
         
+        // Initialize bottom panel tabs
+        InitializeBottomPanelTabs();
+        
         // Load file structure asynchronously
         _ = LoadFileStructureAsync();
     }
@@ -65,6 +71,8 @@ public class MainWindowViewModel : ViewModelBase
     public ObservableCollection<FileSystemItemViewModel> FileSystemItems { get; }
     
     public ObservableCollection<EditorTabViewModel> EditorTabs { get; }
+    
+    public ObservableCollection<BottomPanelTabViewModel> BottomPanelTabs { get; }
 
     public string Title => "Project Documentation Manager";
 
@@ -89,10 +97,16 @@ public class MainWindowViewModel : ViewModelBase
 
     public string? ActiveFileContent => ActiveTab?.Content;
 
-    public bool IsLogOutputVisible
+    public bool IsBottomPanelVisible
     {
-        get => _isLogOutputVisible;
-        set => SetProperty(ref _isLogOutputVisible, value);
+        get => _isBottomPanelVisible;
+        set => SetProperty(ref _isBottomPanelVisible, value);
+    }
+
+    public BottomPanelTabViewModel? ActiveBottomTab
+    {
+        get => _activeBottomTab;
+        private set => SetProperty(ref _activeBottomTab, value);
     }
 
     public ValidationResult? CurrentValidationResult
@@ -107,9 +121,11 @@ public class MainWindowViewModel : ViewModelBase
     
     public ICommand ValidateCommand { get; }
     
-    public ICommand CloseLogOutputCommand { get; }
+    public ICommand CloseBottomPanelCommand { get; }
     
     public ICommand ShowLogsCommand { get; }
+    
+    public ICommand ShowErrorsCommand { get; }
     
     public event EventHandler? ExitRequested;
     public event EventHandler<BuildConfirmationDialogViewModel>? ShowBuildConfirmationDialog;
@@ -383,15 +399,112 @@ public class MainWindowViewModel : ViewModelBase
         return ActiveTab != null;
     }
 
-    private void CloseLogOutput()
+    private void InitializeBottomPanelTabs()
     {
-        IsLogOutputVisible = false;
-        _logger.LogInformation("Log output panel closed");
+        // Tabs will be created on-demand when menu items are clicked
+        // This allows tabs to be properly reopened after being closed
+    }
+
+    private void OnBottomTabCloseRequested(BottomPanelTabViewModel tab)
+    {
+        CloseBottomTab(tab);
+    }
+
+    private void OnBottomTabSelectRequested(BottomPanelTabViewModel tab)
+    {
+        SetActiveBottomTab(tab);
+    }
+
+    public void SetActiveBottomTab(BottomPanelTabViewModel tab)
+    {
+        // Deactivate current active tab
+        if (ActiveBottomTab != null)
+        {
+            ActiveBottomTab.IsActive = false;
+        }
+
+        // Set new active tab
+        tab.IsActive = true;
+        ActiveBottomTab = tab;
+        IsBottomPanelVisible = true;
+        
+        _logger.LogDebug("Active bottom tab changed to: {TabTitle}", tab.Title);
+    }
+
+    public void CloseBottomTab(BottomPanelTabViewModel tab)
+    {
+        if (!BottomPanelTabs.Contains(tab))
+            return;
+
+        // Unsubscribe from events to prevent memory leaks
+        tab.CloseRequested -= OnBottomTabCloseRequested;
+        tab.SelectRequested -= OnBottomTabSelectRequested;
+        
+        BottomPanelTabs.Remove(tab);
+        
+        // If this was the active tab, set a new active tab or hide the panel
+        if (ActiveBottomTab == tab)
+        {
+            ActiveBottomTab = BottomPanelTabs.FirstOrDefault();
+            if (ActiveBottomTab != null)
+            {
+                ActiveBottomTab.IsActive = true;
+                IsBottomPanelVisible = true;
+            }
+            else
+            {
+                IsBottomPanelVisible = false;
+            }
+        }
+        
+        _logger.LogDebug("Bottom tab closed: {TabTitle}", tab.Title);
+    }
+
+    private void CloseBottomPanel()
+    {
+        if (ActiveBottomTab != null)
+        {
+            ActiveBottomTab.IsActive = false;
+            ActiveBottomTab = null;
+        }
+        IsBottomPanelVisible = false;
+        _logger.LogInformation("Bottom panel closed");
     }
     
+    private BottomPanelTabViewModel GetOrCreateBottomTab(string id, string title)
+    {
+        var existingTab = BottomPanelTabs.FirstOrDefault(t => t.Id == id);
+        if (existingTab != null)
+            return existingTab;
+
+        // Create new tab if it doesn't exist
+        var tabModel = new BottomPanelTab
+        {
+            Id = id,
+            Title = title,
+            Content = "",
+            IsActive = false,
+            IsClosable = true
+        };
+        var tabViewModel = new BottomPanelTabViewModel(tabModel);
+        tabViewModel.CloseRequested += OnBottomTabCloseRequested;
+        tabViewModel.SelectRequested += OnBottomTabSelectRequested;
+        BottomPanelTabs.Add(tabViewModel);
+        
+        return tabViewModel;
+    }
+
     private void ShowLogOutput()
     {
-        IsLogOutputVisible = true;
-        _logger.LogInformation("Log output panel shown");
+        var logTab = GetOrCreateBottomTab("logs", "Log Output");
+        SetActiveBottomTab(logTab);
+        _logger.LogInformation("Log output tab shown");
+    }
+    
+    private void ShowErrorOutput()
+    {
+        var errorTab = GetOrCreateBottomTab("errors", "Errors");
+        SetActiveBottomTab(errorTab);
+        _logger.LogInformation("Error output tab shown");
     }
 }

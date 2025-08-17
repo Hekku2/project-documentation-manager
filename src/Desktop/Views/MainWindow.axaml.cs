@@ -26,12 +26,12 @@ public partial class MainWindow : Window
     
     private void OnWindowLoaded(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
-        // Find the LogOutput TextBox and set up UI logging
-        var logOutput = this.FindControl<TextBox>("LogOutput");
-        if (logOutput != null && App.ServiceProvider != null)
+        // Find the BottomOutput TextBox and set up UI logging
+        var bottomOutput = this.FindControl<TextBox>("BottomOutput");
+        if (bottomOutput != null && App.ServiceProvider != null)
         {
             var dynamicLoggerProvider = App.ServiceProvider.GetRequiredService<IDynamicLoggerProvider>();
-            var uiLoggerProvider = new UILoggerProvider(logOutput);
+            var uiLoggerProvider = new UILoggerProvider(bottomOutput);
             dynamicLoggerProvider.AddLoggerProvider(uiLoggerProvider);
             
             // Log a test message to show it's working
@@ -52,11 +52,4 @@ public partial class MainWindow : Window
         dialog.ShowDialog(this);
     }
 
-    private void OnLogTabCloseClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        if (DataContext is MainWindowViewModel viewModel)
-        {
-            viewModel.CloseLogOutputCommand.Execute(null);
-        }
-    }
 }

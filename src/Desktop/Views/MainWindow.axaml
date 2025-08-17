@@ -18,6 +18,7 @@
             </MenuItem>
             <MenuItem Header="View">
                 <MenuItem Header="Logs" Command="{Binding ShowLogsCommand}" />
+                <MenuItem Header="Errors" Command="{Binding ShowErrorsCommand}" />
             </MenuItem>
             <MenuItem Header="Build">
                 <MenuItem Header="Build documentation" Command="{Binding BuildDocumentationCommand}" />
@@ -199,50 +200,66 @@
                         </Grid>
                     </ScrollViewer>
                     
-                    <!-- Log Output -->
-                    <Border Grid.Row="2" Background="#0E0E0E" BorderBrush="#3E3E42" BorderThickness="0,1,0,0" IsVisible="{Binding IsLogOutputVisible}">
+                    <!-- Bottom Panel -->
+                    <Border Grid.Row="2" Background="#0E0E0E" BorderBrush="#3E3E42" BorderThickness="0,1,0,0" IsVisible="{Binding IsBottomPanelVisible}">
                         <Grid>
                             <Grid.RowDefinitions>
-                                <!-- Log Tab Bar -->
+                                <!-- Bottom Tab Bar -->
                                 <RowDefinition Height="35" />
-                                <!-- Log Content -->
+                                <!-- Bottom Content -->
                                 <RowDefinition Height="*" />
                             </Grid.RowDefinitions>
                             
-                            <!-- Log Tab Bar -->
+                            <!-- Bottom Tab Bar -->
                             <Border Grid.Row="0" Background="#2D2D30" BorderBrush="#3E3E42" BorderThickness="0,0,0,1">
                                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                                    <StackPanel Orientation="Horizontal" Margin="5,0">
-                                        <!-- Default Log Tab -->
-                                        <Border Name="LogTabBorder"
-                                                Background="#1E1E1E"
-                                                BorderBrush="#3E3E42"
-                                                BorderThickness="0,0,1,0" 
-                                                Margin="0,0,0,0">
-                                            <StackPanel Orientation="Horizontal" Margin="15,8">
-                                                <TextBlock Name="LogTabTitle"
-                                                           Text="Log Output" 
-                                                           Foreground="#CCCCCC" 
-                                                           VerticalAlignment="Center" />
-                                                <Button Name="LogTabCloseButton"
-                                                        Content="×" 
-                                                        Click="OnLogTabCloseClick"
-                                                        Background="Transparent" 
-                                                        Foreground="#CCCCCC" 
-                                                        BorderThickness="0" 
-                                                        Margin="8,0,0,0" 
-                                                        Padding="4" 
-                                                        FontSize="16" />
-                                            </StackPanel>
-                                        </Border>
-                                    </StackPanel>
+                                    <ItemsControl ItemsSource="{Binding BottomPanelTabs}" Margin="5,0">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Orientation="Horizontal" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:BottomPanelTabViewModel">
+                                                <Border Name="BottomTabBorder"
+                                                        Background="{Binding IsActive, Converter={x:Static conv:BoolToColorConverter.Instance}}"
+                                                        BorderBrush="#3E3E42"
+                                                        BorderThickness="0,0,1,0" 
+                                                        Margin="0,0,0,0">
+                                                    <Button Name="BottomTabButton"
+                                                            Command="{Binding SelectCommand}"
+                                                            Background="Transparent"
+                                                            BorderThickness="0"
+                                                            Padding="0"
+                                                            HorizontalContentAlignment="Stretch"
+                                                            VerticalContentAlignment="Stretch">
+                                                        <StackPanel Orientation="Horizontal" Margin="15,8">
+                                                            <TextBlock Name="BottomTabTitle"
+                                                                       Text="{Binding Title}" 
+                                                                       Foreground="#CCCCCC" 
+                                                                       VerticalAlignment="Center" />
+                                                            <Button Content="×" 
+                                                                    Command="{Binding CloseCommand}"
+                                                                    Background="Transparent" 
+                                                                    Foreground="#CCCCCC" 
+                                                                    BorderThickness="0" 
+                                                                    Margin="8,0,0,0" 
+                                                                    Padding="4" 
+                                                                    FontSize="16"
+                                                                    IsVisible="{Binding IsClosable}" />
+                                                        </StackPanel>
+                                                    </Button>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
                                 </ScrollViewer>
                             </Border>
                             
-                            <!-- Log Content -->
-                            <ScrollViewer Grid.Row="1" Name="LogScrollViewer">
-                                <TextBox Name="LogOutput" 
-                                        Text=""
+                            <!-- Bottom Content -->
+                            <ScrollViewer Grid.Row="1" Name="BottomScrollViewer">
+                                <TextBox Name="BottomOutput" 
+                                        Text="{Binding ActiveBottomTab.Content}"
                                         Background="#0E0E0E" 
                                         Foreground="#CCCCCC"
                                         FontFamily="monospace"
