@@ -232,8 +232,8 @@ public class MainWindowTests
         Assert.That(viewModel.RootItem!.IsExpanded, Is.True, "Root folder should be expanded by default");
 
         // Find child folders in the root
-        var srcFolder = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "src");
-        var testFolder = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "test");
+        var srcFolder = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
+        var testFolder = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "test");
 
         Assert.Multiple(() =>
         {
@@ -277,7 +277,7 @@ public class MainWindowTests
             // Verify the actual children are loaded
             var componentsFolder = srcFolder.Children.FirstOrDefault(c => c.Name == "components");
             var utilsFolder = srcFolder.Children.FirstOrDefault(c => c.Name == "utils");
-            var mainFile = srcFolder.Children.FirstOrDefault(c => c.Name == "main.cs");
+            var mainFile = srcFolder!.Children.FirstOrDefault(c => c.Name == "main.cs");
 
             Assert.That(componentsFolder, Is.Not.Null, "components folder should be loaded");
             Assert.That(utilsFolder, Is.Not.Null, "utils folder should be loaded");
@@ -302,7 +302,7 @@ public class MainWindowTests
 
         // Get both src and test folders
         var srcFolder = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
-        var testFolder = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "test");
+        var testFolder = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "test");
 
         Assert.Multiple(() =>
         {
@@ -350,7 +350,7 @@ public class MainWindowTests
         await WaitForConditionAsync(() => viewModel.RootItem.Children.Any());
 
         // Find the README.md file
-        var readmeFile = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "README.md");
+        var readmeFile = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "README.md");
         Assert.That(readmeFile, Is.Not.Null, "README.md file should exist");
 
         // Get the editor TextBox from the UI
@@ -404,14 +404,14 @@ public class MainWindowTests
         // Expand the root and src folder to get multiple files
         await ExpandFolderAndWaitAsync(viewModel.RootItem!);
 
-        var srcFolder = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "src");
+        var srcFolder = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
         Assert.That(srcFolder, Is.Not.Null, "src folder should exist");
         
         await ExpandFolderAndWaitAsync(srcFolder!);
 
         // Get files
-        var readmeFile = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "README.md");
-        var mainFile = srcFolder.Children.FirstOrDefault(c => c.Name == "main.cs");
+        var readmeFile = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "README.md");
+        var mainFile = srcFolder!.Children.FirstOrDefault(c => c.Name == "main.cs");
         
         Assert.Multiple(() =>
         {
@@ -457,14 +457,14 @@ public class MainWindowTests
         // Expand the root to get files
         await ExpandFolderAndWaitAsync(viewModel.RootItem!);
 
-        var srcFolder = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "src");
+        var srcFolder = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
         Assert.That(srcFolder, Is.Not.Null, "src folder should exist");
         
         await ExpandFolderAndWaitAsync(srcFolder!);
 
         // Get files
-        var readmeFile = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "README.md");
-        var mainFile = srcFolder.Children.FirstOrDefault(c => c.Name == "main.cs");
+        var readmeFile = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "README.md");
+        var mainFile = srcFolder!.Children.FirstOrDefault(c => c.Name == "main.cs");
         
         Assert.Multiple(() =>
         {
@@ -531,11 +531,11 @@ public class MainWindowTests
         // Expand and get files
         await ExpandFolderAndWaitAsync(viewModel.RootItem!);
 
-        var srcFolder = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "src");
+        var srcFolder = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
         await ExpandFolderAndWaitAsync(srcFolder!);
 
-        var readmeFile = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "README.md");
-        var mainFile = srcFolder.Children.FirstOrDefault(c => c.Name == "main.cs");
+        var readmeFile = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "README.md");
+        var mainFile = srcFolder!.Children.FirstOrDefault(c => c.Name == "main.cs");
 
         // Open both files
         await SelectFileAndWaitForTabAsync(readmeFile!, viewModel);
@@ -575,11 +575,11 @@ public class MainWindowTests
         // Expand and get files
         await ExpandFolderAndWaitAsync(viewModel.RootItem!);
 
-        var srcFolder = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "src");
+        var srcFolder = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
         await ExpandFolderAndWaitAsync(srcFolder!);
 
-        var readmeFile = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "README.md");
-        var mainFile = srcFolder.Children.FirstOrDefault(c => c.Name == "main.cs");
+        var readmeFile = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "README.md");
+        var mainFile = srcFolder!.Children.FirstOrDefault(c => c.Name == "main.cs");
 
         // Initially no tabs
         Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(0), "No tabs initially");
@@ -631,11 +631,11 @@ public class MainWindowTests
         // Expand and get files
         await ExpandFolderAndWaitAsync(viewModel.RootItem!);
 
-        var srcFolder = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "src");
+        var srcFolder = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
         await ExpandFolderAndWaitAsync(srcFolder!);
 
-        var readmeFile = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "README.md");
-        var mainFile = srcFolder.Children.FirstOrDefault(c => c.Name == "main.cs");
+        var readmeFile = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "README.md");
+        var mainFile = srcFolder!.Children.FirstOrDefault(c => c.Name == "main.cs");
 
         // Open both files
         await SelectFileAndWaitForTabAsync(readmeFile!, viewModel);
@@ -688,11 +688,11 @@ public class MainWindowTests
         // Expand and get files
         await ExpandFolderAndWaitAsync(viewModel.RootItem!);
 
-        var srcFolder = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "src");
+        var srcFolder = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
         await ExpandFolderAndWaitAsync(srcFolder!);
 
-        var readmeFile = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "README.md");
-        var mainFile = srcFolder.Children.FirstOrDefault(c => c.Name == "main.cs");
+        var readmeFile = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "README.md");
+        var mainFile = srcFolder!.Children.FirstOrDefault(c => c.Name == "main.cs");
 
         // Open both files to create tabs
         await SelectFileAndWaitForTabAsync(readmeFile!, viewModel);
@@ -752,13 +752,13 @@ public class MainWindowTests
         // Expand and get files
         await ExpandFolderAndWaitAsync(viewModel.RootItem!);
 
-        var readmeFile = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "README.md");
+        var readmeFile = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "README.md");
         
         // Get the src folder and expand it
-        var srcFolder = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "src");
+        var srcFolder = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
         await ExpandFolderAndWaitAsync(srcFolder!);
         
-        var mainFile = srcFolder.Children.FirstOrDefault(c => c.Name == "main.cs");
+        var mainFile = srcFolder!.Children.FirstOrDefault(c => c.Name == "main.cs");
 
         // Open three files to test multiple tab selection
         await SelectFileAndWaitForTabAsync(readmeFile!, viewModel);

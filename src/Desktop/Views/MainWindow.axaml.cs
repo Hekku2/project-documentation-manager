@@ -11,6 +11,11 @@ namespace Desktop.Views;
 
 public partial class MainWindow : Window
 {
+    // Parameterless constructor for XAML designer support
+    public MainWindow() : this(null!)
+    {
+    }
+
     public MainWindow(MainWindowViewModel viewModel)
     {
         DataContext = viewModel;

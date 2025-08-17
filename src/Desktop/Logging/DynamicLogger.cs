@@ -29,6 +29,7 @@ internal class DynamicLogger : ILogger
     {
         var scopes = _loggers.Select(logger => logger.BeginScope(state))
                             .Where(scope => scope != null)
+                            .Cast<IDisposable>()
                             .ToList();
         
         return scopes.Count > 0 ? new CompositeScope(scopes) : null;
