@@ -23,6 +23,7 @@
             <MenuItem Header="Build">
                 <MenuItem Header="Build documentation" Command="{Binding BuildDocumentationCommand}" />
                 <MenuItem Header="Validate" Command="{Binding ValidateCommand}" />
+                <MenuItem Header="Validate All" Command="{Binding ValidateAllCommand}" />
             </MenuItem>
         </Menu>
         

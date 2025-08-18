@@ -279,4 +279,54 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
             }
         }
     }
+
+    public ValidationResult ValidateAll(IEnumerable<MarkdownDocument> templateDocuments, IEnumerable<MarkdownDocument> sourceDocuments)
+    {
+        if (templateDocuments == null)
+            throw new ArgumentNullException(nameof(templateDocuments));
+        
+        if (sourceDocuments == null)
+            throw new ArgumentNullException(nameof(sourceDocuments));
+
+        var templateList = templateDocuments.ToList();
+        var sourceList = sourceDocuments.ToList();
+        var combinedResult = new ValidationResult();
+
+        logger.LogInformation("Validating {TemplateCount} template documents", templateList.Count);
+
+        foreach (var template in templateList)
+        {
+            logger.LogDebug("Validating template: {TemplateFileName}", template.FileName);
+            
+            var validationResult = Validate(template, sourceList);
+            
+            // Add template filename context to errors and warnings
+            foreach (var error in validationResult.Errors)
+            {
+                combinedResult.Errors.Add(new ValidationIssue
+                {
+                    Message = $"[{template.FileName}] {error.Message}",
+                    DirectivePath = error.DirectivePath,
+                    LineNumber = error.LineNumber,
+                    SourceContext = error.SourceContext
+                });
+            }
+            
+            foreach (var warning in validationResult.Warnings)
+            {
+                combinedResult.Warnings.Add(new ValidationIssue
+                {
+                    Message = $"[{template.FileName}] {warning.Message}",
+                    DirectivePath = warning.DirectivePath,
+                    LineNumber = warning.LineNumber,
+                    SourceContext = warning.SourceContext
+                });
+            }
+        }
+
+        logger.LogInformation("Validation completed for all templates. Found {ErrorCount} errors and {WarningCount} warnings", 
+            combinedResult.Errors.Count, combinedResult.Warnings.Count);
+
+        return combinedResult;
+    }
 }

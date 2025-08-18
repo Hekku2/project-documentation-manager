@@ -49,6 +49,7 @@ public class MainWindowViewModel : ViewModelBase
         ExitCommand = new RelayCommand(RequestApplicationExit);
         BuildDocumentationCommand = new RelayCommand(BuildDocumentation, CanBuildDocumentation);
         ValidateCommand = new RelayCommand(ValidateDocumentation, CanValidateDocumentation);
+        ValidateAllCommand = new RelayCommand(ValidateAllDocumentation, CanValidateAllDocumentation);
         CloseBottomPanelCommand = new RelayCommand(CloseBottomPanel);
         ShowLogsCommand = new RelayCommand(ShowLogOutput);
         ShowErrorsCommand = new RelayCommand(ShowErrorOutput);
@@ -120,6 +121,8 @@ public class MainWindowViewModel : ViewModelBase
     public ICommand BuildDocumentationCommand { get; }
     
     public ICommand ValidateCommand { get; }
+    
+    public ICommand ValidateAllCommand { get; }
     
     public ICommand CloseBottomPanelCommand { get; }
     
@@ -400,6 +403,65 @@ public class MainWindowViewModel : ViewModelBase
     private bool CanValidateDocumentation()
     {
         return ActiveTab != null;
+    }
+
+    private async void ValidateAllDocumentation()
+    {
+        _logger.LogInformation("Validate all documentation requested");
+
+        try
+        {
+            // Collect all template and source files from the project directory
+            var (templateFiles, sourceFiles) = await _markdownFileCollectorService.CollectAllMarkdownFilesAsync(_applicationOptions.DefaultProjectFolder);
+            
+            if (!templateFiles.Any())
+            {
+                _logger.LogWarning("No template files found for validation");
+                return;
+            }
+
+            _logger.LogInformation("Validating {TemplateCount} template files and {SourceCount} source files", 
+                templateFiles.Count(), sourceFiles.Count());
+            
+            // Validate all templates
+            var validationResult = _markdownCombinationService.ValidateAll(templateFiles, sourceFiles);
+            
+            // Store validation results for UI highlighting
+            CurrentValidationResult = validationResult;
+            
+            // Update error panel with validation results
+            UpdateErrorPanelWithValidationResults(validationResult);
+            
+            // Log validation results
+            if (validationResult.IsValid)
+            {
+                _logger.LogInformation("Validation successful for all {TemplateCount} template files", templateFiles.Count());
+            }
+            else
+            {
+                _logger.LogWarning("Validation failed. Found {ErrorCount} errors and {WarningCount} warnings across all template files.", 
+                    validationResult.Errors.Count, validationResult.Warnings.Count);
+                    
+                foreach (var error in validationResult.Errors)
+                {
+                    _logger.LogError("Validation error: {Message} at line {LineNumber}", error.Message, error.LineNumber);
+                }
+                
+                foreach (var warning in validationResult.Warnings)
+                {
+                    _logger.LogWarning("Validation warning: {Message} at line {LineNumber}", warning.Message, warning.LineNumber);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during validation of all documentation files");
+        }
+    }
+
+    private bool CanValidateAllDocumentation()
+    {
+        return true; // Can always validate all files
     }
 
     private void InitializeBottomPanelTabs()

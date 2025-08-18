@@ -761,4 +761,161 @@ public class MarkdownCombinationServiceTests
     }
 
     #endregion
+
+    #region ValidateAll Tests
+
+    [Test]
+    public void ValidateAll_WithNullTemplateDocuments_ThrowsArgumentNullException()
+    {
+        // Arrange
+        var sourceDocuments = new List<MarkdownDocument>();
+
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() => _service.ValidateAll(null, sourceDocuments));
+    }
+
+    [Test]
+    public void ValidateAll_WithNullSourceDocuments_ThrowsArgumentNullException()
+    {
+        // Arrange
+        var templateDocuments = new List<MarkdownDocument>();
+
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() => _service.ValidateAll(templateDocuments, null));
+    }
+
+    [Test]
+    public void ValidateAll_WithEmptyTemplateDocuments_ReturnsValidResult()
+    {
+        // Arrange
+        var templateDocuments = new List<MarkdownDocument>();
+        var sourceDocuments = new List<MarkdownDocument>
+        {
+            new("source1.mdsrc", "Content 1")
+        };
+
+        // Act
+        var result = _service.ValidateAll(templateDocuments, sourceDocuments);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsValid, Is.True);
+            Assert.That(result.Errors, Is.Empty);
+            Assert.That(result.Warnings, Is.Empty);
+        });
+    }
+
+    [Test]
+    public void ValidateAll_WithValidTemplateDocuments_ReturnsValidResult()
+    {
+        // Arrange
+        var templateDocuments = new List<MarkdownDocument>
+        {
+            new("template1.mdext", "# Template 1\n<MarkDownExtension operation=\"insert\" file=\"source1.mdsrc\" />"),
+            new("template2.mdext", "# Template 2\n<MarkDownExtension operation=\"insert\" file=\"source2.mdsrc\" />")
+        };
+        var sourceDocuments = new List<MarkdownDocument>
+        {
+            new("source1.mdsrc", "Content 1"),
+            new("source2.mdsrc", "Content 2")
+        };
+
+        // Act
+        var result = _service.ValidateAll(templateDocuments, sourceDocuments);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsValid, Is.True);
+            Assert.That(result.Errors, Is.Empty);
+            Assert.That(result.Warnings, Is.Empty);
+        });
+    }
+
+    [Test]
+    public void ValidateAll_WithErrorsInMultipleTemplates_CombinesAllErrors()
+    {
+        // Arrange
+        var templateDocuments = new List<MarkdownDocument>
+        {
+            new("template1.mdext", "# Template 1\n<MarkDownExtension operation=\"insert\" file=\"missing1.mdsrc\" />"),
+            new("template2.mdext", "# Template 2\n<MarkDownExtension operation=\"insert\" file=\"missing2.mdsrc\" />")
+        };
+        var sourceDocuments = new List<MarkdownDocument>
+        {
+            new("available.mdsrc", "Available content")
+        };
+
+        // Act
+        var result = _service.ValidateAll(templateDocuments, sourceDocuments);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsValid, Is.False);
+            Assert.That(result.Errors, Has.Count.EqualTo(2));
+            Assert.That(result.Errors[0].Message, Is.EqualTo("[template1.mdext] Source document not found: 'missing1.mdsrc'"));
+            Assert.That(result.Errors[1].Message, Is.EqualTo("[template2.mdext] Source document not found: 'missing2.mdsrc'"));
+            Assert.That(result.Warnings, Is.Empty);
+        });
+    }
+
+    [Test]
+    public void ValidateAll_WithMixedValidAndInvalidTemplates_ReturnsOnlyErrors()
+    {
+        // Arrange
+        var templateDocuments = new List<MarkdownDocument>
+        {
+            new("valid.mdext", "# Valid Template\n<MarkDownExtension operation=\"insert\" file=\"source1.mdsrc\" />"),
+            new("invalid.mdext", "# Invalid Template\n<MarkDownExtension operation=\"insert\" file=\"missing.mdsrc\" />")
+        };
+        var sourceDocuments = new List<MarkdownDocument>
+        {
+            new("source1.mdsrc", "Available content")
+        };
+
+        // Act
+        var result = _service.ValidateAll(templateDocuments, sourceDocuments);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsValid, Is.False);
+            Assert.That(result.Errors, Has.Count.EqualTo(1));
+            Assert.That(result.Errors[0].Message, Is.EqualTo("[invalid.mdext] Source document not found: 'missing.mdsrc'"));
+            Assert.That(result.Warnings, Is.Empty);
+        });
+    }
+
+    [Test]
+    public void ValidateAll_WithWarningsInMultipleTemplates_CombinesAllWarnings()
+    {
+        // Arrange
+        var templateDocuments = new List<MarkdownDocument>
+        {
+            new("template1.mdext", "# Template 1\n<MarkDownExtension operation=\"insert\" file=\"source1.mdsrc\" />\n<MarkDownExtension operation=\"insert\" file=\"source1.mdsrc\" />"),
+            new("template2.mdext", "# Template 2\n<MarkDownExtension operation=\"insert\" file=\"source2.mdsrc\" />\n<MarkDownExtension operation=\"insert\" file=\"source2.mdsrc\" />")
+        };
+        var sourceDocuments = new List<MarkdownDocument>
+        {
+            new("source1.mdsrc", "Content 1"),
+            new("source2.mdsrc", "Content 2")
+        };
+
+        // Act
+        var result = _service.ValidateAll(templateDocuments, sourceDocuments);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsValid, Is.True); // Warnings don't make it invalid
+            Assert.That(result.Errors, Is.Empty);
+            Assert.That(result.Warnings, Has.Count.EqualTo(2));
+            Assert.That(result.Warnings[0].Message, Does.StartWith("[template1.mdext] Duplicate MarkDownExtension directive found"));
+            Assert.That(result.Warnings[1].Message, Does.StartWith("[template2.mdext] Duplicate MarkDownExtension directive found"));
+        });
+    }
+
+    #endregion
 }

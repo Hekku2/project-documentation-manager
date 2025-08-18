@@ -28,4 +28,14 @@ public interface IMarkdownCombinationService
     ValidationResult Validate(
         MarkdownDocument templateDocument,
         IEnumerable<MarkdownDocument> sourceDocuments);
+
+    /// <summary>
+    /// Validates multiple template documents for insert directive correctness
+    /// </summary>
+    /// <param name="templateDocuments">Template documents to validate</param>
+    /// <param name="sourceDocuments">Available source documents for validation</param>
+    /// <returns>Combined validation result with errors and warnings from all templates</returns>
+    ValidationResult ValidateAll(
+        IEnumerable<MarkdownDocument> templateDocuments,
+        IEnumerable<MarkdownDocument> sourceDocuments);
 }

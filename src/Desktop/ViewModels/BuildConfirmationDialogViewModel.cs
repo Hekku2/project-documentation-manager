@@ -132,57 +132,27 @@ public class BuildConfirmationDialogViewModel : ViewModelBase
     private async Task<List<string>> ValidateTemplatesAsync(IEnumerable<MarkdownDocument> templateFiles, IEnumerable<MarkdownDocument> sourceFiles)
     {
         var validationErrors = new List<string>();
-        var allErrors = new List<ValidationIssue>();
-        var allWarnings = new List<ValidationIssue>();
-        var sourceFilesList = sourceFiles.ToList();
+        
+        ValidationResult combinedValidationResult = null!;
         
         await Task.Run(() =>
         {
-            foreach (var template in templateFiles)
+            // Use the new ValidateAll method for better efficiency
+            combinedValidationResult = _combinationService.ValidateAll(templateFiles, sourceFiles);
+            
+            // Create error list for build failure checking
+            foreach (var error in combinedValidationResult.Errors)
             {
-                _logger.LogDebug("Validating template: {TemplateFileName}", template.FileName);
-                
-                var validationResult = _combinationService.Validate(template, sourceFilesList);
-                
-                foreach (var error in validationResult.Errors)
-                {
-                    var errorMessage = $"{template.FileName}:{error.LineNumber} - {error.Message}";
-                    validationErrors.Add(errorMessage);
-                    _logger.LogError("Validation error in {TemplateFileName}: {ErrorMessage}", template.FileName, error.Message);
-                    
-                    // Add template filename context to the error for the error view
-                    allErrors.Add(new ValidationIssue
-                    {
-                        Message = $"[{template.FileName}] {error.Message}",
-                        DirectivePath = error.DirectivePath,
-                        LineNumber = error.LineNumber,
-                        SourceContext = error.SourceContext
-                    });
-                }
-                
-                foreach (var warning in validationResult.Warnings)
-                {
-                    var warningMessage = $"{template.FileName}:{warning.LineNumber} - {warning.Message}";
-                    _logger.LogWarning("Validation warning in {TemplateFileName}: {WarningMessage}", template.FileName, warning.Message);
-                    
-                    // Add template filename context to the warning for the error view
-                    allWarnings.Add(new ValidationIssue
-                    {
-                        Message = $"[{template.FileName}] {warning.Message}",
-                        DirectivePath = warning.DirectivePath,
-                        LineNumber = warning.LineNumber,
-                        SourceContext = warning.SourceContext
-                    });
-                }
+                var errorMessage = $"{error.LineNumber} - {error.Message}";
+                validationErrors.Add(errorMessage);
+                _logger.LogError("Validation error: {ErrorMessage}", error.Message);
+            }
+            
+            foreach (var warning in combinedValidationResult.Warnings)
+            {
+                _logger.LogWarning("Validation warning: {WarningMessage}", warning.Message);
             }
         });
-        
-        // Create a combined validation result for the error view
-        var combinedValidationResult = new ValidationResult
-        {
-            Errors = allErrors,
-            Warnings = allWarnings
-        };
         
         // Emit validation results for the error view
         ValidationResultsAvailable?.Invoke(this, combinedValidationResult);

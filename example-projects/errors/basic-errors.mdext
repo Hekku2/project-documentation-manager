@@ -1,0 +1,15 @@
+# Error showcase
+
+This file is meant to be used as a testcase for showing errors
+
+Missing operation attribute
+<MarkDownExtension file="common/common.mdsrc" />
+
+Unknown operation attribute
+<MarkDownExtension operation="no-operation-like this" />
+
+Missing file attribute
+<MarkDownExtension operation="insert" />
+
+Missing file
+<MarkDownExtension operation="insert" file="im-not-found.mdsrc" />

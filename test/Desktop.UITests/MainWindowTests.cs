@@ -1055,6 +1055,8 @@ public class MainWindowTests
             .Returns((templateFiles, sourceFiles));
         mockCombination.Validate(Arg.Any<MarkdownDocument>(), Arg.Any<IEnumerable<MarkdownDocument>>())
             .Returns(new ValidationResult());
+        mockCombination.ValidateAll(Arg.Any<IEnumerable<MarkdownDocument>>(), Arg.Any<IEnumerable<MarkdownDocument>>())
+            .Returns(new ValidationResult());
         mockCombination.BuildDocumentation(templateFiles, sourceFiles)
             .Returns(processedDocuments);
         mockFileWriter.WriteDocumentsToFolderAsync(processedDocuments, "/test/project/output")
@@ -1082,7 +1084,7 @@ public class MainWindowTests
 
             // Verify services were called correctly
             mockFileCollector.Received(1).CollectAllMarkdownFilesAsync("/test/project");
-            mockCombination.Received(2).Validate(Arg.Any<MarkdownDocument>(), Arg.Any<IEnumerable<MarkdownDocument>>());
+            mockCombination.Received(1).ValidateAll(Arg.Any<IEnumerable<MarkdownDocument>>(), Arg.Any<IEnumerable<MarkdownDocument>>());
             mockCombination.Received(1).BuildDocumentation(templateFiles, sourceFiles);
             mockFileWriter.Received(1).WriteDocumentsToFolderAsync(processedDocuments, "/test/project/output");
         });
@@ -1513,6 +1515,82 @@ public class MainWindowTests
             {
                 Assert.That(errorTab.IsActive, Is.False, "Error tab should not be active when validation passes");
             }
+        });
+    }
+
+    [AvaloniaTest]
+    public async Task MainWindow_Should_Have_ValidateAllCommand()
+    {
+        var window = CreateMainWindow();
+        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(viewModel.ValidateAllCommand, Is.Not.Null, "ValidateAllCommand should exist");
+            Assert.That(viewModel.ValidateAllCommand.CanExecute(null), Is.True, "ValidateAllCommand should be executable");
+        });
+    }
+
+    [AvaloniaTest]
+    public async Task MainWindow_ValidateAllCommand_Should_Process_All_Templates()
+    {
+        var window = CreateMainWindow();
+        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
+
+        // Mock template and source files
+        var templateFiles = new[]
+        {
+            new MarkdownDocument("template1.mdext", "# Template 1")
+        };
+        var sourceFiles = new[]
+        {
+            new MarkdownDocument("source1.mdsrc", "Source content")
+        };
+
+        // Mock the file collector service
+        var mockFileCollector = Substitute.For<IMarkdownFileCollectorService>();
+        mockFileCollector.CollectAllMarkdownFilesAsync(Arg.Any<string>())
+            .Returns((templateFiles, sourceFiles));
+
+        // Mock the markdown combination service to return validation results
+        var mockValidationResult = new ValidationResult
+        {
+            Errors = new List<ValidationIssue>
+            {
+                new ValidationIssue { Message = "[template1.mdext] Test error", LineNumber = 1 }
+            }
+        };
+
+        var mockCombinationService = Substitute.For<IMarkdownCombinationService>();
+        mockCombinationService.ValidateAll(Arg.Any<IEnumerable<MarkdownDocument>>(), Arg.Any<IEnumerable<MarkdownDocument>>())
+            .Returns(mockValidationResult);
+
+        // Replace the services using reflection to inject our mocks
+        var fileCollectorField = viewModel.GetType().GetField("_markdownFileCollectorService", 
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        fileCollectorField!.SetValue(viewModel, mockFileCollector);
+
+        var combinationServiceField = viewModel.GetType().GetField("_markdownCombinationService", 
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        combinationServiceField!.SetValue(viewModel, mockCombinationService);
+
+        // Execute the validate all command
+        viewModel.ValidateAllCommand.Execute(null);
+
+        // Wait a moment for async operation to complete
+        await WaitForConditionAsync(() => viewModel.IsBottomPanelVisible, 1000);
+
+        Assert.Multiple(() =>
+        {
+            // Verify that services were called
+            mockFileCollector.Received(1).CollectAllMarkdownFilesAsync(Arg.Any<string>());
+            mockCombinationService.Received(1).ValidateAll(Arg.Any<IEnumerable<MarkdownDocument>>(), Arg.Any<IEnumerable<MarkdownDocument>>());
+            
+            // Verify that error panel is shown with validation results
+            Assert.That(viewModel.IsBottomPanelVisible, Is.True, "Bottom panel should be visible for errors");
+            Assert.That(viewModel.ActiveBottomTab, Is.Not.Null, "Active bottom tab should exist");
+            Assert.That(viewModel.ActiveBottomTab!.Title, Is.EqualTo("Errors"), "Error tab should be active");
+            Assert.That(viewModel.ActiveBottomTab.Content, Does.Contain("[template1.mdext] Test error"), "Should contain validation error");
         });
     }
 }
