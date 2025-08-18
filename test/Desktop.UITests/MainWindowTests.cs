@@ -1641,4 +1641,36 @@ public class MainWindowTests
             // which would require more complex UI testing. The key point is that CurrentFileName is bound correctly.
         });
     }
+
+    [AvaloniaTest]
+    public async Task MainWindow_ActiveFileName_Updates_When_Switching_Tabs()
+    {
+        var window = CreateMainWindow();
+        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
+
+        // Open two files with different names
+        await viewModel.OpenFileAsync("/test/path/file1.mdext");
+        await viewModel.OpenFileAsync("/test/path/file2.mdext");
+
+        // Verify file2 is currently active
+        Assert.That(viewModel.ActiveFileName, Is.EqualTo("file2.mdext"), "Should be file2 initially");
+
+        // Switch to file1
+        var file1Tab = viewModel.EditorTabs.FirstOrDefault(t => t.FilePath == "/test/path/file1.mdext");
+        Assert.That(file1Tab, Is.Not.Null, "File1 tab should exist");
+        
+        viewModel.SetActiveTab(file1Tab!);
+
+        // Verify ActiveFileName updated
+        Assert.That(viewModel.ActiveFileName, Is.EqualTo("file1.mdext"), "Should be file1 after switching");
+
+        // Switch back to file2
+        var file2Tab = viewModel.EditorTabs.FirstOrDefault(t => t.FilePath == "/test/path/file2.mdext");
+        Assert.That(file2Tab, Is.Not.Null, "File2 tab should exist");
+        
+        viewModel.SetActiveTab(file2Tab!);
+
+        // Verify ActiveFileName updated again
+        Assert.That(viewModel.ActiveFileName, Is.EqualTo("file2.mdext"), "Should be file2 after switching back");
+    }
 }

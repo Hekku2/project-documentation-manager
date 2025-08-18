@@ -245,8 +245,9 @@ public class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(ActiveFileContent));
         OnPropertyChanged(nameof(ActiveFileName));
         
-        // Clear validation results when switching files
-        CurrentValidationResult = null;
+        
+        // Note: Don't clear validation results when switching files 
+        // so that red underlining can be shown for files with existing validation errors
         
         // Update command states
         ((RelayCommand)ValidateCommand).RaiseCanExecuteChanged();
