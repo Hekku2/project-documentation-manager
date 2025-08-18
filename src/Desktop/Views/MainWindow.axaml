@@ -215,6 +215,7 @@
                             <controls:ValidationErrorOverlay 
                                 ValidationResult="{Binding CurrentValidationResult}"
                                 TargetTextBox="{Binding #DocumentEditor}"
+                                CurrentFileName="{Binding ActiveFileName}"
                                 IsHitTestVisible="False" />
                         </Grid>
                     </ScrollViewer>

@@ -115,6 +115,8 @@ public class MainWindowViewModel : ViewModelBase
         get => _currentValidationResult;
         private set => SetProperty(ref _currentValidationResult, value);
     }
+
+    public string? ActiveFileName => ActiveTab != null ? System.IO.Path.GetFileName(ActiveTab.FilePath) : null;
     
     public ICommand ExitCommand { get; }
     
@@ -241,6 +243,7 @@ public class MainWindowViewModel : ViewModelBase
         tab.IsActive = true;
         ActiveTab = tab;
         OnPropertyChanged(nameof(ActiveFileContent));
+        OnPropertyChanged(nameof(ActiveFileName));
         
         // Clear validation results when switching files
         CurrentValidationResult = null;
@@ -281,6 +284,7 @@ public class MainWindowViewModel : ViewModelBase
                 ActiveTab.IsActive = true;
             }
             OnPropertyChanged(nameof(ActiveFileContent));
+            OnPropertyChanged(nameof(ActiveFileName));
             
             // Update command states when active tab changes
             ((RelayCommand)ValidateCommand).RaiseCanExecuteChanged();

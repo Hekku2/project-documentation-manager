@@ -16,6 +16,9 @@ public class ValidationErrorOverlay : Control
     public static readonly StyledProperty<TextBox?> TargetTextBoxProperty =
         AvaloniaProperty.Register<ValidationErrorOverlay, TextBox?>(nameof(TargetTextBox));
 
+    public static readonly StyledProperty<string?> CurrentFileNameProperty =
+        AvaloniaProperty.Register<ValidationErrorOverlay, string?>(nameof(CurrentFileName));
+
     public ValidationResult? ValidationResult
     {
         get => GetValue(ValidationResultProperty);
@@ -28,10 +31,17 @@ public class ValidationErrorOverlay : Control
         set => SetValue(TargetTextBoxProperty, value);
     }
 
+    public string? CurrentFileName
+    {
+        get => GetValue(CurrentFileNameProperty);
+        set => SetValue(CurrentFileNameProperty, value);
+    }
+
     static ValidationErrorOverlay()
     {
         ValidationResultProperty.Changed.AddClassHandler<ValidationErrorOverlay>(OnValidationResultChanged);
         TargetTextBoxProperty.Changed.AddClassHandler<ValidationErrorOverlay>(OnTargetTextBoxChanged);
+        CurrentFileNameProperty.Changed.AddClassHandler<ValidationErrorOverlay>(OnCurrentFileNameChanged);
     }
 
     private static void OnValidationResultChanged(ValidationErrorOverlay overlay, AvaloniaPropertyChangedEventArgs e)
@@ -51,6 +61,11 @@ public class ValidationErrorOverlay : Control
             newTextBox.PropertyChanged += overlay.OnTextBoxPropertyChanged;
         }
 
+        overlay.InvalidateVisual();
+    }
+
+    private static void OnCurrentFileNameChanged(ValidationErrorOverlay overlay, AvaloniaPropertyChangedEventArgs e)
+    {
         overlay.InvalidateVisual();
     }
 
@@ -78,7 +93,10 @@ public class ValidationErrorOverlay : Control
         if (TargetTextBox?.Text == null)
             return;
 
-        var errorLines = ValidationResult!.Errors
+        // Filter errors to only show those for the current file
+        var filteredErrors = ValidationResult!.Errors.Where(error => ShouldShowError(error)).ToList();
+        
+        var errorLines = filteredErrors
             .Where(e => e.LineNumber.HasValue)
             .Select(e => e.LineNumber!.Value)
             .Distinct()
@@ -127,5 +145,26 @@ public class ValidationErrorOverlay : Control
 
             currentY += lineHeight;
         }
+    }
+
+    private bool ShouldShowError(ValidationIssue error)
+    {
+        // If no current file name is set, show all errors (backward compatibility)
+        if (string.IsNullOrEmpty(CurrentFileName))
+            return true;
+
+        // If the error message starts with [filename], check if it matches the current file
+        if (error.Message.StartsWith('['))
+        {
+            var endBracket = error.Message.IndexOf(']');
+            if (endBracket > 1)
+            {
+                var errorFileName = error.Message[1..endBracket];
+                return string.Equals(errorFileName, CurrentFileName, StringComparison.OrdinalIgnoreCase);
+            }
+        }
+
+        // For errors without filename prefix (single file validation), always show
+        return true;
     }
 }
