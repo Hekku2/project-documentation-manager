@@ -1708,4 +1708,144 @@ public class MainWindowTests
         // Verify ActiveFileName updated again
         Assert.That(viewModel.ActiveFileName, Is.EqualTo("file2.mdext"), "Should be file2 after switching back");
     }
+
+    [AvaloniaTest]
+    public async Task MainWindow_Should_Reuse_Existing_Tab_When_Same_File_Opened_Multiple_Times()
+    {
+        var window = CreateMainWindowWithNestedStructure();
+        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
+
+        // Expand the root to get the README.md file
+        await ExpandFolderAndWaitAsync(viewModel.RootItem!);
+
+        var readmeFile = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "README.md");
+        Assert.That(readmeFile, Is.Not.Null, "README.md file should exist");
+
+        // Initially no tabs should be open
+        Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(0), "No tabs should be open initially");
+
+        // First, open the file via tree view selection
+        await SelectFileAndWaitForTabAsync(readmeFile!, viewModel);
+
+        // Verify tab was created
+        Assert.Multiple(() =>
+        {
+            Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(1), "One tab should be open after first selection");
+            
+            var tab = viewModel.EditorTabs.First();
+            Assert.That(tab.Title, Is.EqualTo("README.md"), "Tab title should be README.md");
+            Assert.That(tab.FilePath, Is.EqualTo("/test/path/README.md"), "Tab file path should be correct");
+            Assert.That(tab.IsActive, Is.True, "Tab should be active");
+            Assert.That(viewModel.ActiveTab, Is.EqualTo(tab), "Active tab should be set");
+        });
+
+        var originalTab = viewModel.EditorTabs.First();
+        var originalTabId = originalTab.Id;
+
+        // Now simulate opening the same file via error navigation or other method
+        // by calling OpenFileAsync directly with the same file path
+        await viewModel.OpenFileAsync("/test/path/README.md");
+
+        Assert.Multiple(() =>
+        {
+            // Should still have only one tab (not duplicated)
+            Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(1), "Should still have only one tab after second open");
+            
+            // Should be the same tab instance
+            var currentTab = viewModel.EditorTabs.First();
+            Assert.That(currentTab.Id, Is.EqualTo(originalTabId), "Should be the same tab instance");
+            Assert.That(currentTab, Is.EqualTo(originalTab), "Should be the exact same tab object");
+            
+            // Tab should still be active
+            Assert.That(currentTab.IsActive, Is.True, "Tab should remain active");
+            Assert.That(viewModel.ActiveTab, Is.EqualTo(currentTab), "Active tab should remain the same");
+        });
+
+        // Test with different path representations that should resolve to the same file
+        // Test with path that has extra slashes or path separators
+        var pathWithExtraSlashes = "/test/path//README.md";
+        await viewModel.OpenFileAsync(pathWithExtraSlashes);
+
+        Assert.Multiple(() =>
+        {
+            // Should still have only one tab since paths normalize to the same file
+            Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(1), "Should still have only one tab after opening with extra slashes");
+            Assert.That(viewModel.EditorTabs.First().Id, Is.EqualTo(originalTabId), "Should still be the same tab");
+            
+            // Active tab should remain unchanged
+            Assert.That(viewModel.ActiveTab, Is.EqualTo(originalTab), "Active tab should remain the same");
+            Assert.That(viewModel.ActiveTab!.IsActive, Is.True, "Active tab should still be active");
+        });
+
+        // Test with path that has redundant path components (../)
+        var pathWithDotDot = "/test/other/../path/README.md";
+        await viewModel.OpenFileAsync(pathWithDotDot);
+
+        Assert.Multiple(() =>
+        {
+            // Should still have only one tab since paths normalize to the same file
+            Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(1), "Should still have only one tab after opening with ../ path");
+            Assert.That(viewModel.EditorTabs.First().Id, Is.EqualTo(originalTabId), "Should still be the same tab");
+            
+            // Active tab should remain unchanged
+            Assert.That(viewModel.ActiveTab, Is.EqualTo(originalTab), "Active tab should remain the same");
+            Assert.That(viewModel.ActiveTab!.IsActive, Is.True, "Active tab should still be active");
+        });
+    }
+
+    [AvaloniaTest] 
+    public async Task MainWindow_Should_Handle_Case_Insensitive_Path_Deduplication()
+    {
+        var window = CreateMainWindowWithNestedStructure();
+        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
+
+        // First open a file with lowercase path
+        await viewModel.OpenFileAsync("/test/path/readme.md");
+
+        Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(1), "One tab should be open");
+        var originalTab = viewModel.EditorTabs.First();
+        var originalTabId = originalTab.Id;
+
+        // Try opening with different case - should reuse existing tab
+        await viewModel.OpenFileAsync("/test/path/README.md");
+        await viewModel.OpenFileAsync("/TEST/PATH/README.MD");
+        
+        Assert.Multiple(() =>
+        {
+            // Should still have only one tab
+            Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(1), "Should have only one tab despite different case paths");
+            Assert.That(viewModel.EditorTabs.First().Id, Is.EqualTo(originalTabId), "Should be the same tab");
+            Assert.That(viewModel.ActiveTab, Is.EqualTo(originalTab), "Active tab should remain the same");
+        });
+    }
+
+    [AvaloniaTest]
+    public async Task MainWindow_Should_Create_Separate_Tabs_For_Different_Files()
+    {
+        var window = CreateMainWindowWithNestedStructure();
+        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
+
+        // Open first file
+        await viewModel.OpenFileAsync("/test/path/README.md");
+        Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(1), "One tab should be open for first file");
+        
+        // Open second file - should create a new tab
+        await viewModel.OpenFileAsync("/test/path/different-file.md");
+        
+        Assert.Multiple(() =>
+        {
+            // Should have two tabs for different files
+            Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(2), "Should have two tabs for different files");
+            
+            var readmeTab = viewModel.EditorTabs.FirstOrDefault(t => t.FilePath.Contains("README.md"));
+            var differentTab = viewModel.EditorTabs.FirstOrDefault(t => t.FilePath.Contains("different-file.md"));
+            
+            Assert.That(readmeTab, Is.Not.Null, "README tab should exist");
+            Assert.That(differentTab, Is.Not.Null, "Different file tab should exist");
+            Assert.That(readmeTab!.Id, Is.Not.EqualTo(differentTab!.Id), "Tabs should have different IDs");
+            
+            // The most recently opened file should be active
+            Assert.That(viewModel.ActiveTab, Is.EqualTo(differentTab), "Most recently opened file should be active");
+        });
+    }
 }

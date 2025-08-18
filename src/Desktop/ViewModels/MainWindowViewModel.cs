@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Microsoft.Extensions.Logging;
@@ -187,8 +188,12 @@ public class MainWindowViewModel : ViewModelBase
         if (string.IsNullOrWhiteSpace(filePath))
             return;
 
-        // Check if tab already exists
-        var existingTab = EditorTabs.FirstOrDefault(t => t.FilePath == filePath);
+        // Normalize the file path for comparison
+        var normalizedFilePath = Path.GetFullPath(filePath);
+
+        // Check if tab already exists using normalized path comparison
+        var existingTab = EditorTabs.FirstOrDefault(t => 
+            string.Equals(Path.GetFullPath(t.FilePath), normalizedFilePath, StringComparison.OrdinalIgnoreCase));
         if (existingTab != null)
         {
             SetActiveTab(existingTab);
@@ -211,7 +216,7 @@ public class MainWindowViewModel : ViewModelBase
             {
                 Id = Guid.NewGuid().ToString(),
                 Title = fileName,
-                FilePath = filePath,
+                FilePath = normalizedFilePath,
                 Content = content,
                 IsModified = false,
                 IsActive = true
