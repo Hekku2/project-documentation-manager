@@ -4,5 +4,3 @@ File 2 contents
 
  * File 2 feature
  * Common source
-
-<!-- Missing source: common/commondsadsadsad.mdsrc -->
