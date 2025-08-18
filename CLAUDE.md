@@ -173,6 +173,12 @@ The application implements a sophisticated logging architecture:
 - When adding new features, consider if new tests are needed and update existing tests that may be affected
 - Test failures indicate either bugs in the code or outdated test expectations that need updating
 
+### Code Validation Process
+- **Build Validation**: Use `dotnet build` to verify code compiles without errors
+- **Test Validation**: Use `dotnet test` to ensure functionality works as expected
+- **DO NOT**: Run the desktop application (`dotnet run --project src/Desktop/Desktop.csproj`) for validation purposes
+- The desktop application is for manual testing and demonstration, not automated validation
+
 ## important-instruction-reminders
 Do what has been asked; nothing more, nothing less.
 NEVER create files unless they're absolutely necessary for achieving your goal.
