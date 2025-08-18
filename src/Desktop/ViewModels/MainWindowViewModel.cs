@@ -511,7 +511,7 @@ public class MainWindowViewModel : ViewModelBase
         _logger.LogInformation("Error output tab shown");
     }
 
-    private void UpdateErrorPanelWithValidationResults(ValidationResult validationResult)
+    public void UpdateErrorPanelWithValidationResults(ValidationResult validationResult)
     {
         var errorTab = GetOrCreateBottomTab("errors", "Errors");
         

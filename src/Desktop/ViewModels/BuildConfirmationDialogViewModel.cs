@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -7,6 +8,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 using Desktop.Configuration;
 using Business.Services;
+using Business.Models;
 
 namespace Desktop.ViewModels;
 
@@ -64,6 +66,7 @@ public class BuildConfirmationDialogViewModel : ViewModelBase
     public ICommand SaveCommand { get; }
 
     public event EventHandler? DialogClosed;
+    public event EventHandler<ValidationResult>? ValidationResultsAvailable;
 
     private void OnCancel()
     {
@@ -96,6 +99,16 @@ public class BuildConfirmationDialogViewModel : ViewModelBase
             _logger.LogInformation("Found {TemplateCount} template files and {SourceCount} source files", 
                 templateFiles.Count(), sourceFiles.Count());
             
+            BuildStatus = "Validating templates...";
+            var validationErrors = await ValidateTemplatesAsync(templateFiles, sourceFiles);
+            
+            if (validationErrors.Any())
+            {
+                BuildStatus = $"Build failed: {validationErrors.Count} validation errors found.";
+                _logger.LogError("Build aborted due to validation errors. Fix the errors and try again.");
+                return;
+            }
+            
             BuildStatus = "Processing templates...";
             var processedDocuments = _combinationService.BuildDocumentation(templateFiles, sourceFiles);
             
@@ -114,5 +127,75 @@ public class BuildConfirmationDialogViewModel : ViewModelBase
         {
             IsBuildInProgress = false;
         }
+    }
+
+    private async Task<List<string>> ValidateTemplatesAsync(IEnumerable<MarkdownDocument> templateFiles, IEnumerable<MarkdownDocument> sourceFiles)
+    {
+        var validationErrors = new List<string>();
+        var allErrors = new List<ValidationIssue>();
+        var allWarnings = new List<ValidationIssue>();
+        var sourceFilesList = sourceFiles.ToList();
+        
+        await Task.Run(() =>
+        {
+            foreach (var template in templateFiles)
+            {
+                _logger.LogDebug("Validating template: {TemplateFileName}", template.FileName);
+                
+                var validationResult = _combinationService.Validate(template, sourceFilesList);
+                
+                foreach (var error in validationResult.Errors)
+                {
+                    var errorMessage = $"{template.FileName}:{error.LineNumber} - {error.Message}";
+                    validationErrors.Add(errorMessage);
+                    _logger.LogError("Validation error in {TemplateFileName}: {ErrorMessage}", template.FileName, error.Message);
+                    
+                    // Add template filename context to the error for the error view
+                    allErrors.Add(new ValidationIssue
+                    {
+                        Message = $"[{template.FileName}] {error.Message}",
+                        DirectivePath = error.DirectivePath,
+                        LineNumber = error.LineNumber,
+                        SourceContext = error.SourceContext
+                    });
+                }
+                
+                foreach (var warning in validationResult.Warnings)
+                {
+                    var warningMessage = $"{template.FileName}:{warning.LineNumber} - {warning.Message}";
+                    _logger.LogWarning("Validation warning in {TemplateFileName}: {WarningMessage}", template.FileName, warning.Message);
+                    
+                    // Add template filename context to the warning for the error view
+                    allWarnings.Add(new ValidationIssue
+                    {
+                        Message = $"[{template.FileName}] {warning.Message}",
+                        DirectivePath = warning.DirectivePath,
+                        LineNumber = warning.LineNumber,
+                        SourceContext = warning.SourceContext
+                    });
+                }
+            }
+        });
+        
+        // Create a combined validation result for the error view
+        var combinedValidationResult = new ValidationResult
+        {
+            Errors = allErrors,
+            Warnings = allWarnings
+        };
+        
+        // Emit validation results for the error view
+        ValidationResultsAvailable?.Invoke(this, combinedValidationResult);
+        
+        if (validationErrors.Any())
+        {
+            _logger.LogError("Validation completed with {ErrorCount} errors", validationErrors.Count);
+        }
+        else
+        {
+            _logger.LogInformation("Validation completed successfully with no errors");
+        }
+        
+        return validationErrors;
     }
 }

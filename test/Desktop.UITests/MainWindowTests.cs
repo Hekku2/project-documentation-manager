@@ -1053,12 +1053,18 @@ public class MainWindowTests
 
         mockFileCollector.CollectAllMarkdownFilesAsync("/test/project")
             .Returns((templateFiles, sourceFiles));
+        mockCombination.Validate(Arg.Any<MarkdownDocument>(), Arg.Any<IEnumerable<MarkdownDocument>>())
+            .Returns(new ValidationResult());
         mockCombination.BuildDocumentation(templateFiles, sourceFiles)
             .Returns(processedDocuments);
         mockFileWriter.WriteDocumentsToFolderAsync(processedDocuments, "/test/project/output")
             .Returns(Task.CompletedTask);
 
         var dialogViewModel = new BuildConfirmationDialogViewModel(options, mockFileCollector, mockCombination, mockFileWriter, mockLogger);
+
+        // Track validation results event
+        ValidationResult? receivedValidationResult = null;
+        dialogViewModel.ValidationResultsAvailable += (sender, result) => receivedValidationResult = result;
 
         // Act
         dialogViewModel.SaveCommand.Execute(null);
@@ -1071,9 +1077,12 @@ public class MainWindowTests
         {
             Assert.That(dialogViewModel.CanBuild, Is.True, "Should be able to build again after completion");
             Assert.That(dialogViewModel.BuildStatus, Does.Contain("completed"), "Should show completion status");
+            Assert.That(receivedValidationResult, Is.Not.Null, "ValidationResultsAvailable event should be triggered");
+            Assert.That(receivedValidationResult!.IsValid, Is.True, "Validation should pass with no errors");
 
             // Verify services were called correctly
             mockFileCollector.Received(1).CollectAllMarkdownFilesAsync("/test/project");
+            mockCombination.Received(2).Validate(Arg.Any<MarkdownDocument>(), Arg.Any<IEnumerable<MarkdownDocument>>());
             mockCombination.Received(1).BuildDocumentation(templateFiles, sourceFiles);
             mockFileWriter.Received(1).WriteDocumentsToFolderAsync(processedDocuments, "/test/project/output");
         });
@@ -1446,9 +1455,7 @@ public class MainWindowTests
         viewModel.GetType().GetProperty("CurrentValidationResult")!.SetValue(viewModel, mockValidationResult);
         
         // Manually call the UpdateErrorPanelWithValidationResults method
-        var updateMethod = viewModel.GetType().GetMethod("UpdateErrorPanelWithValidationResults", 
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        updateMethod!.Invoke(viewModel, [mockValidationResult]);
+        viewModel.UpdateErrorPanelWithValidationResults(mockValidationResult);
 
 
         // No delay needed for direct method invocation
@@ -1487,9 +1494,7 @@ public class MainWindowTests
         viewModel.GetType().GetProperty("CurrentValidationResult")!.SetValue(viewModel, mockValidationResult);
         
         // Manually call the UpdateErrorPanelWithValidationResults method
-        var updateMethod = viewModel.GetType().GetMethod("UpdateErrorPanelWithValidationResults", 
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        updateMethod!.Invoke(viewModel, [mockValidationResult]);
+        viewModel.UpdateErrorPanelWithValidationResults(mockValidationResult);
 
 
         // No delay needed for direct method invocation

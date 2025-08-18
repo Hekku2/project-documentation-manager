@@ -6,6 +6,7 @@ using Desktop.Views;
 using Desktop.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Business.Models;
 
 namespace Desktop.Views;
 
@@ -53,8 +54,26 @@ public partial class MainWindow : Window
 
     private void OnShowBuildConfirmationDialog(object? sender, BuildConfirmationDialogViewModel dialogViewModel)
     {
+        // Wire up validation results to the main window's error view
+        dialogViewModel.ValidationResultsAvailable += OnValidationResultsAvailable;
+        
         var dialog = new BuildConfirmationDialog(dialogViewModel);
+        
+        // Clean up the event subscription when dialog closes
+        dialogViewModel.DialogClosed += (s, e) => {
+            dialogViewModel.ValidationResultsAvailable -= OnValidationResultsAvailable;
+        };
+        
         dialog.ShowDialog(this);
+    }
+    
+    private void OnValidationResultsAvailable(object? sender, ValidationResult validationResult)
+    {
+        // Pass validation results to the main window view model for display in error view
+        if (DataContext is MainWindowViewModel mainViewModel)
+        {
+            mainViewModel.UpdateErrorPanelWithValidationResults(validationResult);
+        }
     }
 
 }
