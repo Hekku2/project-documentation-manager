@@ -363,6 +363,7 @@ public class MainWindowViewModel : ViewModelBase
             var templateDocument = new MarkdownDocument
             {
                 FileName = fileName,
+                FilePath = ActiveTab.FilePath,
                 Content = activeFileContent
             };
 

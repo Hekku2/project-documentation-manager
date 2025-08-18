@@ -1039,11 +1039,13 @@ public class MainWindowTests
             new MarkdownDocument
             {
                 FileName = "template1.mdext",
+                FilePath = "/test/template1.mdext",
                 Content = "# Template 1\n<insert source1.mdsrc>"
             },
             new MarkdownDocument
             {
                 FileName = "template2.mdext",
+                FilePath = "/test/template2.mdext",
                 Content = "# Template 2"
             }
         };
@@ -1053,6 +1055,7 @@ public class MainWindowTests
             new MarkdownDocument
             {
                 FileName = "source1.mdsrc",
+                FilePath = "/test/source1.mdsrc",
                 Content = "Source 1 content"
             }
         };
@@ -1062,11 +1065,13 @@ public class MainWindowTests
             new MarkdownDocument
             {
                 FileName = "template1.md",
+                FilePath = "/test/template1.md",
                 Content = "# Template 1\nSource 1 content"
             },
             new MarkdownDocument
             {
                 FileName = "template2.md",
+                FilePath = "/test/template2.md",
                 Content = "# Template 2"
             }
         };
@@ -1563,6 +1568,7 @@ public class MainWindowTests
             new MarkdownDocument
             {
                 FileName = "template1.mdext",
+                FilePath = "/test/template1.mdext",
                 Content = "# Template 1\nSource 1 content"
             }
         };
@@ -1571,6 +1577,7 @@ public class MainWindowTests
             new MarkdownDocument
             {
                 FileName = "source1.mdsrc",
+                FilePath = "/test/source1.mdsrc",
                 Content = "Source content"
             }
         };

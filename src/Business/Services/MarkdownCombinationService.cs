@@ -54,6 +54,7 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
                 var resultDocument = new MarkdownDocument
                 { 
                     FileName = outputFileName,
+                    FilePath = Path.ChangeExtension(template.FilePath, ".md"),
                     Content = processedContent
                 };
                 
@@ -69,6 +70,7 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
                 results.Add(new MarkdownDocument
                 { 
                     FileName = outputFileName,
+                    FilePath = Path.ChangeExtension(template.FilePath, ".md"),
                     Content = template.Content
                 });
             }
