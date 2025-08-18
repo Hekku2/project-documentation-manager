@@ -586,6 +586,10 @@ public class MainWindowViewModel : ViewModelBase
             var errorTab = GetOrCreateBottomTab("errors", "Errors");
             var errorContent = new System.Text.StringBuilder();
             
+            // Clear existing error entries
+            errorTab.ErrorEntries.Clear();
+            
+            // Add errors
             foreach (var error in validationResult.Errors)
             {
                 var lineInfo = error.LineNumber.HasValue ? $" (Line {error.LineNumber})" : "";
@@ -599,8 +603,26 @@ public class MainWindowViewModel : ViewModelBase
                     errorContent.AppendLine($"  Context: {error.SourceContext}");
                 }
                 errorContent.AppendLine();
+                
+                // Create ErrorEntry for navigation
+                // Prefer SourceFile (where error occurs) over DirectivePath (what file is referenced)
+                var navigationPath = error.SourceFile ?? error.DirectivePath;
+                var errorEntry = new ErrorEntry
+                {
+                    Type = "Error",
+                    Message = error.Message,
+                    FilePath = navigationPath,
+                    FileName = !string.IsNullOrEmpty(navigationPath) ? System.IO.Path.GetFileName(navigationPath) : null,
+                    LineNumber = error.LineNumber,
+                    SourceContext = error.SourceContext,
+                    NavigateCommand = !string.IsNullOrEmpty(navigationPath) 
+                        ? new RelayCommand(() => NavigateToFile(navigationPath!))
+                        : null
+                };
+                errorTab.ErrorEntries.Add(errorEntry);
             }
             
+            // Add warnings
             foreach (var warning in validationResult.Warnings)
             {
                 var lineInfo = warning.LineNumber.HasValue ? $" (Line {warning.LineNumber})" : "";
@@ -614,6 +636,23 @@ public class MainWindowViewModel : ViewModelBase
                     errorContent.AppendLine($"  Context: {warning.SourceContext}");
                 }
                 errorContent.AppendLine();
+                
+                // Create ErrorEntry for navigation
+                // Prefer SourceFile (where warning occurs) over DirectivePath (what file is referenced)
+                var navigationPath = warning.SourceFile ?? warning.DirectivePath;
+                var warningEntry = new ErrorEntry
+                {
+                    Type = "Warning",
+                    Message = warning.Message,
+                    FilePath = navigationPath,
+                    FileName = !string.IsNullOrEmpty(navigationPath) ? System.IO.Path.GetFileName(navigationPath) : null,
+                    LineNumber = warning.LineNumber,
+                    SourceContext = warning.SourceContext,
+                    NavigateCommand = !string.IsNullOrEmpty(navigationPath) 
+                        ? new RelayCommand(() => NavigateToFile(navigationPath!))
+                        : null
+                };
+                errorTab.ErrorEntries.Add(warningEntry);
             }
             
             errorTab.Content = errorContent.ToString().TrimEnd();
@@ -622,5 +661,18 @@ public class MainWindowViewModel : ViewModelBase
             SetActiveBottomTab(errorTab);
         }
         // If validation passes, don't create or show the error panel
+    }
+
+    private async void NavigateToFile(string filePath)
+    {
+        try
+        {
+            _logger.LogInformation("Navigating to file from error: {FilePath}", filePath);
+            await OpenFileAsync(filePath);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error navigating to file: {FilePath}", filePath);
+        }
     }
 }

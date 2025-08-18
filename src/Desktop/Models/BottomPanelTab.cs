@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+
 namespace Desktop.Models;
 
 public class BottomPanelTab
@@ -7,4 +9,5 @@ public class BottomPanelTab
     public string Content { get; set; } = string.Empty;
     public bool IsActive { get; set; }
     public bool IsClosable { get; set; } = true;
+    public ObservableCollection<ErrorEntry> ErrorEntries { get; set; } = new();
 }

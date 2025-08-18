@@ -186,6 +186,7 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
                     {
                         Message = "MarkDownExtension directive is missing filename",
                         DirectivePath = fullDirective,
+                        SourceFile = templateDocument.FileName,
                         LineNumber = lineNumber,
                         SourceContext = line.Trim()
                     });
@@ -200,6 +201,7 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
                     {
                         Message = $"MarkDownExtension directive contains invalid filename characters: '{fileName}'",
                         DirectivePath = fileName,
+                        SourceFile = templateDocument.FileName,
                         LineNumber = lineNumber,
                         SourceContext = line.Trim()
                     });
@@ -213,6 +215,7 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
                     {
                         Message = $"Source document not found: '{fileName}'",
                         DirectivePath = fileName,
+                        SourceFile = templateDocument.FileName,
                         LineNumber = lineNumber,
                         SourceContext = line.Trim()
                     });
@@ -226,6 +229,7 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
                     {
                         Message = $"Duplicate MarkDownExtension directive found: '{fullDirective}'",
                         DirectivePath = fileName,
+                        SourceFile = templateDocument.FileName,
                         LineNumber = lineNumber,
                         SourceContext = line.Trim()
                     });
@@ -252,7 +256,8 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
             result.Warnings.Add(new ValidationIssue
             {
                 Message = $"Potential circular reference detected involving file: '{currentFileName}'",
-                DirectivePath = currentFileName
+                DirectivePath = currentFileName,
+                SourceFile = currentFileName
             });
             return;
         }
@@ -307,6 +312,7 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
                 {
                     Message = $"[{template.FileName}] {error.Message}",
                     DirectivePath = error.DirectivePath,
+                    SourceFile = error.SourceFile,
                     LineNumber = error.LineNumber,
                     SourceContext = error.SourceContext
                 });
@@ -318,6 +324,7 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
                 {
                     Message = $"[{template.FileName}] {warning.Message}",
                     DirectivePath = warning.DirectivePath,
+                    SourceFile = warning.SourceFile,
                     LineNumber = warning.LineNumber,
                     SourceContext = warning.SourceContext
                 });

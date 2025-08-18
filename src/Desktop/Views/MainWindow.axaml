@@ -4,6 +4,7 @@
     xmlns:conv="clr-namespace:Desktop.Converters"
     xmlns:behaviors="clr-namespace:Desktop.Behaviors"
     xmlns:controls="clr-namespace:Desktop.Controls"
+    xmlns:models="clr-namespace:Desktop.Models"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
@@ -278,31 +279,82 @@
                             
                             <!-- Bottom Content -->
                             <ScrollViewer Grid.Row="1" Name="BottomScrollViewer">
-                                <TextBox Name="BottomOutput" 
-                                        Text="{Binding ActiveBottomTab.Content}"
-                                        Background="#0E0E0E" 
-                                        Foreground="#CCCCCC"
-                                        FontFamily="monospace"
-                                        FontSize="12"
-                                        IsReadOnly="True"
-                                        AcceptsReturn="True"
-                                        TextWrapping="Wrap"
-                                        BorderThickness="0"
-                                        Margin="20">
-                                    <TextBox.Styles>
-                                        <!-- Remove all highlighting for read-only -->
-                                        <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
-                                            <Setter Property="Background" Value="#0E0E0E" />
-                                            <Setter Property="BorderBrush" Value="Transparent" />
-                                            <Setter Property="BorderThickness" Value="0" />
-                                        </Style>
-                                        <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
-                                            <Setter Property="Background" Value="#0E0E0E" />
-                                            <Setter Property="BorderBrush" Value="Transparent" />
-                                            <Setter Property="BorderThickness" Value="0" />
-                                        </Style>
-                                    </TextBox.Styles>
-                                </TextBox>
+                                <Grid>
+                                    <!-- Text content for logs -->
+                                    <TextBox Name="BottomOutput" 
+                                            Text="{Binding ActiveBottomTab.Content}"
+                                            Background="#0E0E0E" 
+                                            Foreground="#CCCCCC"
+                                            FontFamily="monospace"
+                                            FontSize="12"
+                                            IsReadOnly="True"
+                                            AcceptsReturn="True"
+                                            TextWrapping="Wrap"
+                                            BorderThickness="0"
+                                            Margin="20"
+                                            IsVisible="{Binding ActiveBottomTab.ErrorEntries.Count, Converter={x:Static conv:CountToBooleanConverter.ZeroIsTrue}}">
+                                        <TextBox.Styles>
+                                            <!-- Remove all highlighting for read-only -->
+                                            <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
+                                                <Setter Property="Background" Value="#0E0E0E" />
+                                                <Setter Property="BorderBrush" Value="Transparent" />
+                                                <Setter Property="BorderThickness" Value="0" />
+                                            </Style>
+                                            <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+                                                <Setter Property="Background" Value="#0E0E0E" />
+                                                <Setter Property="BorderBrush" Value="Transparent" />
+                                                <Setter Property="BorderThickness" Value="0" />
+                                            </Style>
+                                        </TextBox.Styles>
+                                    </TextBox>
+                                    
+                                    <!-- Error entries with navigation -->
+                                    <ItemsControl ItemsSource="{Binding ActiveBottomTab.ErrorEntries}"
+                                                  Background="#0E0E0E"
+                                                  Margin="20"
+                                                  IsVisible="{Binding ActiveBottomTab.ErrorEntries.Count, Converter={x:Static conv:CountToBooleanConverter.ZeroIsFalse}}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="models:ErrorEntry">
+                                                <StackPanel Margin="0,0,0,15">
+                                                    <!-- Error/Warning message -->
+                                                    <TextBlock Text="{Binding DisplayText}" 
+                                                               Foreground="{Binding Type, Converter={x:Static conv:ErrorTypeToColorConverter.Instance}}" 
+                                                               FontFamily="monospace" 
+                                                               FontSize="12" 
+                                                               TextWrapping="Wrap" />
+                                                    
+                                                    <!-- File link (if available) -->
+                                                    <Button Content="{Binding FileDisplayText}"
+                                                            Command="{Binding NavigateCommand}"
+                                                            HorizontalAlignment="Left"
+                                                            Background="Transparent"
+                                                            BorderThickness="0"
+                                                            Foreground="#569CD6"
+                                                            FontFamily="monospace"
+                                                            FontSize="12"
+                                                            Padding="0"
+                                                            Margin="10,2,0,0"
+                                                            IsVisible="{Binding HasFileNavigation}"
+                                                            Cursor="Hand">
+                                                        <Button.Styles>
+                                                            <Style Selector="Button:pointerover">
+                                                                <Setter Property="Foreground" Value="#77A3E0" />
+                                                            </Style>
+                                                        </Button.Styles>
+                                                    </Button>
+                                                    
+                                                    <!-- Source context (if available) -->
+                                                    <TextBlock Text="{Binding SourceContext, StringFormat='  Context: {0}'}"
+                                                               Foreground="#888888"
+                                                               FontFamily="monospace"
+                                                               FontSize="12"
+                                                               Margin="10,2,0,0"
+                                                               IsVisible="{Binding SourceContext, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Grid>
                             </ScrollViewer>
                         </Grid>
                     </Border>

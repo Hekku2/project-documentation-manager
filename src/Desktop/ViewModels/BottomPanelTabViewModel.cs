@@ -1,4 +1,5 @@
 using System;
+using System.Collections.ObjectModel;
 using System.Windows.Input;
 using Desktop.Models;
 
@@ -23,6 +24,7 @@ public class BottomPanelTabViewModel : ViewModelBase
     public string Id => Tab.Id;
     public string Title => Tab.Title;
     public bool IsClosable => Tab.IsClosable;
+    public ObservableCollection<ErrorEntry> ErrorEntries => Tab.ErrorEntries;
 
     public string Content
     {
