@@ -65,26 +65,44 @@
                         <TreeView.ItemTemplate>
                             <TreeDataTemplate ItemsSource="{Binding Children}" x:DataType="vm:FileSystemItemViewModel">
                                 <StackPanel Orientation="Horizontal">
-                                    <!-- Directory Icon -->
-                                    <TextBlock Text="📁" 
-                                               Foreground="#CCCCCC" 
-                                               Margin="0,0,5,0"
-                                               IsVisible="{Binding IsDirectory}" />
+                                    <!-- Icon area - only one icon visible at a time -->
+                                    <!-- Loading indicator takes priority -->
+                                    <Ellipse Width="12" Height="12" 
+                                             Fill="#CCCCCC" 
+                                             Margin="0,0,5,0"
+                                             VerticalAlignment="Top"
+                                             IsVisible="{Binding IsLoading}" />
                                     
-                                    <!-- File Icon -->
-                                    <TextBlock Text="📄" 
-                                               Foreground="#CCCCCC" 
-                                               Margin="0,0,5,0"
-                                               IsVisible="{Binding !IsDirectory}" />
+                                    <!-- Directory Icon - visible when not loading and is directory -->
+                                    <Path Width="20" Height="14" 
+                                          Fill="#CCCCCC" 
+                                          Margin="0,0,5,0"
+                                          VerticalAlignment="Top"
+                                          Data="M10,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V8C22,6.89 21.1,6 20,6H12L10,4Z">
+                                        <Path.IsVisible>
+                                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                                <Binding Path="!IsLoading"/>
+                                                <Binding Path="IsDirectory"/>
+                                            </MultiBinding>
+                                        </Path.IsVisible>
+                                    </Path>
                                     
-                                    <!-- Loading indicator for individual items -->
-                                    <TextBlock Text="⏳" 
-                                               Foreground="#CCCCCC" 
-                                               Margin="0,0,5,0"
-                                               IsVisible="{Binding IsLoading}" />
+                                    <!-- File Icon - visible when not loading and not directory -->
+                                    <Path Width="20" Height="14" 
+                                          Fill="#CCCCCC" 
+                                          Margin="0,0,5,0"
+                                          VerticalAlignment="Top"
+                                          Data="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z">
+                                        <Path.IsVisible>
+                                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                                <Binding Path="!IsLoading"/>
+                                                <Binding Path="!IsDirectory"/>
+                                            </MultiBinding>
+                                        </Path.IsVisible>
+                                    </Path>
                                     
                                     <!-- Item name -->
-                                    <TextBlock Text="{Binding Name}" Foreground="#CCCCCC" />
+                                    <TextBlock Text="{Binding Name}" Foreground="#CCCCCC" VerticalAlignment="Center" Height="14" Margin="0,5,0,0" />
                                 </StackPanel>
                             </TreeDataTemplate>
                         </TreeView.ItemTemplate>
