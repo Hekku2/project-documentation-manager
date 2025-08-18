@@ -513,14 +513,10 @@ public class MainWindowViewModel : ViewModelBase
 
     public void UpdateErrorPanelWithValidationResults(ValidationResult validationResult)
     {
-        var errorTab = GetOrCreateBottomTab("errors", "Errors");
-        
-        if (validationResult.IsValid)
+        // Only show the error panel if there are actual errors or warnings
+        if (!validationResult.IsValid)
         {
-            errorTab.Content = "No errors found";
-        }
-        else
-        {
+            var errorTab = GetOrCreateBottomTab("errors", "Errors");
             var errorContent = new System.Text.StringBuilder();
             
             foreach (var error in validationResult.Errors)
@@ -554,9 +550,10 @@ public class MainWindowViewModel : ViewModelBase
             }
             
             errorTab.Content = errorContent.ToString().TrimEnd();
+            
+            // Show the error panel only when there are errors or warnings
+            SetActiveBottomTab(errorTab);
         }
-        
-        // Show the error panel when validation is performed
-        SetActiveBottomTab(errorTab);
+        // If validation passes, don't create or show the error panel
     }
 }

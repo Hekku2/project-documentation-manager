@@ -1477,38 +1477,42 @@ public class MainWindowTests
     }
 
     [AvaloniaTest]
-    public async Task MainWindow_Should_Display_No_Errors_Message_When_Validation_Passes()
+    public async Task MainWindow_Should_Not_Show_Error_Panel_When_Validation_Passes()
     {
         var window = CreateMainWindow();
         var viewModel = await SetupWindowAndWaitForLoadAsync(window);
-
 
         // Open a file
         await viewModel.OpenFileAsync("/test/path/README.md");
         Assert.That(viewModel.ActiveTab, Is.Not.Null, "Active tab should exist");
 
-        // Mock validation service to return success
+        // Mock validation service to return success (no errors)
         var mockValidationResult = new ValidationResult();
 
         // Manually update the current validation result to simulate validation
         viewModel.GetType().GetProperty("CurrentValidationResult")!.SetValue(viewModel, mockValidationResult);
         
+        // Store initial state
+        var wasBottomPanelVisible = viewModel.IsBottomPanelVisible;
+        var initialActiveBottomTab = viewModel.ActiveBottomTab;
+        
         // Manually call the UpdateErrorPanelWithValidationResults method
         viewModel.UpdateErrorPanelWithValidationResults(mockValidationResult);
-
 
         // No delay needed for direct method invocation
 
         Assert.Multiple(() =>
         {
-            // Error panel should be visible
-            Assert.That(viewModel.IsBottomPanelVisible, Is.True, "Bottom panel should be visible");
-            Assert.That(viewModel.ActiveBottomTab, Is.Not.Null, "Active bottom tab should exist");
-            Assert.That(viewModel.ActiveBottomTab!.Title, Is.EqualTo("Errors"), "Error tab should be active");
-
-            // Error content should show "No errors found"
-            var errorContent = viewModel.ActiveBottomTab.Content;
-            Assert.That(errorContent, Is.EqualTo("No errors found"), "Should show no errors message");
+            // Error panel should NOT be shown when validation passes
+            Assert.That(viewModel.IsBottomPanelVisible, Is.EqualTo(wasBottomPanelVisible), "Bottom panel visibility should not change");
+            Assert.That(viewModel.ActiveBottomTab, Is.EqualTo(initialActiveBottomTab), "Active bottom tab should not change");
+            
+            // No error tab should be created for successful validation
+            var errorTab = viewModel.BottomPanelTabs.FirstOrDefault(t => t.Title == "Errors");
+            if (errorTab != null)
+            {
+                Assert.That(errorTab.IsActive, Is.False, "Error tab should not be active when validation passes");
+            }
         });
     }
 }
