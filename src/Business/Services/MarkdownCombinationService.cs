@@ -64,7 +64,7 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error processing template: {TemplateFileName}", template.FileName);
+                logger.LogError(ex, "Error processing template: {TemplateFileName} at {TemplateFilePath}", template.FileName, template.FilePath);
                 // Add the template with original content on error, but with .md extension
                 var outputFileName = Path.ChangeExtension(template.FileName, ".md");
                 results.Add(new MarkdownDocument
@@ -196,7 +196,7 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
                     {
                         Message = "MarkDownExtension directive is missing filename",
                         DirectivePath = fullDirective,
-                        SourceFile = templateDocument.FileName,
+                        SourceFile = templateDocument.FilePath,
                         LineNumber = lineNumber,
                         SourceContext = line.Trim()
                     });
@@ -211,7 +211,7 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
                     {
                         Message = $"MarkDownExtension directive contains invalid filename characters: '{fileName}'",
                         DirectivePath = fileName,
-                        SourceFile = templateDocument.FileName,
+                        SourceFile = templateDocument.FilePath,
                         LineNumber = lineNumber,
                         SourceContext = line.Trim()
                     });
@@ -225,7 +225,7 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
                     {
                         Message = $"Source document not found: '{fileName}'",
                         DirectivePath = fileName,
-                        SourceFile = templateDocument.FileName,
+                        SourceFile = templateDocument.FilePath,
                         LineNumber = lineNumber,
                         SourceContext = line.Trim()
                     });
@@ -239,7 +239,7 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
                     {
                         Message = $"Duplicate MarkDownExtension directive found: '{fullDirective}'",
                         DirectivePath = fileName,
-                        SourceFile = templateDocument.FileName,
+                        SourceFile = templateDocument.FilePath,
                         LineNumber = lineNumber,
                         SourceContext = line.Trim()
                     });
