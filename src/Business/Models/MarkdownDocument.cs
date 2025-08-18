@@ -8,20 +8,10 @@ public class MarkdownDocument
     /// <summary>
     /// The filename of the document (e.g., "common-features.md")
     /// </summary>
-    public string FileName { get; set; } = string.Empty;
+    public required string FileName { get; init; }
 
     /// <summary>
     /// The markdown content of the document
     /// </summary>
-    public string Content { get; set; } = string.Empty;
-
-    public MarkdownDocument()
-    {
-    }
-
-    public MarkdownDocument(string fileName, string content)
-    {
-        FileName = fileName;
-        Content = content;
-    }
+    public required string Content { get; init; }
 }

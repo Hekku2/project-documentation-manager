@@ -65,18 +65,26 @@ public class MarkdownFileCollectorService(ILogger<MarkdownFileCollectorService> 
                 try
                 {
                     logger.LogDebug("Reading file: {FilePath}", filePath);
-                    
+
                     var content = await File.ReadAllTextAsync(filePath);
                     var relativePath = Path.GetRelativePath(directoryPath, filePath);
-                    
-                    return new MarkdownDocument(relativePath, content);
+
+                    return new MarkdownDocument
+                    {
+                        FileName = relativePath,
+                        Content = content
+                    };
                 }
                 catch (Exception ex)
                 {
                     logger.LogError(ex, "Error reading file: {FilePath}", filePath);
                     // Return document with empty content on error
                     var relativePath = Path.GetRelativePath(directoryPath, filePath);
-                    return new MarkdownDocument(relativePath, string.Empty);
+                    return new MarkdownDocument
+                    {
+                        FileName = relativePath,
+                        Content = string.Empty
+                    };
                 }
             });
 

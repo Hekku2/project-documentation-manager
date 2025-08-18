@@ -1036,19 +1036,39 @@ public class MainWindowTests
         // Setup mock return values
         var templateFiles = new[]
         {
-            new MarkdownDocument("template1.mdext", "# Template 1\n<insert source1.mdsrc>"),
-            new MarkdownDocument("template2.mdext", "# Template 2")
+            new MarkdownDocument
+            {
+                FileName = "template1.mdext",
+                Content = "# Template 1\n<insert source1.mdsrc>"
+            },
+            new MarkdownDocument
+            {
+                FileName = "template2.mdext",
+                Content = "# Template 2"
+            }
         };
         
         var sourceFiles = new[]
         {
-            new MarkdownDocument("source1.mdsrc", "Source 1 content")
+            new MarkdownDocument
+            {
+                FileName = "source1.mdsrc",
+                Content = "Source 1 content"
+            }
         };
 
         var processedDocuments = new[]
         {
-            new MarkdownDocument("template1.md", "# Template 1\nSource 1 content"),
-            new MarkdownDocument("template2.md", "# Template 2")
+            new MarkdownDocument
+            {
+                FileName = "template1.md",
+                Content = "# Template 1\nSource 1 content"
+            },
+            new MarkdownDocument
+            {
+                FileName = "template2.md",
+                Content = "# Template 2"
+            }
         };
 
         mockFileCollector.CollectAllMarkdownFilesAsync("/test/project")
@@ -1540,11 +1560,19 @@ public class MainWindowTests
         // Mock template and source files
         var templateFiles = new[]
         {
-            new MarkdownDocument("template1.mdext", "# Template 1")
+            new MarkdownDocument
+            {
+                FileName = "template1.mdext",
+                Content = "# Template 1\nSource 1 content"
+            }
         };
         var sourceFiles = new[]
         {
-            new MarkdownDocument("source1.mdsrc", "Source content")
+            new MarkdownDocument
+            {
+                FileName = "source1.mdsrc",
+                Content = "Source content"
+            }
         };
 
         // Mock the file collector service

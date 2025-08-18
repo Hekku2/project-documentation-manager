@@ -111,7 +111,7 @@ public class MarkdownDocumentFileWriterServiceTests
         // Arrange
         var documents = new List<MarkdownDocument>
         {
-            new("test.md", "# Test Content\n\nThis is a test document.")
+            new MarkdownDocument { FileName = "test.md", Content = "# Test Content\n\nThis is a test document." }
         };
 
         // Act
@@ -131,9 +131,9 @@ public class MarkdownDocumentFileWriterServiceTests
         // Arrange
         var documents = new List<MarkdownDocument>
         {
-            new("doc1.md", "# Document 1\n\nFirst document content."),
-            new("doc2.md", "# Document 2\n\nSecond document content."),
-            new("doc3.md", "# Document 3\n\nThird document content.")
+            new MarkdownDocument { FileName = "doc1.md", Content = "# Document 1\n\nFirst document content." },
+            new MarkdownDocument { FileName = "doc2.md", Content = "# Document 2\n\nSecond document content." },
+            new MarkdownDocument { FileName = "doc3.md", Content = "# Document 3\n\nThird document content." }
         };
 
         // Act
@@ -162,7 +162,7 @@ public class MarkdownDocumentFileWriterServiceTests
         // Arrange
         var documents = new List<MarkdownDocument>
         {
-            new("empty.md", null!)
+            new MarkdownDocument { FileName = "empty.md", Content = null! }
         };
 
         // Act
@@ -182,7 +182,7 @@ public class MarkdownDocumentFileWriterServiceTests
         // Arrange
         var documents = new List<MarkdownDocument>
         {
-            new("empty.md", "")
+            new MarkdownDocument { FileName = "empty.md", Content = "" }
         };
 
         // Act
@@ -202,10 +202,10 @@ public class MarkdownDocumentFileWriterServiceTests
         // Arrange
         var documents = new List<MarkdownDocument>
         {
-            new("valid.md", "Valid content"),
-            new("", "Empty filename content"),
-            new("   ", "Whitespace filename content"),
-            new("another-valid.md", "Another valid content")
+            new MarkdownDocument { FileName = "valid.md", Content = "Valid content" },
+            new MarkdownDocument { FileName = "", Content = "Empty filename content" },
+            new MarkdownDocument { FileName = "   ", Content = "Whitespace filename content" },
+            new MarkdownDocument { FileName = "another-valid.md", Content = "Another valid content" }
         };
 
         // Act
@@ -229,7 +229,7 @@ public class MarkdownDocumentFileWriterServiceTests
         var nestedPath = Path.Combine(_testOutputFolder, "nested", "deeply", "nested", "folder");
         var documents = new List<MarkdownDocument>
         {
-            new("test.md", "Test content in nested folder")
+            new MarkdownDocument { FileName = "test.md", Content = "Test content in nested folder" }
         };
 
         // Act
@@ -255,7 +255,7 @@ public class MarkdownDocumentFileWriterServiceTests
 
         var documents = new List<MarkdownDocument>
         {
-            new("existing.md", "Updated content")
+            new MarkdownDocument { FileName = "existing.md", Content = "Updated content" }
         };
 
         // Act
@@ -278,7 +278,7 @@ public class MarkdownDocumentFileWriterServiceTests
         
         var documents = new List<MarkdownDocument>
         {
-            new("special.md", specialContent)
+            new MarkdownDocument { FileName = "special.md", Content = specialContent }
         };
 
         // Act
