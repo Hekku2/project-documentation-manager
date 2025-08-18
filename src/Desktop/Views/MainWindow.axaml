@@ -10,6 +10,7 @@
     mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
     x:Class="Desktop.Views.MainWindow"
     x:DataType="vm:MainWindowViewModel"
+    Width="1200" Height="800"
     Title="{Binding Title}">
     <DockPanel>
         <!-- Menu Bar -->

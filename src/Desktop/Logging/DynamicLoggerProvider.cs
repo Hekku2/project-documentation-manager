@@ -8,7 +8,7 @@ namespace Desktop.Logging;
 
 public class DynamicLoggerProvider : IDynamicLoggerProvider
 {
-    private readonly ConcurrentBag<ILoggerProvider> _providers = new();
+    private readonly ConcurrentDictionary<ILoggerProvider, object?> _providers = new();
     private readonly ConcurrentDictionary<string, DynamicLogger> _loggers = new();
     private bool _disposed = false;
 
@@ -25,7 +25,7 @@ public class DynamicLoggerProvider : IDynamicLoggerProvider
         if (_disposed)
             throw new ObjectDisposedException(nameof(DynamicLoggerProvider));
 
-        _providers.Add(provider);
+        _providers.TryAdd(provider, null);
         
         // Update all existing loggers with the new provider
         foreach (var logger in _loggers.Values)
@@ -39,8 +39,7 @@ public class DynamicLoggerProvider : IDynamicLoggerProvider
         if (_disposed)
             return;
 
-        // Note: ConcurrentBag doesn't support removal, so we'll mark as removed
-        // In a production scenario, you might want to use a different collection
+        _providers.TryRemove(provider, out _);
         foreach (var logger in _loggers.Values)
         {
             logger.RemoveProvider(provider);
@@ -60,7 +59,7 @@ public class DynamicLoggerProvider : IDynamicLoggerProvider
 
     internal IEnumerable<ILoggerProvider> GetProviders()
     {
-        return _providers.ToArray();
+        return _providers.Keys;
     }
 
     public void Dispose()
@@ -70,7 +69,7 @@ public class DynamicLoggerProvider : IDynamicLoggerProvider
 
         _disposed = true;
         
-        foreach (var provider in _providers)
+        foreach (var provider in _providers.Keys)
         {
             provider?.Dispose();
         }

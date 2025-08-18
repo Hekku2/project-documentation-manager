@@ -10,7 +10,7 @@ internal class DynamicLogger : ILogger
 {
     private readonly string _categoryName;
     private readonly DynamicLoggerProvider _provider;
-    private readonly ConcurrentBag<ILogger> _loggers = new();
+    private readonly ConcurrentDictionary<ILoggerProvider, ILogger> _loggers = new();
 
     public DynamicLogger(string categoryName, DynamicLoggerProvider provider)
     {
@@ -21,13 +21,13 @@ internal class DynamicLogger : ILogger
         foreach (var loggerProvider in _provider.GetProviders())
         {
             var logger = loggerProvider.CreateLogger(categoryName);
-            _loggers.Add(logger);
+            _loggers.TryAdd(loggerProvider, logger);
         }
     }
 
     public IDisposable? BeginScope<TState>(TState state) where TState : notnull
     {
-        var scopes = _loggers.Select(logger => logger.BeginScope(state))
+        var scopes = _loggers.Values.Select(logger => logger.BeginScope(state))
                             .Where(scope => scope != null)
                             .Cast<IDisposable>()
                             .ToList();
@@ -37,12 +37,12 @@ internal class DynamicLogger : ILogger
 
     public bool IsEnabled(LogLevel logLevel)
     {
-        return _loggers.Any(logger => logger.IsEnabled(logLevel));
+        return _loggers.Values.Any(logger => logger.IsEnabled(logLevel));
     }
 
     public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
     {
-        foreach (var logger in _loggers)
+        foreach (var logger in _loggers.Values)
         {
             if (logger.IsEnabled(logLevel))
             {
@@ -54,19 +54,17 @@ internal class DynamicLogger : ILogger
     internal void AddProvider(ILoggerProvider provider)
     {
         var logger = provider.CreateLogger(_categoryName);
-        _loggers.Add(logger);
+        _loggers.TryAdd(provider, logger);
     }
 
     internal void RemoveProvider(ILoggerProvider provider)
     {
-        // Note: ConcurrentBag doesn't support removal
-        // In a production scenario, you might want to track loggers differently
+        _loggers.TryRemove(provider, out _);
     }
 
     internal void ClearProviders()
     {
-        // Note: ConcurrentBag doesn't support clearing
-        // In a production scenario, you might want to use a different collection
+        _loggers.Clear();
     }
 
     private class CompositeScope : IDisposable
