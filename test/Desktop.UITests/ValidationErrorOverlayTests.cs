@@ -1,91 +1,83 @@
-using System.Collections.Generic;
 using Business.Models;
-using Desktop.Controls;
 using NUnit.Framework;
 
 namespace Desktop.UITests;
 
 [TestFixture]
-public class ValidationErrorOverlayTests
+public class ValidationIssueExtensionsTests
 {
     [Test]
-    public void ShouldShowError_WithCurrentFileName_FiltersErrorsCorrectly()
+    public void IsFromFile_WithMatchingFileName_ReturnsTrue()
     {
         // Arrange
-        var overlay = new ValidationErrorOverlay();
-        overlay.CurrentFileName = "file1.mdext";
+        var issue = new ValidationIssue { Message = "Error in current file", SourceFile = "file1.mdext", LineNumber = 5 };
         
-        var errorFromCurrentFile = new ValidationIssue { Message = "Error in current file", SourceFile = "file1.mdext", LineNumber = 5 };
-        var errorFromOtherFile = new ValidationIssue { Message = "Error in other file", SourceFile = "file2.mdext", LineNumber = 3 };
-        var errorWithoutFilename = new ValidationIssue { Message = "Generic error without filename", LineNumber = 1 };
+        // Act & Assert
+        Assert.That(issue.IsFromFile("file1.mdext"), Is.True, "Should return true for matching filename");
+    }
+    
+    [Test]
+    public void IsFromFile_WithDifferentFileName_ReturnsFalse()
+    {
+        // Arrange
+        var issue = new ValidationIssue { Message = "Error in other file", SourceFile = "file2.mdext", LineNumber = 3 };
         
-        // Use reflection to access the private method
-        var shouldShowErrorMethod = typeof(ValidationErrorOverlay).GetMethod("ShouldShowError", 
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        // Act & Assert
+        Assert.That(issue.IsFromFile("file1.mdext"), Is.False, "Should return false for different filename");
+    }
+    
+    [Test]
+    public void IsFromFile_WithoutSourceFile_ReturnsTrue()
+    {
+        // Arrange
+        var issue = new ValidationIssue { Message = "Generic error without filename", LineNumber = 1 };
+        
+        // Act & Assert
+        Assert.That(issue.IsFromFile("file1.mdext"), Is.True, "Should return true for issue without source file");
+    }
+    
+    [Test]
+    public void IsFromFile_WithNullFileName_ReturnsTrue()
+    {
+        // Arrange
+        var issueWithSource = new ValidationIssue { Message = "Error in file 1", SourceFile = "file1.mdext", LineNumber = 5 };
+        var issueWithoutSource = new ValidationIssue { Message = "Generic error", LineNumber = 1 };
         
         // Act & Assert
         Assert.Multiple(() =>
         {
-            var shouldShowCurrent = (bool)shouldShowErrorMethod!.Invoke(overlay, new object[] { errorFromCurrentFile });
-            var shouldShowOther = (bool)shouldShowErrorMethod!.Invoke(overlay, new object[] { errorFromOtherFile });
-            var shouldShowGeneric = (bool)shouldShowErrorMethod!.Invoke(overlay, new object[] { errorWithoutFilename });
-            
-            Assert.That(shouldShowCurrent, Is.True, "Should show error from current file");
-            Assert.That(shouldShowOther, Is.False, "Should NOT show error from other file");
-            Assert.That(shouldShowGeneric, Is.True, "Should show generic error without filename prefix");
+            Assert.That(issueWithSource.IsFromFile(null), Is.True, "Should return true for issue with source when filename is null");
+            Assert.That(issueWithoutSource.IsFromFile(null), Is.True, "Should return true for issue without source when filename is null");
         });
     }
     
     [Test]
-    public void ShouldShowError_WithoutCurrentFileName_ShowsAllErrors()
+    public void IsFromFile_WithEmptyFileName_ReturnsTrue()
     {
         // Arrange
-        var overlay = new ValidationErrorOverlay();
-        // CurrentFileName is null/empty
-        
-        var errorFromFile1 = new ValidationIssue { Message = "Error in file 1", SourceFile = "file1.mdext", LineNumber = 5 };
-        var errorFromFile2 = new ValidationIssue { Message = "Error in file 2", SourceFile = "file2.mdext", LineNumber = 3 };
-        var errorWithoutFilename = new ValidationIssue { Message = "Generic error", LineNumber = 1 };
-        
-        // Use reflection to access the private method
-        var shouldShowErrorMethod = typeof(ValidationErrorOverlay).GetMethod("ShouldShowError", 
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        var issueWithSource = new ValidationIssue { Message = "Error in file 1", SourceFile = "file1.mdext", LineNumber = 5 };
+        var issueWithoutSource = new ValidationIssue { Message = "Generic error", LineNumber = 1 };
         
         // Act & Assert
         Assert.Multiple(() =>
         {
-            var shouldShowFile1 = (bool)shouldShowErrorMethod!.Invoke(overlay, new object[] { errorFromFile1 });
-            var shouldShowFile2 = (bool)shouldShowErrorMethod!.Invoke(overlay, new object[] { errorFromFile2 });
-            var shouldShowGeneric = (bool)shouldShowErrorMethod!.Invoke(overlay, new object[] { errorWithoutFilename });
-            
-            Assert.That(shouldShowFile1, Is.True, "Should show error from file 1 when no filter");
-            Assert.That(shouldShowFile2, Is.True, "Should show error from file 2 when no filter");
-            Assert.That(shouldShowGeneric, Is.True, "Should show generic error when no filter");
+            Assert.That(issueWithSource.IsFromFile(""), Is.True, "Should return true for issue with source when filename is empty");
+            Assert.That(issueWithoutSource.IsFromFile(""), Is.True, "Should return true for issue without source when filename is empty");
         });
     }
     
     [Test]
-    public void ShouldShowError_WithCaseInsensitiveMatching()
+    public void IsFromFile_WithCaseInsensitiveMatching_ReturnsTrue()
     {
         // Arrange
-        var overlay = new ValidationErrorOverlay();
-        overlay.CurrentFileName = "File1.MDEXT"; // Mixed case
-        
         var errorLowerCase = new ValidationIssue { Message = "Error with lowercase filename", SourceFile = "file1.mdext", LineNumber = 5 };
         var errorUpperCase = new ValidationIssue { Message = "Error with uppercase filename", SourceFile = "FILE1.MDEXT", LineNumber = 3 };
         
-        // Use reflection to access the private method
-        var shouldShowErrorMethod = typeof(ValidationErrorOverlay).GetMethod("ShouldShowError", 
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        
         // Act & Assert
         Assert.Multiple(() =>
         {
-            var shouldShowLower = (bool)shouldShowErrorMethod!.Invoke(overlay, new object[] { errorLowerCase });
-            var shouldShowUpper = (bool)shouldShowErrorMethod!.Invoke(overlay, new object[] { errorUpperCase });
-            
-            Assert.That(shouldShowLower, Is.True, "Should match lowercase filename case-insensitively");
-            Assert.That(shouldShowUpper, Is.True, "Should match uppercase filename case-insensitively");
+            Assert.That(errorLowerCase.IsFromFile("File1.MDEXT"), Is.True, "Should match lowercase filename case-insensitively");
+            Assert.That(errorUpperCase.IsFromFile("file1.mdext"), Is.True, "Should match uppercase filename case-insensitively");
         });
     }
 }

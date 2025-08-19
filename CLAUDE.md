@@ -195,6 +195,9 @@ The application implements a sophisticated logging architecture:
 - **Test Validation**: Use `dotnet test` to ensure functionality works as expected
 - **DO NOT**: Run the desktop application (`dotnet run --project src/Desktop/Desktop.csproj`) for validation purposes
 - The desktop application is for manual testing and demonstration, not automated validation
+- **CRITICAL BUILD REQUIREMENT**: ALWAYS run `dotnet build` on the ENTIRE solution after ANY code changes to ensure nothing is broken
+- **Full Solution Validation**: Never assume that individual project builds or test runs guarantee the whole solution builds correctly
+- **Immediate Fix Requirement**: If `dotnet build` fails, all build errors must be fixed immediately before proceeding with any other tasks
 
 ## important-instruction-reminders
 Do what has been asked; nothing more, nothing less.

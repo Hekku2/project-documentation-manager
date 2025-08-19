@@ -567,11 +567,6 @@ public class MarkdownCombinationServiceTests
     [Test]
     public void Validate_WithInvalidFilenameCharacters_ReturnsErrorResult()
     {
-        // Arrange - Use a null character which is definitely invalid
-    var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"invalid\0file.mdsrc\" />" };
-        var sourceDocuments = new List<MarkdownDocument>();
-
-    {
         // Arrange - Use one or more invalid filename characters for the current platform
         var invalidChars = new string(Path.GetInvalidFileNameChars().Where(c => c != '\0').Take(2).ToArray());
         var invalidFileName = $"invalid{invalidChars}file.mdsrc";
@@ -597,13 +592,13 @@ public class MarkdownCombinationServiceTests
     public void Validate_WithDuplicateDirectives_ReturnsWarningResult()
     {
         // Arrange
-    var templateDocument = new MarkdownDocument
-    {
-        FileName = "template.mdext",
-        FilePath = "/test/template.mdext",
-        Content =
-            "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"common.mdsrc\" />\n\nSome content\n\n<MarkDownExtension operation=\"insert\" file=\"common.mdsrc\" />"
-    };
+        var templateDocument = new MarkdownDocument
+        {
+            FileName = "template.mdext",
+            FilePath = "/test/template.mdext",
+            Content =
+                "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"common.mdsrc\" />\n\nSome content\n\n<MarkDownExtension operation=\"insert\" file=\"common.mdsrc\" />"
+        };
         var sourceDocuments = new List<MarkdownDocument>
         {
             new MarkdownDocument { FileName = "common.mdsrc", FilePath = "/test/common.mdsrc", Content = "Common content" }
@@ -628,7 +623,7 @@ public class MarkdownCombinationServiceTests
     public void Validate_WithMultipleDirectivesOnSameLine_ValidatesEach()
     {
         // Arrange
-    var templateDocument = new MarkdownDocument
+        var templateDocument = new MarkdownDocument
     {
         FileName = "template.mdext",
         FilePath = "/test/template.mdext",
@@ -658,7 +653,7 @@ public class MarkdownCombinationServiceTests
     public void Validate_WithCaseInsensitiveFilenames_ValidatesCorrectly()
     {
         // Arrange
-    var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"COMMON.MDSRC\" />" };
+        var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"COMMON.MDSRC\" />" };
         var sourceDocuments = new List<MarkdownDocument>
         {
             new MarkdownDocument { FileName = "common.mdsrc", FilePath = "/test/common.mdsrc", Content = "Common content" }
@@ -680,7 +675,7 @@ public class MarkdownCombinationServiceTests
     public void Validate_WithDirectiveWithSpaces_ValidatesCorrectly()
     {
         // Arrange
-    var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"common.mdsrc\" />" };
+        var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"common.mdsrc\" />" };
         var sourceDocuments = new List<MarkdownDocument>
         {
             new MarkdownDocument { FileName = "common.mdsrc", FilePath = "/test/common.mdsrc", Content = "Common content" }
@@ -702,7 +697,7 @@ public class MarkdownCombinationServiceTests
     public void Validate_WithCircularReference_ReturnsWarningResult()
     {
         // Arrange
-    var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"circular1.mdsrc\" />" };
+        var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"circular1.mdsrc\" />" };
         var sourceDocuments = new List<MarkdownDocument>
         {
             new MarkdownDocument { FileName = "circular1.mdsrc", FilePath = "/test/circular1.mdsrc", Content = "Content <MarkDownExtension operation=\"insert\" file=\"circular2.mdsrc\" />" },
@@ -726,7 +721,7 @@ public class MarkdownCombinationServiceTests
     public void Validate_WithNestedValidDirectives_ReturnsValidResult()
     {
         // Arrange
-    var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"level1.mdsrc\" />" };
+        var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"level1.mdsrc\" />" };
         var sourceDocuments = new List<MarkdownDocument>
         {
             new MarkdownDocument { FileName = "level1.mdsrc", FilePath = "/test/level1.mdsrc", Content = "Level 1 <MarkDownExtension operation=\"insert\" file=\"level2.mdsrc\" />" },
@@ -749,7 +744,7 @@ public class MarkdownCombinationServiceTests
     public void Validate_WithMixedValidAndInvalidDirectives_ReturnsAppropriateResults()
     {
         // Arrange
-    var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"valid.mdsrc\" />\n<MarkDownExtension operation=\"insert\" file=\"missing.mdsrc\" />\n<MarkDownExtension operation=\"insert\" file=\"valid.mdsrc\" />\n<MarkDownExtension operation=\"insert\" file=\"\" />" };
+        var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"valid.mdsrc\" />\n<MarkDownExtension operation=\"insert\" file=\"missing.mdsrc\" />\n<MarkDownExtension operation=\"insert\" file=\"valid.mdsrc\" />\n<MarkDownExtension operation=\"insert\" file=\"\" />" };
         var sourceDocuments = new List<MarkdownDocument>
         {
             new MarkdownDocument { FileName = "valid.mdsrc", FilePath = "/test/valid.mdsrc", Content = "Valid content" }

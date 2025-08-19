@@ -94,7 +94,7 @@ public class ValidationErrorOverlay : Control
             return;
 
         // Filter errors to only show those for the current file
-        var filteredErrors = ValidationResult!.Errors.Where(error => ShouldShowError(error)).ToList();
+        var filteredErrors = ValidationResult!.Errors.Where(error => error.IsFromFile(CurrentFileName)).ToList();
         
         var errorLines = filteredErrors
             .Where(e => e.LineNumber.HasValue)
@@ -147,19 +147,4 @@ public class ValidationErrorOverlay : Control
         }
     }
 
-    private bool ShouldShowError(ValidationIssue error)
-    {
-        // If no current file name is set, show all errors (backward compatibility)
-        if (string.IsNullOrEmpty(CurrentFileName))
-            return true;
-
-        // If the error has a source file, check if it matches the current file
-        if (!string.IsNullOrEmpty(error.SourceFile))
-        {
-            return string.Equals(error.SourceFile, CurrentFileName, StringComparison.OrdinalIgnoreCase);
-        }
-
-        // For errors without source file information, always show
-        return true;
-    }
 }
