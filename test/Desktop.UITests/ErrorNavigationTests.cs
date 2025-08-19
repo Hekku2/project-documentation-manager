@@ -31,7 +31,6 @@ public class ErrorNavigationTests
         options.Value.Returns(new ApplicationOptions 
         { 
             DefaultProjectFolder = "/test",
-            DefaultTheme = "dark",
             DefaultOutputFolder = "/output"
         });
 
@@ -129,7 +128,6 @@ public class ErrorNavigationTests
         options.Value.Returns(new ApplicationOptions 
         { 
             DefaultProjectFolder = "/test",
-            DefaultTheme = "dark",
             DefaultOutputFolder = "/output"
         });
 

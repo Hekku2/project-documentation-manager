@@ -57,7 +57,6 @@ public class MainWindowViewModel : ViewModelBase
         SettingsCommand = new RelayCommand(OpenSettingsTab);
         
         _logger.LogInformation("MainWindowViewModel initialized");
-        _logger.LogInformation("Default theme: {Theme}", _applicationOptions.DefaultTheme);
         _logger.LogInformation("Default project folder: {Folder}", _applicationOptions.DefaultProjectFolder);
         _logger.LogInformation("Default output folder: {OutputFolder}", _applicationOptions.DefaultOutputFolder);
         

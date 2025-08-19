@@ -249,21 +249,6 @@
                                                  FontFamily="monospace" />
                                     </StackPanel>
                                     
-                                    <!-- Default Theme -->
-                                    <StackPanel Spacing="8">
-                                        <TextBlock Text="Default Theme:" 
-                                                   FontWeight="SemiBold" 
-                                                   Foreground="#CCCCCC" 
-                                                   FontSize="14" />
-                                        <TextBox Text="{Binding ApplicationOptions.DefaultTheme}" 
-                                                 IsReadOnly="True"
-                                                 Background="#2D2D30" 
-                                                 Foreground="#D4D4D4" 
-                                                 BorderBrush="#3E3E42" 
-                                                 Padding="8" 
-                                                 FontFamily="monospace" />
-                                    </StackPanel>
-                                    
                                     <!-- Default Output Folder -->
                                     <StackPanel Spacing="8">
                                         <TextBlock Text="Default Output Folder:" 

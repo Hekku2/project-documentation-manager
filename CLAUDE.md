@@ -107,7 +107,7 @@ The application features a file explorer with lazy loading:
 - `ApplicationOptions` class defines available settings
 - `appsettings.json` provides default configuration
 - Configuration bound to strongly-typed options via `IOptions<T>`
-- Current settings: `DefaultProjectFolder`, `DefaultTheme`, `DefaultOutputFolder`
+- Current settings: `DefaultProjectFolder`, `DefaultOutputFolder`
 
 ### Dynamic Logging System
 The application implements a sophisticated logging architecture:
