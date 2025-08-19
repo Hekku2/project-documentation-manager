@@ -295,8 +295,9 @@ public class MainWindowViewModel : ViewModelBase
     {
         if (id == "logs")
         {
-            // Get historical logs for the log tab
-            return _logTransitionService.GetFormattedHistoricalLogs();
+            // Get historical logs for the log tab with trailing newline
+            var historicalLogs = _logTransitionService.GetFormattedHistoricalLogs();
+            return string.IsNullOrEmpty(historicalLogs) ? "" : historicalLogs + Environment.NewLine;
         }
         
         return "";

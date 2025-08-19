@@ -53,7 +53,7 @@ public class LogTransitionServiceIntegrationTests
         // Assert
         var logTab = viewModel.BottomPanelTabs.FirstOrDefault(t => t.Id == "logs");
         Assert.That(logTab, Is.Not.Null, "Log tab should be created");
-        Assert.That(logTab.Content, Is.EqualTo(testLogs), "Log tab should contain historical logs");
+        Assert.That(logTab.Content, Is.EqualTo(testLogs + Environment.NewLine), "Log tab should contain historical logs with trailing newline");
         mockLogTransitionService.Received(1).GetFormattedHistoricalLogs();
     }
     
