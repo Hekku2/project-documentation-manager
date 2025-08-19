@@ -8,7 +8,6 @@ public class LogTransitionService : ILogTransitionService
 {
     private readonly IDynamicLoggerProvider _dynamicLoggerProvider;
     private readonly InMemoryLoggerProvider _inMemoryLoggerProvider;
-    private IEnumerable<LogEntry>? _historicalLogs;
     private bool _hasTransitioned = false;
 
     public LogTransitionService(IDynamicLoggerProvider dynamicLoggerProvider, InMemoryLoggerProvider inMemoryLoggerProvider)
@@ -22,27 +21,19 @@ public class LogTransitionService : ILogTransitionService
         if (_hasTransitioned)
             return;
 
-        // Store historical logs before transitioning
-        _historicalLogs = _inMemoryLoggerProvider.GetLogEntries().ToArray();
         
         // Create standard UI logger provider (not the enhanced one)
         var uiLoggerProvider = new UILoggerProvider(textBox);
         
-        // Remove the in-memory provider and add the UI provider
-        _dynamicLoggerProvider.RemoveLoggerProvider(_inMemoryLoggerProvider);
+        // Keep the in-memory provider active and add the UI provider
+        // This ensures logs continue to be collected even when UI logger is active
         _dynamicLoggerProvider.AddLoggerProvider(uiLoggerProvider);
-        
-        // Clear the in-memory logs to free memory
-        _inMemoryLoggerProvider.ClearLogs();
         
         _hasTransitioned = true;
     }
 
     public IEnumerable<LogEntry> GetHistoricalLogs()
     {
-        if (_hasTransitioned && _historicalLogs != null)
-            return _historicalLogs;
-        
         return _inMemoryLoggerProvider.GetLogEntries();
     }
     
