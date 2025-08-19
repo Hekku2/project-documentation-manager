@@ -128,7 +128,7 @@
                 <Grid>
                     <Grid.RowDefinitions>
                         <!-- Tab Bar -->
-                        <RowDefinition Height="35" />
+                        <RowDefinition Height="40" />
                         <!-- Editor Content -->
                         <RowDefinition Height="*" />
                         <!-- Log Output -->
@@ -158,7 +158,7 @@
                                                     Padding="0"
                                                     HorizontalContentAlignment="Stretch"
                                                     VerticalContentAlignment="Stretch">
-                                                <StackPanel Orientation="Horizontal" Margin="15,8">
+                                                <StackPanel Orientation="Horizontal" Margin="15,6">
                                                     <TextBlock Name="TabTitle"
                                                                Text="{Binding DisplayTitle}" 
                                                                Foreground="#CCCCCC" 
@@ -169,8 +169,9 @@
                                                             Foreground="#CCCCCC" 
                                                             BorderThickness="0" 
                                                             Margin="8,0,0,0" 
-                                                            Padding="4" 
-                                                            FontSize="16" />
+                                                            Padding="2" 
+                                                            FontSize="14"
+                                                            VerticalAlignment="Center" />
                                                 </StackPanel>
                                             </Button>
                                         </Border>
@@ -315,7 +316,7 @@
                                                             Padding="0"
                                                             HorizontalContentAlignment="Stretch"
                                                             VerticalContentAlignment="Stretch">
-                                                        <StackPanel Orientation="Horizontal" Margin="15,8">
+                                                        <StackPanel Orientation="Horizontal" Margin="15,6">
                                                             <TextBlock Name="BottomTabTitle"
                                                                        Text="{Binding Title}" 
                                                                        Foreground="#CCCCCC" 
@@ -326,8 +327,9 @@
                                                                     Foreground="#CCCCCC" 
                                                                     BorderThickness="0" 
                                                                     Margin="8,0,0,0" 
-                                                                    Padding="4" 
-                                                                    FontSize="16"
+                                                                    Padding="2" 
+                                                                    FontSize="14"
+                                                                    VerticalAlignment="Center"
                                                                     IsVisible="{Binding IsClosable}" />
                                                         </StackPanel>
                                                     </Button>
