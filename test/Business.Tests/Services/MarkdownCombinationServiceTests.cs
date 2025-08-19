@@ -571,6 +571,13 @@ public class MarkdownCombinationServiceTests
     var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"invalid\0file.mdsrc\" />" };
         var sourceDocuments = new List<MarkdownDocument>();
 
+    {
+        // Arrange - Use one or more invalid filename characters for the current platform
+        var invalidChars = new string(Path.GetInvalidFileNameChars().Where(c => c != '\0').Take(2).ToArray());
+        var invalidFileName = $"invalid{invalidChars}file.mdsrc";
+        var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = $"# Title\n\n<MarkDownExtension operation=\"insert\" file=\"{invalidFileName}\" />" };
+        var sourceDocuments = new List<MarkdownDocument>();
+
         // Act
         var result = _service.Validate(templateDocument, sourceDocuments);
 
