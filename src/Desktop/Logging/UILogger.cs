@@ -57,7 +57,18 @@ internal class UILogger : ILogger
                         var logTab = viewModel.BottomPanelTabs.FirstOrDefault(t => t.Id == "logs");
                         if (logTab != null)
                         {
+                            // Add to both content (for backward compatibility) and LogEntries (for colored display)
                             logTab.Content += logEntry + Environment.NewLine;
+                            
+                            var logEntryObj = new LogEntry
+                            {
+                                Timestamp = DateTime.Now,
+                                LogLevel = logLevel,
+                                CategoryName = _categoryName,
+                                Message = message,
+                                Exception = exception
+                            };
+                            logTab.LogEntries.Add(logEntryObj);
                         }
                     }
                     else

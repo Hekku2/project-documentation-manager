@@ -283,6 +283,17 @@ public class MainWindowViewModel : ViewModelBase
             IsActive = false,
             IsClosable = true
         };
+        
+        // Populate LogEntries for log tab
+        if (id == "logs")
+        {
+            var historicalLogs = _logTransitionService.GetHistoricalLogs();
+            foreach (var logEntry in historicalLogs)
+            {
+                tabModel.LogEntries.Add(logEntry);
+            }
+        }
+        
         var tabViewModel = new BottomPanelTabViewModel(tabModel);
         tabViewModel.CloseRequested += OnBottomTabCloseRequested;
         tabViewModel.SelectRequested += OnBottomTabSelectRequested;

@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using Desktop.Logging;
 
 namespace Desktop.Models;
 
@@ -10,4 +11,5 @@ public class BottomPanelTab
     public bool IsActive { get; set; }
     public bool IsClosable { get; set; } = true;
     public ObservableCollection<ErrorEntry> ErrorEntries { get; set; } = new();
+    public ObservableCollection<LogEntry> LogEntries { get; set; } = new();
 }

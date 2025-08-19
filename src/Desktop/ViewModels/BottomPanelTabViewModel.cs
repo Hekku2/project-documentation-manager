@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using Desktop.Models;
+using Desktop.Logging;
 
 namespace Desktop.ViewModels;
 
@@ -25,6 +26,7 @@ public class BottomPanelTabViewModel : ViewModelBase
     public string Title => Tab.Title;
     public bool IsClosable => Tab.IsClosable;
     public ObservableCollection<ErrorEntry> ErrorEntries => Tab.ErrorEntries;
+    public ObservableCollection<LogEntry> LogEntries => Tab.LogEntries;
 
     public string Content
     {

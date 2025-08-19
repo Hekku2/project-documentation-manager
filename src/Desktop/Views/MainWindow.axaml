@@ -281,7 +281,7 @@
                             <!-- Bottom Content -->
                             <ScrollViewer Grid.Row="1" Name="BottomScrollViewer">
                                 <Grid>
-                                    <!-- Text content for logs -->
+                                    <!-- Text content for non-log tabs (fallback) -->
                                     <TextBox Name="BottomOutput" 
                                             Text="{Binding ActiveBottomTab.Content}"
                                             Background="#0E0E0E" 
@@ -293,7 +293,8 @@
                                             TextWrapping="Wrap"
                                             BorderThickness="0"
                                             Margin="20"
-                                            IsVisible="{Binding ActiveBottomTab.ErrorEntries.Count, Converter={x:Static conv:CountToBooleanConverter.ZeroIsTrue}}">
+                                            IsVisible="False">
+                                    
                                         <TextBox.Styles>
                                             <!-- Remove all highlighting for read-only -->
                                             <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
@@ -308,6 +309,12 @@
                                             </Style>
                                         </TextBox.Styles>
                                     </TextBox>
+                                    
+                                    <!-- Colored log display for log entries -->
+                                    <controls:ColoredLogDisplay Name="ColoredLogOutput"
+                                            LogEntries="{Binding ActiveBottomTab.LogEntries}"
+                                            Margin="20"
+                                            IsVisible="{Binding ActiveBottomTab.ErrorEntries.Count, Converter={x:Static conv:CountToBooleanConverter.ZeroIsTrue}}" />
                                     
                                     <!-- Error entries with navigation -->
                                     <ItemsControl ItemsSource="{Binding ActiveBottomTab.ErrorEntries}"
