@@ -22,8 +22,8 @@
                 <MenuItem Header="Logs" Command="{Binding ShowLogsCommand}" />
                 <MenuItem Header="Errors" Command="{Binding ShowErrorsCommand}" />
             </MenuItem>
-            <MenuItem Header="Build">
-                <MenuItem Header="Build documentation" Command="{Binding EditorContent.BuildDocumentationCommand}" />
+            <MenuItem Header="Compile">
+                <MenuItem Header="Compile documentation" Command="{Binding EditorContent.BuildDocumentationCommand}" />
                 <MenuItem Header="Validate" Command="{Binding EditorContent.ValidateCommand}" />
                 <MenuItem Header="Validate All" Command="{Binding EditorContent.ValidateAllCommand}" />
             </MenuItem>

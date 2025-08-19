@@ -89,7 +89,7 @@ public class BuildConfirmationDialogViewModel : ViewModelBase
         try
         {
             IsBuildInProgress = true;
-            BuildStatus = "Starting build...";
+            BuildStatus = "Starting compile...";
             
             _logger.LogInformation("Starting documentation build from: {ProjectFolder}", _applicationOptions.DefaultProjectFolder);
             
@@ -104,7 +104,7 @@ public class BuildConfirmationDialogViewModel : ViewModelBase
             
             if (validationErrors.Any())
             {
-                BuildStatus = $"Build failed: {validationErrors.Count} validation errors found.";
+                BuildStatus = $"Compile failed: {validationErrors.Count} validation errors found.";
                 _logger.LogError("Build aborted due to validation errors. Fix the errors and try again.");
                 return;
             }
@@ -115,12 +115,12 @@ public class BuildConfirmationDialogViewModel : ViewModelBase
             BuildStatus = "Writing output files...";
             await _fileWriterService.WriteDocumentsToFolderAsync(processedDocuments, OutputLocation);
             
-            BuildStatus = "Build completed successfully!";
+            BuildStatus = "Compile completed successfully!";
             _logger.LogInformation("Documentation build completed successfully. Output written to: {OutputLocation}", OutputLocation);
         }
         catch (Exception ex)
         {
-            BuildStatus = $"Build failed: {ex.Message}";
+            BuildStatus = $"Compile failed: {ex.Message}";
             _logger.LogError(ex, "Error during documentation build");
         }
         finally
