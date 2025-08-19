@@ -16,6 +16,7 @@
         <!-- Menu Bar -->
         <Menu DockPanel.Dock="Top" Name="MainMenu">
             <MenuItem Header="File">
+                <MenuItem Header="Settings" Command="{Binding SettingsCommand}" />
                 <MenuItem Header="Exit" Command="{Binding ExitCommand}" />
             </MenuItem>
             <MenuItem Header="View">
@@ -196,7 +197,8 @@
                                     TextWrapping="Wrap"
                                     BorderThickness="0"
                                     Margin="20"
-                                    Watermark="Start typing or open a file...">
+                                    Watermark="Start typing or open a file..."
+                                    IsVisible="{Binding !EditorContent.IsActiveTabSettings}">
                                 <TextBox.Styles>
                                     <!-- Remove hover highlighting -->
                                     <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
@@ -218,7 +220,15 @@
                                 ValidationResult="{Binding EditorContent.CurrentValidationResult}"
                                 TargetTextBox="{Binding #DocumentEditor}"
                                 CurrentFileName="{Binding EditorContent.ActiveFileName}"
-                                IsHitTestVisible="False" />
+                                IsHitTestVisible="False"
+                                IsVisible="{Binding !EditorContent.IsActiveTabSettings}" />
+                            
+                            <!-- Settings Content -->
+                            <TextBlock Text="Settings content will be implemented here"
+                                       Foreground="#CCCCCC"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       IsVisible="{Binding EditorContent.IsActiveTabSettings}" />
                         </Grid>
                     </ScrollViewer>
                     

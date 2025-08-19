@@ -144,4 +144,43 @@ public class EditorTabBarViewModel : ViewModelBase
             _logger.LogError(ex, "Error saving file: {FilePath}", activeTab.FilePath);
         }
     }
+
+    public void OpenSettingsTab()
+    {
+        // Check if settings tab already exists
+        var existingTab = EditorTabs.FirstOrDefault(t => t.Id == "settings");
+        if (existingTab != null)
+        {
+            SetActiveTab(existingTab);
+            return;
+        }
+
+        try
+        {
+            _logger.LogDebug("Opening Settings tab");
+            
+            var tab = new EditorTab
+            {
+                Id = "settings",
+                Title = "Settings",
+                FilePath = "", // No file path for settings tab
+                Content = "", // No content for settings tab
+                IsModified = false,
+                IsActive = true,
+                TabType = "settings"
+            };
+
+            var tabViewModel = new EditorTabViewModel(tab);
+            tabViewModel.CloseRequested += OnTabCloseRequested;
+            tabViewModel.SelectRequested += OnTabSelectRequested;
+            EditorTabs.Add(tabViewModel);
+            SetActiveTab(tabViewModel);
+            
+            _logger.LogDebug("Settings tab opened successfully");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error opening Settings tab");
+        }
+    }
 }

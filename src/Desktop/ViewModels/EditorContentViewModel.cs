@@ -49,6 +49,7 @@ public class EditorContentViewModel : ViewModelBase
     public string? ActiveFileName => _editorStateService.ActiveFileName;
     public ValidationResult? CurrentValidationResult => _editorStateService.CurrentValidationResult;
     public EditorTabViewModel? ActiveTab => _editorStateService.ActiveTab;
+    public bool IsActiveTabSettings => ActiveTab?.TabType == "settings";
 
     public ICommand ValidateCommand { get; }
     public ICommand ValidateAllCommand { get; }
@@ -61,6 +62,7 @@ public class EditorContentViewModel : ViewModelBase
         OnPropertyChanged(nameof(ActiveFileContent));
         OnPropertyChanged(nameof(ActiveFileName));
         OnPropertyChanged(nameof(ActiveTab));
+        OnPropertyChanged(nameof(IsActiveTabSettings));
         
         // Update command states
         ((RelayCommand)ValidateCommand).RaiseCanExecuteChanged();

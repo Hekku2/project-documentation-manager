@@ -25,6 +25,7 @@ public class EditorTabViewModel : ViewModelBase
     public string Id => Tab.Id;
     public string Title => Tab.Title;
     public string FilePath => Tab.FilePath;
+    public string TabType => Tab.TabType;
 
     public string Content
     {

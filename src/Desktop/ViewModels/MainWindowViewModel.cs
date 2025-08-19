@@ -54,6 +54,7 @@ public class MainWindowViewModel : ViewModelBase
         CloseBottomPanelCommand = new RelayCommand(CloseBottomPanel);
         ShowLogsCommand = new RelayCommand(ShowLogOutput);
         ShowErrorsCommand = new RelayCommand(ShowErrorOutput);
+        SettingsCommand = new RelayCommand(OpenSettingsTab);
         
         _logger.LogInformation("MainWindowViewModel initialized");
         _logger.LogInformation("Default theme: {Theme}", _applicationOptions.DefaultTheme);
@@ -116,6 +117,8 @@ public class MainWindowViewModel : ViewModelBase
     public ICommand ShowLogsCommand { get; }
     
     public ICommand ShowErrorsCommand { get; }
+    
+    public ICommand SettingsCommand { get; }
     
     public event EventHandler? ExitRequested;
     public event EventHandler<BuildConfirmationDialogViewModel>? ShowBuildConfirmationDialog;
@@ -424,5 +427,11 @@ public class MainWindowViewModel : ViewModelBase
         {
             _logger.LogError(ex, "Error navigating to file: {FilePath}", filePath);
         }
+    }
+
+    private void OpenSettingsTab()
+    {
+        _logger.LogInformation("Opening Settings tab");
+        EditorTabBar.OpenSettingsTab();
     }
 }
