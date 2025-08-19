@@ -1003,7 +1003,7 @@ public class MainWindowTests
     }
 
     [AvaloniaTest]
-    public void BuildConfirmationDialog_Should_Have_Cancel_And_Save_Commands()
+    public void BuildConfirmationDialog_Should_Have_Cancel_And_Compile_Commands()
     {
         var options = Options.Create(new ApplicationOptions());
         var mockFileCollector = Substitute.For<IMarkdownFileCollectorService>();
@@ -1016,9 +1016,9 @@ public class MainWindowTests
         Assert.Multiple(() =>
         {
             Assert.That(dialogViewModel.CancelCommand, Is.Not.Null, "Cancel command should exist");
-            Assert.That(dialogViewModel.SaveCommand, Is.Not.Null, "Save command should exist");
+            Assert.That(dialogViewModel.SaveCommand, Is.Not.Null, "Compile command should exist");
             Assert.That(dialogViewModel.CancelCommand.CanExecute(null), Is.True, "Cancel command should be executable");
-            Assert.That(dialogViewModel.SaveCommand.CanExecute(null), Is.True, "Save command should be enabled when not building");
+            Assert.That(dialogViewModel.SaveCommand.CanExecute(null), Is.True, "Compile command should be enabled when not building");
         });
     }
 
@@ -1206,7 +1206,7 @@ public class MainWindowTests
         Assert.Multiple(() =>
         {
             Assert.That(dialogViewModel.CanBuild, Is.False, "Should not be able to build when build is in progress");
-            Assert.That(dialogViewModel.SaveCommand.CanExecute(null), Is.False, "Save command should be disabled during build");
+            Assert.That(dialogViewModel.SaveCommand.CanExecute(null), Is.False, "Compile command should be disabled during build");
         });
     }
 
@@ -1265,7 +1265,7 @@ public class MainWindowTests
         {
             Assert.That(dialogViewModel.IsBuildInProgress, Is.False, "Build should not be in progress initially");
             Assert.That(dialogViewModel.CanBuild, Is.True, "Should be able to build when not in progress");
-            Assert.That(dialogViewModel.SaveCommand.CanExecute(null), Is.True, "Save command should be enabled when build is not in progress");
+            Assert.That(dialogViewModel.SaveCommand.CanExecute(null), Is.True, "Compile command should be enabled when build is not in progress");
         });
     }
 

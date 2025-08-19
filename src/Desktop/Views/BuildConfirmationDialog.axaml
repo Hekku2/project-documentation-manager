@@ -56,7 +56,7 @@
                     Command="{Binding CancelCommand}" 
                     Width="80" 
                     Height="32" />
-            <Button Content="Save" 
+            <Button Content="Compile" 
                     Command="{Binding SaveCommand}" 
                     Width="80" 
                     Height="32" />
