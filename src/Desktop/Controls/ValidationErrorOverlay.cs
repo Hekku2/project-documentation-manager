@@ -95,7 +95,7 @@ public class ValidationErrorOverlay : Control
 
         // Filter errors to only show those for the current file
         var filteredErrors = ValidationResult!.Errors.Where(error => error.IsFromFile(CurrentFileName)).ToList();
-        
+
         var errorLines = filteredErrors
             .Where(e => e.LineNumber.HasValue)
             .Select(e => e.LineNumber!.Value)
@@ -146,5 +146,4 @@ public class ValidationErrorOverlay : Control
             currentY += lineHeight;
         }
     }
-
 }

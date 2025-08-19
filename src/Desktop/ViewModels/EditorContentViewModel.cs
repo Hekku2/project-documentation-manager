@@ -48,6 +48,7 @@ public class EditorContentViewModel : ViewModelBase
 
     public string? ActiveFileContent => _editorStateService.ActiveFileContent;
     public string? ActiveFileName => _editorStateService.ActiveFileName;
+    public string? ActiveFilePath => _editorStateService.ActiveTab?.FilePath;
     public ValidationResult? CurrentValidationResult => _editorStateService.CurrentValidationResult;
     public EditorTabViewModel? ActiveTab => _editorStateService.ActiveTab;
     public bool IsActiveTabSettings => ActiveTab?.TabType == TabType.Settings;
@@ -62,6 +63,7 @@ public class EditorContentViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(ActiveFileContent));
         OnPropertyChanged(nameof(ActiveFileName));
+        OnPropertyChanged(nameof(ActiveFilePath));
         OnPropertyChanged(nameof(ActiveTab));
         OnPropertyChanged(nameof(IsActiveTabSettings));
         
@@ -182,12 +184,12 @@ public class EditorContentViewModel : ViewModelBase
                     
                 foreach (var error in validationResult.Errors)
                 {
-                    _logger.LogError("Validation error: {Message} at line {LineNumber}", error.Message, error.LineNumber);
+                    _logger.LogError("Validation error: {Message} at line {LineNumber} in file {SourceFile}", error.Message, error.LineNumber, error.SourceFile);
                 }
                 
                 foreach (var warning in validationResult.Warnings)
                 {
-                    _logger.LogWarning("Validation warning: {Message} at line {LineNumber}", warning.Message, warning.LineNumber);
+                    _logger.LogWarning("Validation warning: {Message} at line {LineNumber} in file {SourceFile}", warning.Message, warning.LineNumber, warning.SourceFile);
                 }
             }
         }

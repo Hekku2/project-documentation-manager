@@ -220,7 +220,7 @@
                             <controls:ValidationErrorOverlay 
                                 ValidationResult="{Binding EditorContent.CurrentValidationResult}"
                                 TargetTextBox="{Binding #DocumentEditor}"
-                                CurrentFileName="{Binding EditorContent.ActiveFileName}"
+                                CurrentFileName="{Binding EditorContent.ActiveFilePath}"
                                 IsHitTestVisible="False"
                                 IsVisible="{Binding !EditorContent.IsActiveTabSettings}" />
                             
