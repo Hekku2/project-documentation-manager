@@ -66,7 +66,8 @@ public class EditorTabBarViewModel : ViewModelBase
                 FilePath = normalizedFilePath,
                 Content = content,
                 IsModified = false,
-                IsActive = true
+                IsActive = true,
+                TabType = TabType.File
             };
 
             var tabViewModel = new EditorTabViewModel(tab);

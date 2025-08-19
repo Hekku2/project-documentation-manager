@@ -166,6 +166,23 @@ The application implements a sophisticated logging architecture:
 - Use NSubstitute for mocking in tests rather than custom mock classes
 - Follow MVVM pattern with proper separation of concerns
 
+### Data Model Design Guidelines
+- **Prefer `required` keyword**: For data transfer objects and models, use `required` for non-nullable properties that don't have meaningful default values
+- **Avoid meaningless defaults**: Don't use `string.Empty` or similar defaults for properties that should always have real values
+- **Type safety first**: The `required` keyword provides compile-time enforcement and better developer experience
+- **Self-documenting code**: `required` clearly indicates essential vs optional properties
+- **Example pattern**:
+  ```csharp
+  public class ExampleDto
+  {
+      public required string Id { get; set; }           // Essential, no meaningful default
+      public required string Name { get; set; }         // Essential, no meaningful default
+      public string Description { get; set; } = "";     // Optional, empty is meaningful
+      public bool IsActive { get; set; } = false;       // Optional, false is meaningful
+      public DateTime? LastModified { get; set; }       // Optional, null is meaningful
+  }
+  ```
+
 ### Test-Driven Development Requirements
 - **CRITICAL**: After ANY code change, feature addition, or modification, ALWAYS run `dotnet test` to ensure all tests pass
 - If tests fail after code changes, fix the failing tests immediately before considering the task complete
