@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Desktop.Configuration;
+using Desktop.Models;
 using Desktop.Services;
 using Business.Services;
 using Business.Models;
@@ -49,7 +50,7 @@ public class EditorContentViewModel : ViewModelBase
     public string? ActiveFileName => _editorStateService.ActiveFileName;
     public ValidationResult? CurrentValidationResult => _editorStateService.CurrentValidationResult;
     public EditorTabViewModel? ActiveTab => _editorStateService.ActiveTab;
-    public bool IsActiveTabSettings => ActiveTab?.TabType == "settings";
+    public bool IsActiveTabSettings => ActiveTab?.TabType == TabType.Settings;
 
     public ICommand ValidateCommand { get; }
     public ICommand ValidateAllCommand { get; }

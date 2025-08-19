@@ -167,7 +167,7 @@ public class EditorTabBarViewModel : ViewModelBase
                 Content = "", // No content for settings tab
                 IsModified = false,
                 IsActive = true,
-                TabType = "settings"
+                TabType = TabType.Settings
             };
 
             var tabViewModel = new EditorTabViewModel(tab);
