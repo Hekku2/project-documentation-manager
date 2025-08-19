@@ -43,6 +43,7 @@ public class ErrorNavigationTests
         var editorTabBarViewModel = new EditorTabBarViewModel(tabBarLogger, fileService, editorStateService);
         var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService);
         
+        var logTransitionService = Substitute.For<Desktop.Logging.ILogTransitionService>();
         var viewModel = new MainWindowViewModel(
             logger, 
             options, 
@@ -50,7 +51,8 @@ public class ErrorNavigationTests
             serviceProvider,
             editorStateService,
             editorTabBarViewModel,
-            editorContentViewModel);
+            editorContentViewModel,
+            logTransitionService);
 
         var validationResult = new ValidationResult
         {
@@ -139,6 +141,7 @@ public class ErrorNavigationTests
         var editorTabBarViewModel = new EditorTabBarViewModel(tabBarLogger, fileService, editorStateService);
         var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService);
         
+        var logTransitionService = Substitute.For<Desktop.Logging.ILogTransitionService>();
         var viewModel = new MainWindowViewModel(
             logger, 
             options, 
@@ -146,7 +149,8 @@ public class ErrorNavigationTests
             serviceProvider,
             editorStateService,
             editorTabBarViewModel,
-            editorContentViewModel);
+            editorContentViewModel,
+            logTransitionService);
 
         var validationResult = new ValidationResult
         {

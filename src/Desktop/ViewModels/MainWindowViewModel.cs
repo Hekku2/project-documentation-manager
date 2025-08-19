@@ -12,6 +12,7 @@ using Desktop.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Business.Services;
 using Business.Models;
+using Desktop.Logging;
 
 namespace Desktop.ViewModels;
 
@@ -22,6 +23,7 @@ public class MainWindowViewModel : ViewModelBase
     private readonly IFileService _fileService;
     private readonly IServiceProvider _serviceProvider;
     private readonly IEditorStateService _editorStateService;
+    private readonly ILogTransitionService _logTransitionService;
     private bool _isLoading;
     private FileSystemItemViewModel? _rootItem;
     private bool _isBottomPanelVisible = false;
@@ -34,13 +36,15 @@ public class MainWindowViewModel : ViewModelBase
         IServiceProvider serviceProvider,
         IEditorStateService editorStateService,
         EditorTabBarViewModel editorTabBarViewModel,
-        EditorContentViewModel editorContentViewModel)
+        EditorContentViewModel editorContentViewModel,
+        ILogTransitionService logTransitionService)
     {
         _logger = logger;
         _applicationOptions = applicationOptions.Value;
         _fileService = fileService;
         _serviceProvider = serviceProvider;
         _editorStateService = editorStateService;
+        _logTransitionService = logTransitionService;
         EditorTabBar = editorTabBarViewModel;
         EditorContent = editorContentViewModel;
         
@@ -275,7 +279,7 @@ public class MainWindowViewModel : ViewModelBase
         {
             Id = id,
             Title = title,
-            Content = "",
+            Content = GetInitialContentForTab(id),
             IsActive = false,
             IsClosable = true
         };
@@ -285,6 +289,17 @@ public class MainWindowViewModel : ViewModelBase
         BottomPanelTabs.Add(tabViewModel);
         
         return tabViewModel;
+    }
+    
+    private string GetInitialContentForTab(string id)
+    {
+        if (id == "logs")
+        {
+            // Get historical logs for the log tab
+            return _logTransitionService.GetFormattedHistoricalLogs();
+        }
+        
+        return "";
     }
 
     private void ShowLogOutput()

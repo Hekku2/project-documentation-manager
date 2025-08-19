@@ -32,18 +32,17 @@ public partial class MainWindow : Window
     
     private async void OnWindowLoaded(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
-        // Find the BottomOutput TextBox and set up UI logging
+        // Find the BottomOutput TextBox and transition from in-memory to UI logging
         var bottomOutput = this.FindControl<TextBox>("BottomOutput");
         if (bottomOutput != null && App.ServiceProvider != null)
         {
-            var dynamicLoggerProvider = App.ServiceProvider.GetRequiredService<IDynamicLoggerProvider>();
-            var uiLoggerProvider = new UILoggerProvider(bottomOutput);
-            dynamicLoggerProvider.AddLoggerProvider(uiLoggerProvider);
+            var logTransitionService = App.ServiceProvider.GetRequiredService<ILogTransitionService>();
+            logTransitionService.TransitionToUILogging(bottomOutput);
             
             // Log a test message to show it's working
             var logger = App.ServiceProvider.GetRequiredService<ILogger<MainWindow>>();
             logger.LogInformation("UI logging initialized successfully!");
-            logger.LogInformation("All application logs will now appear in the UI log output.");
+            logger.LogInformation("Historical logs from application startup have been loaded.");
         }
         
         // Initialize the view model after UI is fully loaded

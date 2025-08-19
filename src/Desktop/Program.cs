@@ -20,6 +20,11 @@ class Program
         // Set the service provider in the App
         App.ServiceProvider = host.Services;
         
+        // Initialize in-memory logging before starting the host
+        var dynamicLoggerProvider = host.Services.GetRequiredService<IDynamicLoggerProvider>();
+        var inMemoryLoggerProvider = host.Services.GetRequiredService<InMemoryLoggerProvider>();
+        dynamicLoggerProvider.AddLoggerProvider(inMemoryLoggerProvider);
+        
         await host.StartAsync();
         
         try
@@ -81,8 +86,10 @@ class Program
                 // Register services here
                 services.AddSingleton<Desktop.Views.MainWindow>();
                 
-                // Register dynamic logging provider
+                // Register logging components
+                services.AddSingleton<InMemoryLoggerProvider>();
                 services.AddSingleton<IDynamicLoggerProvider, DynamicLoggerProvider>();
+                services.AddSingleton<ILogTransitionService, LogTransitionService>();
                 services.AddLogging(builder => 
                 {
                     builder.AddConsole();
