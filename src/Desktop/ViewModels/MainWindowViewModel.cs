@@ -83,6 +83,8 @@ public class MainWindowViewModel : ViewModelBase
     public EditorContentViewModel EditorContent { get; }
 
     public string Title => "Project Documentation Manager";
+    
+    public ApplicationOptions ApplicationOptions => _applicationOptions;
 
     public bool IsLoading
     {

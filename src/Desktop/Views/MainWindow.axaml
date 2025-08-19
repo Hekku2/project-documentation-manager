@@ -224,11 +224,61 @@
                                 IsVisible="{Binding !EditorContent.IsActiveTabSettings}" />
                             
                             <!-- Settings Content -->
-                            <TextBlock Text="Settings content will be implemented here"
-                                       Foreground="#CCCCCC"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"
-                                       IsVisible="{Binding EditorContent.IsActiveTabSettings}" />
+                            <ScrollViewer IsVisible="{Binding EditorContent.IsActiveTabSettings}"
+                                          Background="#1E1E1E">
+                                <StackPanel Margin="30" Spacing="20">
+                                    <TextBlock Text="Application Settings" 
+                                               FontSize="24" 
+                                               FontWeight="Bold" 
+                                               Foreground="#CCCCCC" 
+                                               Margin="0,0,0,20" />
+                                    
+                                    <!-- Default Project Folder -->
+                                    <StackPanel Spacing="8">
+                                        <TextBlock Text="Default Project Folder:" 
+                                                   FontWeight="SemiBold" 
+                                                   Foreground="#CCCCCC" 
+                                                   FontSize="14" />
+                                        <TextBox Text="{Binding ApplicationOptions.DefaultProjectFolder}" 
+                                                 IsReadOnly="True"
+                                                 Background="#2D2D30" 
+                                                 Foreground="#D4D4D4" 
+                                                 BorderBrush="#3E3E42" 
+                                                 Padding="8" 
+                                                 FontFamily="monospace" />
+                                    </StackPanel>
+                                    
+                                    <!-- Default Theme -->
+                                    <StackPanel Spacing="8">
+                                        <TextBlock Text="Default Theme:" 
+                                                   FontWeight="SemiBold" 
+                                                   Foreground="#CCCCCC" 
+                                                   FontSize="14" />
+                                        <TextBox Text="{Binding ApplicationOptions.DefaultTheme}" 
+                                                 IsReadOnly="True"
+                                                 Background="#2D2D30" 
+                                                 Foreground="#D4D4D4" 
+                                                 BorderBrush="#3E3E42" 
+                                                 Padding="8" 
+                                                 FontFamily="monospace" />
+                                    </StackPanel>
+                                    
+                                    <!-- Default Output Folder -->
+                                    <StackPanel Spacing="8">
+                                        <TextBlock Text="Default Output Folder:" 
+                                                   FontWeight="SemiBold" 
+                                                   Foreground="#CCCCCC" 
+                                                   FontSize="14" />
+                                        <TextBox Text="{Binding ApplicationOptions.DefaultOutputFolder}" 
+                                                 IsReadOnly="True"
+                                                 Background="#2D2D30" 
+                                                 Foreground="#D4D4D4" 
+                                                 BorderBrush="#3E3E42" 
+                                                 Padding="8" 
+                                                 FontFamily="monospace" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </ScrollViewer>
                         </Grid>
                     </ScrollViewer>
                     
