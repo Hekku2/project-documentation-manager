@@ -153,18 +153,13 @@ public class ValidationErrorOverlay : Control
         if (string.IsNullOrEmpty(CurrentFileName))
             return true;
 
-        // If the error message starts with [filename], check if it matches the current file
-        if (error.Message.StartsWith('['))
+        // If the error has a source file, check if it matches the current file
+        if (!string.IsNullOrEmpty(error.SourceFile))
         {
-            var endBracket = error.Message.IndexOf(']');
-            if (endBracket > 1)
-            {
-                var errorFileName = error.Message[1..endBracket];
-                return string.Equals(errorFileName, CurrentFileName, StringComparison.OrdinalIgnoreCase);
-            }
+            return string.Equals(error.SourceFile, CurrentFileName, StringComparison.OrdinalIgnoreCase);
         }
 
-        // For errors without filename prefix (single file validation), always show
+        // For errors without source file information, always show
         return true;
     }
 }

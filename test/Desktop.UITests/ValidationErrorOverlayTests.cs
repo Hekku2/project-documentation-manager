@@ -15,8 +15,8 @@ public class ValidationErrorOverlayTests
         var overlay = new ValidationErrorOverlay();
         overlay.CurrentFileName = "file1.mdext";
         
-        var errorFromCurrentFile = new ValidationIssue { Message = "[file1.mdext] Error in current file", LineNumber = 5 };
-        var errorFromOtherFile = new ValidationIssue { Message = "[file2.mdext] Error in other file", LineNumber = 3 };
+        var errorFromCurrentFile = new ValidationIssue { Message = "Error in current file", SourceFile = "file1.mdext", LineNumber = 5 };
+        var errorFromOtherFile = new ValidationIssue { Message = "Error in other file", SourceFile = "file2.mdext", LineNumber = 3 };
         var errorWithoutFilename = new ValidationIssue { Message = "Generic error without filename", LineNumber = 1 };
         
         // Use reflection to access the private method
@@ -43,8 +43,8 @@ public class ValidationErrorOverlayTests
         var overlay = new ValidationErrorOverlay();
         // CurrentFileName is null/empty
         
-        var errorFromFile1 = new ValidationIssue { Message = "[file1.mdext] Error in file 1", LineNumber = 5 };
-        var errorFromFile2 = new ValidationIssue { Message = "[file2.mdext] Error in file 2", LineNumber = 3 };
+        var errorFromFile1 = new ValidationIssue { Message = "Error in file 1", SourceFile = "file1.mdext", LineNumber = 5 };
+        var errorFromFile2 = new ValidationIssue { Message = "Error in file 2", SourceFile = "file2.mdext", LineNumber = 3 };
         var errorWithoutFilename = new ValidationIssue { Message = "Generic error", LineNumber = 1 };
         
         // Use reflection to access the private method
@@ -71,8 +71,8 @@ public class ValidationErrorOverlayTests
         var overlay = new ValidationErrorOverlay();
         overlay.CurrentFileName = "File1.MDEXT"; // Mixed case
         
-        var errorLowerCase = new ValidationIssue { Message = "[file1.mdext] Error with lowercase filename", LineNumber = 5 };
-        var errorUpperCase = new ValidationIssue { Message = "[FILE1.MDEXT] Error with uppercase filename", LineNumber = 3 };
+        var errorLowerCase = new ValidationIssue { Message = "Error with lowercase filename", SourceFile = "file1.mdext", LineNumber = 5 };
+        var errorUpperCase = new ValidationIssue { Message = "Error with uppercase filename", SourceFile = "FILE1.MDEXT", LineNumber = 3 };
         
         // Use reflection to access the private method
         var shouldShowErrorMethod = typeof(ValidationErrorOverlay).GetMethod("ShouldShowError", 
