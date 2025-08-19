@@ -64,9 +64,9 @@ public class MainWindowTests
 
     private static async Task SelectFileAndWaitForTabAsync(FileSystemItemViewModel file, MainWindowViewModel viewModel)
     {
-        var initialTabCount = viewModel.EditorTabs.Count;
+        var initialTabCount = viewModel.EditorTabBar.EditorTabs.Count;
         file.IsSelected = true;
-        await WaitForConditionAsync(() => viewModel.EditorTabs.Count > initialTabCount, 1000);
+        await WaitForConditionAsync(() => viewModel.EditorTabBar.EditorTabs.Count > initialTabCount, 1000);
     }
 
     private static FileSystemItem CreateSimpleTestStructure() => new()
@@ -85,6 +85,9 @@ public class MainWindowTests
     private static MainWindow CreateMainWindow()
     {
         var vmLogger = new LoggerFactory().CreateLogger<MainWindowViewModel>();
+        var tabBarLogger = new LoggerFactory().CreateLogger<EditorTabBarViewModel>();
+        var contentLogger = new LoggerFactory().CreateLogger<EditorContentViewModel>();
+        var stateLogger = new LoggerFactory().CreateLogger<EditorStateService>();
         var options = Options.Create(new ApplicationOptions());
         var fileService = Substitute.For<IFileService>();
         var serviceProvider = Substitute.For<IServiceProvider>();
@@ -96,7 +99,11 @@ public class MainWindowTests
         fileService.IsValidFolder(Arg.Any<string>()).Returns(true);
         fileService.ReadFileContentAsync(Arg.Any<string>()).Returns("Mock file content");
         
-        var viewModel = new MainWindowViewModel(vmLogger, options, fileService, serviceProvider, markdownCombinationService, markdownFileCollectorService);
+        var editorStateService = new EditorStateService(stateLogger);
+        var editorTabBarViewModel = new EditorTabBarViewModel(tabBarLogger, fileService, editorStateService);
+        var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService);
+        
+        var viewModel = new MainWindowViewModel(vmLogger, options, fileService, serviceProvider, editorStateService, editorTabBarViewModel, editorContentViewModel);
         return new MainWindow(viewModel);
     }
 
@@ -161,7 +168,7 @@ public class MainWindowTests
 
         // Check that the main window has EditorTabs collection
         var viewModel = window.DataContext as MainWindowViewModel;
-        Assert.That(viewModel?.EditorTabs, Is.Not.Null, "EditorTabs collection not found");
+        Assert.That(viewModel?.EditorTabBar.EditorTabs, Is.Not.Null, "EditorTabs collection not found");
     }
 
     private static FileSystemItem CreateNestedTestStructure() => new()
@@ -201,6 +208,9 @@ public class MainWindowTests
     private static MainWindow CreateMainWindowWithNestedStructure()
     {
         var vmLogger = new LoggerFactory().CreateLogger<MainWindowViewModel>();
+        var tabBarLogger = new LoggerFactory().CreateLogger<EditorTabBarViewModel>();
+        var contentLogger = new LoggerFactory().CreateLogger<EditorContentViewModel>();
+        var stateLogger = new LoggerFactory().CreateLogger<EditorStateService>();
         var options = Options.Create(new ApplicationOptions());
         var fileService = Substitute.For<IFileService>();
         var serviceProvider = Substitute.For<IServiceProvider>();
@@ -212,7 +222,11 @@ public class MainWindowTests
         fileService.IsValidFolder(Arg.Any<string>()).Returns(true);
         fileService.ReadFileContentAsync(Arg.Any<string>()).Returns("Mock file content");
         
-        var viewModel = new MainWindowViewModel(vmLogger, options, fileService, serviceProvider, markdownCombinationService, markdownFileCollectorService);
+        var editorStateService = new EditorStateService(stateLogger);
+        var editorTabBarViewModel = new EditorTabBarViewModel(tabBarLogger, fileService, editorStateService);
+        var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService);
+        
+        var viewModel = new MainWindowViewModel(vmLogger, options, fileService, serviceProvider, editorStateService, editorTabBarViewModel, editorContentViewModel);
         return new MainWindow(viewModel);
     }
 
@@ -363,29 +377,29 @@ public class MainWindowTests
         Assert.That(tabContainer, Is.Not.Null, "Tab container should exist");
 
         // Initially no tabs should be open
-        Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(0), "No tabs should be open initially");
+        Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(0), "No tabs should be open initially");
         Assert.That(editorTextBox.Text, Is.Null.Or.Empty, "Editor should be empty initially");
 
         // Select the file (simulating clicking in TreeView)
         readmeFile!.IsSelected = true;
 
         // Wait for file to load
-        await WaitForConditionAsync(() => viewModel.EditorTabs.Count > 0, 1000);
+        await WaitForConditionAsync(() => viewModel.EditorTabBar.EditorTabs.Count > 0, 1000);
 
         Assert.Multiple(() =>
         {
             // Verify tab was created and is visible
-            Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(1), "One tab should be open");
+            Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(1), "One tab should be open");
             
-            var tab = viewModel.EditorTabs.First();
+            var tab = viewModel.EditorTabBar.EditorTabs.First();
             Assert.That(tab.Title, Is.EqualTo("README.md"), "Tab title should be README.md");
             Assert.That(tab.FilePath, Is.EqualTo("/test/path/README.md"), "Tab file path should be correct");
             Assert.That(tab.IsActive, Is.True, "Tab should be active");
             Assert.That(tab.Content, Is.EqualTo("Mock file content"), "Tab should contain file content");
             
             // Verify active tab is set correctly
-            Assert.That(viewModel.ActiveTab, Is.EqualTo(tab), "Active tab should be set");
-            Assert.That(viewModel.ActiveFileContent, Is.EqualTo("Mock file content"), "Active file content should be available");
+            Assert.That(viewModel.EditorTabBar.ActiveTab, Is.EqualTo(tab), "Active tab should be set");
+            Assert.That(viewModel.EditorContent.ActiveFileContent, Is.EqualTo("Mock file content"), "Active file content should be available");
             
             // Verify editor displays the content
             Assert.That(editorTextBox.Text, Is.EqualTo("Mock file content"), "Editor should display file content");
@@ -420,7 +434,7 @@ public class MainWindowTests
         });
 
         // Initially no tabs
-        Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(0), "No tabs initially");
+        Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(0), "No tabs initially");
 
         // Select first file
         await SelectFileAndWaitForTabAsync(readmeFile!, viewModel);
@@ -431,20 +445,20 @@ public class MainWindowTests
         Assert.Multiple(() =>
         {
             // Should have 2 tabs
-            Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(2), "Two tabs should be open");
+            Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(2), "Two tabs should be open");
             
             // First tab should exist but not be active
-            var readmeTab = viewModel.EditorTabs.FirstOrDefault(t => t.Title == "README.md");
+            var readmeTab = viewModel.EditorTabBar.EditorTabs.FirstOrDefault(t => t.Title == "README.md");
             Assert.That(readmeTab, Is.Not.Null, "README tab should exist");
             Assert.That(readmeTab!.IsActive, Is.False, "README tab should not be active");
             
             // Second tab should be active
-            var mainTab = viewModel.EditorTabs.FirstOrDefault(t => t.Title == "main.cs");
+            var mainTab = viewModel.EditorTabBar.EditorTabs.FirstOrDefault(t => t.Title == "main.cs");
             Assert.That(mainTab, Is.Not.Null, "main.cs tab should exist");
             Assert.That(mainTab!.IsActive, Is.True, "main.cs tab should be active");
             
             // Active tab should be the main.cs tab
-            Assert.That(viewModel.ActiveTab, Is.EqualTo(mainTab), "Active tab should be main.cs");
+            Assert.That(viewModel.EditorTabBar.ActiveTab, Is.EqualTo(mainTab), "Active tab should be main.cs");
         });
     }
 
@@ -478,11 +492,11 @@ public class MainWindowTests
         await SelectFileAndWaitForTabAsync(mainFile!, viewModel);
 
         // Verify 2 tabs are open
-        Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(2), "Two tabs should be open");
+        Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(2), "Two tabs should be open");
 
         // Get the README tab and main tab
-        var readmeTab = viewModel.EditorTabs.FirstOrDefault(t => t.Title == "README.md");
-        var mainTab = viewModel.EditorTabs.FirstOrDefault(t => t.Title == "main.cs");
+        var readmeTab = viewModel.EditorTabBar.EditorTabs.FirstOrDefault(t => t.Title == "README.md");
+        var mainTab = viewModel.EditorTabBar.EditorTabs.FirstOrDefault(t => t.Title == "main.cs");
         
         Assert.Multiple(() =>
         {
@@ -497,28 +511,28 @@ public class MainWindowTests
         Assert.Multiple(() =>
         {
             // Should only have 1 tab remaining
-            Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(1), "One tab should remain");
+            Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(1), "One tab should remain");
             
             // The remaining tab should be main.cs
-            var remainingTab = viewModel.EditorTabs.FirstOrDefault();
+            var remainingTab = viewModel.EditorTabBar.EditorTabs.FirstOrDefault();
             Assert.That(remainingTab, Is.Not.Null, "One tab should remain");
             Assert.That(remainingTab!.Title, Is.EqualTo("main.cs"), "Remaining tab should be main.cs");
             Assert.That(remainingTab.IsActive, Is.True, "Remaining tab should be active");
             
             // Active tab should still be main.cs
-            Assert.That(viewModel.ActiveTab, Is.EqualTo(remainingTab), "Active tab should be main.cs");
+            Assert.That(viewModel.EditorTabBar.ActiveTab, Is.EqualTo(remainingTab), "Active tab should be main.cs");
         });
 
         // Close the last remaining tab
-        var lastTab = viewModel.EditorTabs.FirstOrDefault();
+        var lastTab = viewModel.EditorTabBar.EditorTabs.FirstOrDefault();
         lastTab!.CloseCommand.Execute(null);
 
         Assert.Multiple(() =>
         {
             // No tabs should remain
-            Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(0), "No tabs should remain");
-            Assert.That(viewModel.ActiveTab, Is.Null, "No active tab should exist");
-            Assert.That(viewModel.ActiveFileContent, Is.Null, "No active file content should exist");
+            Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(0), "No tabs should remain");
+            Assert.That(viewModel.EditorTabBar.ActiveTab, Is.Null, "No active tab should exist");
+            Assert.That(viewModel.EditorContent.ActiveFileContent, Is.Null, "No active file content should exist");
         });
     }
 
@@ -543,13 +557,13 @@ public class MainWindowTests
         await SelectFileAndWaitForTabAsync(mainFile!, viewModel);
 
         // Verify setup: 2 tabs, main.cs is active
-        Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(2), "Two tabs should be open");
+        Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(2), "Two tabs should be open");
         
-        var readmeTab = viewModel.EditorTabs.FirstOrDefault(t => t.Title == "README.md");
-        var mainTab = viewModel.EditorTabs.FirstOrDefault(t => t.Title == "main.cs");
+        var readmeTab = viewModel.EditorTabBar.EditorTabs.FirstOrDefault(t => t.Title == "README.md");
+        var mainTab = viewModel.EditorTabBar.EditorTabs.FirstOrDefault(t => t.Title == "main.cs");
         
         Assert.That(mainTab!.IsActive, Is.True, "main.cs should be active");
-        Assert.That(viewModel.ActiveTab, Is.EqualTo(mainTab), "ActiveTab should be main.cs");
+        Assert.That(viewModel.EditorTabBar.ActiveTab, Is.EqualTo(mainTab), "ActiveTab should be main.cs");
 
         // Close the currently active tab (main.cs)
         mainTab.CloseCommand.Execute(null);
@@ -557,12 +571,12 @@ public class MainWindowTests
         Assert.Multiple(() =>
         {
             // Should have 1 tab remaining
-            Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(1), "One tab should remain");
+            Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(1), "One tab should remain");
             
             // The README tab should now be active
             Assert.That(readmeTab!.IsActive, Is.True, "README tab should now be active");
-            Assert.That(viewModel.ActiveTab, Is.EqualTo(readmeTab), "ActiveTab should switch to README");
-            Assert.That(viewModel.ActiveFileContent, Is.EqualTo("Mock file content"), "Active content should be from README");
+            Assert.That(viewModel.EditorTabBar.ActiveTab, Is.EqualTo(readmeTab), "ActiveTab should switch to README");
+            Assert.That(viewModel.EditorContent.ActiveFileContent, Is.EqualTo("Mock file content"), "Active content should be from README");
         });
     }
 
@@ -582,24 +596,24 @@ public class MainWindowTests
         var mainFile = srcFolder!.Children.FirstOrDefault(c => c.Name == "main.cs");
 
         // Initially no tabs
-        Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(0), "No tabs initially");
+        Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(0), "No tabs initially");
 
         // Open first file (README.md)
         await SelectFileAndWaitForTabAsync(readmeFile!, viewModel);
 
         // Should have 1 tab and it should be active
-        Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(1), "One tab should be open");
-        var readmeTab = viewModel.EditorTabs.FirstOrDefault(t => t.Title == "README.md");
+        Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(1), "One tab should be open");
+        var readmeTab = viewModel.EditorTabBar.EditorTabs.FirstOrDefault(t => t.Title == "README.md");
         Assert.That(readmeTab, Is.Not.Null, "README tab should exist");
         Assert.That(readmeTab!.IsActive, Is.True, "README tab should be active");
-        Assert.That(viewModel.ActiveTab, Is.EqualTo(readmeTab), "ActiveTab should be README");
+        Assert.That(viewModel.EditorTabBar.ActiveTab, Is.EqualTo(readmeTab), "ActiveTab should be README");
 
         // Open second file (main.cs)
         await SelectFileAndWaitForTabAsync(mainFile!, viewModel);
 
         // Should have 2 tabs now
-        Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(2), "Two tabs should be open");
-        var mainTab = viewModel.EditorTabs.FirstOrDefault(t => t.Title == "main.cs");
+        Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(2), "Two tabs should be open");
+        var mainTab = viewModel.EditorTabBar.EditorTabs.FirstOrDefault(t => t.Title == "main.cs");
         Assert.That(mainTab, Is.Not.Null, "main.cs tab should exist");
 
         Assert.Multiple(() =>
@@ -607,18 +621,18 @@ public class MainWindowTests
             // Only the main.cs tab should be active now
             Assert.That(mainTab!.IsActive, Is.True, "main.cs tab should be active");
             Assert.That(readmeTab.IsActive, Is.False, "README tab should NOT be active");
-            Assert.That(viewModel.ActiveTab, Is.EqualTo(mainTab), "ActiveTab should be main.cs");
+            Assert.That(viewModel.EditorTabBar.ActiveTab, Is.EqualTo(mainTab), "ActiveTab should be main.cs");
         });
 
         // Switch active tab back to README by clicking it (simulate tab selection)
-        viewModel.SetActiveTab(readmeTab);
+        viewModel.EditorTabBar.SetActiveTab(readmeTab);
 
         Assert.Multiple(() =>
         {
             // Now only the README tab should be active
             Assert.That(readmeTab.IsActive, Is.True, "README tab should be active again");
             Assert.That(mainTab.IsActive, Is.False, "main.cs tab should NOT be active");
-            Assert.That(viewModel.ActiveTab, Is.EqualTo(readmeTab), "ActiveTab should be README");
+            Assert.That(viewModel.EditorTabBar.ActiveTab, Is.EqualTo(readmeTab), "ActiveTab should be README");
         });
     }
 
@@ -643,16 +657,16 @@ public class MainWindowTests
         await SelectFileAndWaitForTabAsync(mainFile!, viewModel);
 
         // Verify setup: 2 tabs, main.cs is active
-        Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(2), "Two tabs should be open");
+        Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(2), "Two tabs should be open");
         
-        var readmeTab = viewModel.EditorTabs.FirstOrDefault(t => t.Title == "README.md");
-        var mainTab = viewModel.EditorTabs.FirstOrDefault(t => t.Title == "main.cs");
+        var readmeTab = viewModel.EditorTabBar.EditorTabs.FirstOrDefault(t => t.Title == "README.md");
+        var mainTab = viewModel.EditorTabBar.EditorTabs.FirstOrDefault(t => t.Title == "main.cs");
 
         Assert.Multiple(() =>
         {
             Assert.That(mainTab!.IsActive, Is.True, "main.cs should be active initially");
             Assert.That(readmeTab!.IsActive, Is.False, "README should not be active initially");
-            Assert.That(viewModel.ActiveTab, Is.EqualTo(mainTab), "ActiveTab should be main.cs");
+            Assert.That(viewModel.EditorTabBar.ActiveTab, Is.EqualTo(mainTab), "ActiveTab should be main.cs");
         });
 
         // Close the currently active tab (main.cs)
@@ -661,11 +675,11 @@ public class MainWindowTests
         Assert.Multiple(() =>
         {
             // Should have 1 tab remaining
-            Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(1), "One tab should remain");
+            Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(1), "One tab should remain");
             
             // The README tab should now be active (and highlighted)
             Assert.That(readmeTab!.IsActive, Is.True, "README tab should now be active and highlighted");
-            Assert.That(viewModel.ActiveTab, Is.EqualTo(readmeTab), "ActiveTab should switch to README");
+            Assert.That(viewModel.EditorTabBar.ActiveTab, Is.EqualTo(readmeTab), "ActiveTab should switch to README");
         });
 
         // Close the last tab
@@ -674,8 +688,8 @@ public class MainWindowTests
         Assert.Multiple(() =>
         {
             // No tabs should remain
-            Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(0), "No tabs should remain");
-            Assert.That(viewModel.ActiveTab, Is.Null, "No active tab should exist");
+            Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(0), "No tabs should remain");
+            Assert.That(viewModel.EditorTabBar.ActiveTab, Is.Null, "No active tab should exist");
         });
     }
 
@@ -700,10 +714,10 @@ public class MainWindowTests
         await SelectFileAndWaitForTabAsync(mainFile!, viewModel);
 
         // Verify setup: 2 tabs exist, main.cs is currently active
-        Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(2), "Two tabs should be open");
+        Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(2), "Two tabs should be open");
         
-        var readmeTab = viewModel.EditorTabs.FirstOrDefault(t => t.Title == "README.md");
-        var mainTab = viewModel.EditorTabs.FirstOrDefault(t => t.Title == "main.cs");
+        var readmeTab = viewModel.EditorTabBar.EditorTabs.FirstOrDefault(t => t.Title == "README.md");
+        var mainTab = viewModel.EditorTabBar.EditorTabs.FirstOrDefault(t => t.Title == "main.cs");
         
         Assert.Multiple(() =>
         {
@@ -711,7 +725,7 @@ public class MainWindowTests
             Assert.That(mainTab, Is.Not.Null, "main.cs tab should exist");
             Assert.That(mainTab!.IsActive, Is.True, "main.cs should be active initially");
             Assert.That(readmeTab!.IsActive, Is.False, "README should not be active initially");
-            Assert.That(viewModel.ActiveTab, Is.EqualTo(mainTab), "ActiveTab should be main.cs");
+            Assert.That(viewModel.EditorTabBar.ActiveTab, Is.EqualTo(mainTab), "ActiveTab should be main.cs");
         });
 
         // Click on the README tab to select it
@@ -722,8 +736,8 @@ public class MainWindowTests
             // README tab should now be active
             Assert.That(readmeTab.IsActive, Is.True, "README tab should be active after click");
             Assert.That(mainTab!.IsActive, Is.False, "main.cs tab should not be active after README click");
-            Assert.That(viewModel.ActiveTab, Is.EqualTo(readmeTab), "ActiveTab should be README after click");
-            Assert.That(viewModel.ActiveFileContent, Is.EqualTo("Mock file content"), "Active content should be from README");
+            Assert.That(viewModel.EditorTabBar.ActiveTab, Is.EqualTo(readmeTab), "ActiveTab should be README after click");
+            Assert.That(viewModel.EditorContent.ActiveFileContent, Is.EqualTo("Mock file content"), "Active content should be from README");
             
             // Editor should display README content
             var editorTextBox = window.FindControl<TextBox>("DocumentEditor");
@@ -738,8 +752,8 @@ public class MainWindowTests
             // main.cs tab should be active again
             Assert.That(mainTab.IsActive, Is.True, "main.cs tab should be active after click");
             Assert.That(readmeTab.IsActive, Is.False, "README tab should not be active after main.cs click");
-            Assert.That(viewModel.ActiveTab, Is.EqualTo(mainTab), "ActiveTab should be main.cs after click");
-            Assert.That(viewModel.ActiveFileContent, Is.EqualTo("Mock file content"), "Active content should be from main.cs");
+            Assert.That(viewModel.EditorTabBar.ActiveTab, Is.EqualTo(mainTab), "ActiveTab should be main.cs after click");
+            Assert.That(viewModel.EditorContent.ActiveFileContent, Is.EqualTo("Mock file content"), "Active content should be from main.cs");
         });
     }
 
@@ -766,10 +780,10 @@ public class MainWindowTests
         await SelectFileAndWaitForTabAsync(mainFile!, viewModel);
 
         // Verify setup
-        Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(2), "Two tabs should be open");
+        Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(2), "Two tabs should be open");
         
-        var readmeTab = viewModel.EditorTabs.FirstOrDefault(t => t.Title == "README.md");
-        var mainTab = viewModel.EditorTabs.FirstOrDefault(t => t.Title == "main.cs");
+        var readmeTab = viewModel.EditorTabBar.EditorTabs.FirstOrDefault(t => t.Title == "README.md");
+        var mainTab = viewModel.EditorTabBar.EditorTabs.FirstOrDefault(t => t.Title == "main.cs");
 
         // Initially main.cs should be active
         Assert.That(mainTab!.IsActive, Is.True, "main.cs should be active initially");
@@ -785,7 +799,7 @@ public class MainWindowTests
             Assert.That(mainTab.IsActive, Is.False, "main.cs should not be active after README click");
             
             // Verify the highlighting is applied (IsActive property drives the visual highlighting)
-            Assert.That(viewModel.ActiveTab, Is.EqualTo(readmeTab), "ActiveTab should be README");
+            Assert.That(viewModel.EditorTabBar.ActiveTab, Is.EqualTo(readmeTab), "ActiveTab should be README");
         });
 
         // Click main.cs tab and verify highlighting switches
@@ -798,7 +812,7 @@ public class MainWindowTests
             Assert.That(readmeTab.IsActive, Is.False, "README should not be active after main.cs click");
             
             // Verify the highlighting is applied
-            Assert.That(viewModel.ActiveTab, Is.EqualTo(mainTab), "ActiveTab should be main.cs");
+            Assert.That(viewModel.EditorTabBar.ActiveTab, Is.EqualTo(mainTab), "ActiveTab should be main.cs");
         });
     }
 
@@ -880,10 +894,10 @@ public class MainWindowTests
         var viewModel = window.DataContext as MainWindowViewModel;
         
         Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
-        Assert.That(viewModel!.BuildDocumentationCommand, Is.Not.Null, "BuildDocumentationCommand should exist");
+        Assert.That(viewModel!.EditorContent.BuildDocumentationCommand, Is.Not.Null, "BuildDocumentationCommand should exist");
         
         // Test that the command exists and is enabled
-        bool canExecute = viewModel.BuildDocumentationCommand.CanExecute(null);
+        bool canExecute = viewModel.EditorContent.BuildDocumentationCommand.CanExecute(null);
         Assert.That(canExecute, Is.True, "BuildDocumentationCommand should be enabled");
     }
 
@@ -902,10 +916,10 @@ public class MainWindowTests
         Assert.That(menu.Items.Count, Is.EqualTo(3), "Menu should have File, View, and Build menus");
 
         // Test that the BuildDocumentationCommand exists and is bound to the Build menu item
-        Assert.That(viewModel!.BuildDocumentationCommand, Is.Not.Null, "BuildDocumentationCommand should be available for menu binding");
+        Assert.That(viewModel!.EditorContent.BuildDocumentationCommand, Is.Not.Null, "BuildDocumentationCommand should be available for menu binding");
         
         // Test that the command is enabled
-        bool canExecute = viewModel.BuildDocumentationCommand.CanExecute(null);
+        bool canExecute = viewModel.EditorContent.BuildDocumentationCommand.CanExecute(null);
         Assert.That(canExecute, Is.True, "BuildDocumentationCommand should be enabled");
     }
 
@@ -934,16 +948,24 @@ public class MainWindowTests
         var markdownCombinationService = Substitute.For<IMarkdownCombinationService>();
         var markdownFileCollectorService = Substitute.For<IMarkdownFileCollectorService>();
         
-        var viewModel = new MainWindowViewModel(vmLogger, options, fileService, serviceProvider, markdownCombinationService, markdownFileCollectorService);
+        var stateLogger = Substitute.For<ILogger<EditorStateService>>();
+        var tabBarLogger = Substitute.For<ILogger<EditorTabBarViewModel>>();
+        var contentLogger = Substitute.For<ILogger<EditorContentViewModel>>();
         
-        Assert.That(viewModel.BuildDocumentationCommand, Is.Not.Null, "BuildDocumentationCommand should exist");
+        var editorStateService = new EditorStateService(stateLogger);
+        var editorTabBarViewModel = new EditorTabBarViewModel(tabBarLogger, fileService, editorStateService);
+        var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService);
+        
+        var viewModel = new MainWindowViewModel(vmLogger, options, fileService, serviceProvider, editorStateService, editorTabBarViewModel, editorContentViewModel);
+        
+        Assert.That(viewModel.EditorContent.BuildDocumentationCommand, Is.Not.Null, "BuildDocumentationCommand should exist");
         
         // Track if dialog event was triggered
         BuildConfirmationDialogViewModel? dialogViewModel = null;
         viewModel.ShowBuildConfirmationDialog += (sender, e) => dialogViewModel = e;
         
         // Execute the build command
-        viewModel.BuildDocumentationCommand.Execute(null);
+        viewModel.EditorContent.BuildDocumentationCommand.Execute(null);
         
         Assert.Multiple(() =>
         {
@@ -1448,8 +1470,8 @@ public class MainWindowTests
 
 
         // Open a file
-        await viewModel.OpenFileAsync("/test/path/README.md");
-        Assert.That(viewModel.ActiveTab, Is.Not.Null, "Active tab should exist");
+        await viewModel.EditorTabBar.OpenFileAsync("/test/path/README.md");
+        Assert.That(viewModel.EditorTabBar.ActiveTab, Is.Not.Null, "Active tab should exist");
 
         // Mock validation service to return errors
         var mockValidationResult = new ValidationResult
@@ -1479,7 +1501,9 @@ public class MainWindowTests
         };
 
         // Manually update the current validation result to simulate validation
-        viewModel.GetType().GetProperty("CurrentValidationResult")!.SetValue(viewModel, mockValidationResult);
+        // Set the validation result through the EditorStateService
+        var editorStateService = (EditorStateService)viewModel.GetType().GetField("_editorStateService", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(viewModel)!;
+        editorStateService.CurrentValidationResult = mockValidationResult;
         
         // Manually call the UpdateErrorPanelWithValidationResults method
         viewModel.UpdateErrorPanelWithValidationResults(mockValidationResult);
@@ -1510,14 +1534,16 @@ public class MainWindowTests
         var viewModel = await SetupWindowAndWaitForLoadAsync(window);
 
         // Open a file
-        await viewModel.OpenFileAsync("/test/path/README.md");
-        Assert.That(viewModel.ActiveTab, Is.Not.Null, "Active tab should exist");
+        await viewModel.EditorTabBar.OpenFileAsync("/test/path/README.md");
+        Assert.That(viewModel.EditorTabBar.ActiveTab, Is.Not.Null, "Active tab should exist");
 
         // Mock validation service to return success (no errors)
         var mockValidationResult = new ValidationResult();
 
         // Manually update the current validation result to simulate validation
-        viewModel.GetType().GetProperty("CurrentValidationResult")!.SetValue(viewModel, mockValidationResult);
+        // Set the validation result through the EditorStateService
+        var editorStateService = (EditorStateService)viewModel.GetType().GetField("_editorStateService", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(viewModel)!;
+        editorStateService.CurrentValidationResult = mockValidationResult;
         
         // Store initial state
         var wasBottomPanelVisible = viewModel.IsBottomPanelVisible;
@@ -1551,8 +1577,8 @@ public class MainWindowTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(viewModel.ValidateAllCommand, Is.Not.Null, "ValidateAllCommand should exist");
-            Assert.That(viewModel.ValidateAllCommand.CanExecute(null), Is.True, "ValidateAllCommand should be executable");
+            Assert.That(viewModel.EditorContent.ValidateAllCommand, Is.Not.Null, "ValidateAllCommand should exist");
+            Assert.That(viewModel.EditorContent.ValidateAllCommand.CanExecute(null), Is.True, "ValidateAllCommand should be executable");
         });
     }
 
@@ -1600,17 +1626,17 @@ public class MainWindowTests
         mockCombinationService.ValidateAll(Arg.Any<IEnumerable<MarkdownDocument>>(), Arg.Any<IEnumerable<MarkdownDocument>>())
             .Returns(mockValidationResult);
 
-        // Replace the services using reflection to inject our mocks
-        var fileCollectorField = viewModel.GetType().GetField("_markdownFileCollectorService", 
+        // Replace the services using reflection to inject our mocks into EditorContentViewModel
+        var fileCollectorField = viewModel.EditorContent.GetType().GetField("_markdownFileCollectorService", 
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        fileCollectorField!.SetValue(viewModel, mockFileCollector);
+        fileCollectorField!.SetValue(viewModel.EditorContent, mockFileCollector);
 
-        var combinationServiceField = viewModel.GetType().GetField("_markdownCombinationService", 
+        var combinationServiceField = viewModel.EditorContent.GetType().GetField("_markdownCombinationService", 
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        combinationServiceField!.SetValue(viewModel, mockCombinationService);
+        combinationServiceField!.SetValue(viewModel.EditorContent, mockCombinationService);
 
         // Execute the validate all command
-        viewModel.ValidateAllCommand.Execute(null);
+        viewModel.EditorContent.ValidateAllCommand.Execute(null);
 
         // Wait a moment for async operation to complete
         await WaitForConditionAsync(() => viewModel.IsBottomPanelVisible, 1000);
@@ -1636,8 +1662,8 @@ public class MainWindowTests
         var viewModel = await SetupWindowAndWaitForLoadAsync(window);
 
         // Open a file
-        await viewModel.OpenFileAsync("/test/path/file1.mdext");
-        Assert.That(viewModel.ActiveTab, Is.Not.Null, "Active tab should exist");
+        await viewModel.EditorTabBar.OpenFileAsync("/test/path/file1.mdext");
+        Assert.That(viewModel.EditorTabBar.ActiveTab, Is.Not.Null, "Active tab should exist");
 
         // Create validation results with errors from multiple files
         var mockValidationResult = new ValidationResult
@@ -1651,7 +1677,9 @@ public class MainWindowTests
         };
 
         // Set validation results
-        viewModel.GetType().GetProperty("CurrentValidationResult")!.SetValue(viewModel, mockValidationResult);
+        // Set the validation result through the EditorStateService
+        var editorStateService = (EditorStateService)viewModel.GetType().GetField("_editorStateService", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(viewModel)!;
+        editorStateService.CurrentValidationResult = mockValidationResult;
 
         // Update error panel to simulate validation
         viewModel.UpdateErrorPanelWithValidationResults(mockValidationResult);
@@ -1659,7 +1687,7 @@ public class MainWindowTests
         Assert.Multiple(() =>
         {
             // Verify that the ActiveFileName is set correctly
-            Assert.That(viewModel.ActiveFileName, Is.EqualTo("file1.mdext"), "ActiveFileName should be set to current file");
+            Assert.That(viewModel.EditorContent.ActiveFileName, Is.EqualTo("file1.mdext"), "ActiveFileName should be set to current file");
             
             // Verify that all errors are shown in the error panel
             Assert.That(viewModel.IsBottomPanelVisible, Is.True, "Bottom panel should be visible for errors");
@@ -1684,29 +1712,29 @@ public class MainWindowTests
         var viewModel = await SetupWindowAndWaitForLoadAsync(window);
 
         // Open two files with different names
-        await viewModel.OpenFileAsync("/test/path/file1.mdext");
-        await viewModel.OpenFileAsync("/test/path/file2.mdext");
+        await viewModel.EditorTabBar.OpenFileAsync("/test/path/file1.mdext");
+        await viewModel.EditorTabBar.OpenFileAsync("/test/path/file2.mdext");
 
         // Verify file2 is currently active
-        Assert.That(viewModel.ActiveFileName, Is.EqualTo("file2.mdext"), "Should be file2 initially");
+        Assert.That(viewModel.EditorContent.ActiveFileName, Is.EqualTo("file2.mdext"), "Should be file2 initially");
 
         // Switch to file1
-        var file1Tab = viewModel.EditorTabs.FirstOrDefault(t => t.FilePath == "/test/path/file1.mdext");
+        var file1Tab = viewModel.EditorTabBar.EditorTabs.FirstOrDefault(t => t.FilePath == "/test/path/file1.mdext");
         Assert.That(file1Tab, Is.Not.Null, "File1 tab should exist");
         
-        viewModel.SetActiveTab(file1Tab!);
+        viewModel.EditorTabBar.SetActiveTab(file1Tab!);
 
         // Verify ActiveFileName updated
-        Assert.That(viewModel.ActiveFileName, Is.EqualTo("file1.mdext"), "Should be file1 after switching");
+        Assert.That(viewModel.EditorContent.ActiveFileName, Is.EqualTo("file1.mdext"), "Should be file1 after switching");
 
         // Switch back to file2
-        var file2Tab = viewModel.EditorTabs.FirstOrDefault(t => t.FilePath == "/test/path/file2.mdext");
+        var file2Tab = viewModel.EditorTabBar.EditorTabs.FirstOrDefault(t => t.FilePath == "/test/path/file2.mdext");
         Assert.That(file2Tab, Is.Not.Null, "File2 tab should exist");
         
-        viewModel.SetActiveTab(file2Tab!);
+        viewModel.EditorTabBar.SetActiveTab(file2Tab!);
 
         // Verify ActiveFileName updated again
-        Assert.That(viewModel.ActiveFileName, Is.EqualTo("file2.mdext"), "Should be file2 after switching back");
+        Assert.That(viewModel.EditorContent.ActiveFileName, Is.EqualTo("file2.mdext"), "Should be file2 after switching back");
     }
 
     [AvaloniaTest]
@@ -1722,7 +1750,7 @@ public class MainWindowTests
         Assert.That(readmeFile, Is.Not.Null, "README.md file should exist");
 
         // Initially no tabs should be open
-        Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(0), "No tabs should be open initially");
+        Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(0), "No tabs should be open initially");
 
         // First, open the file via tree view selection
         await SelectFileAndWaitForTabAsync(readmeFile!, viewModel);
@@ -1730,66 +1758,66 @@ public class MainWindowTests
         // Verify tab was created
         Assert.Multiple(() =>
         {
-            Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(1), "One tab should be open after first selection");
+            Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(1), "One tab should be open after first selection");
             
-            var tab = viewModel.EditorTabs.First();
+            var tab = viewModel.EditorTabBar.EditorTabs.First();
             Assert.That(tab.Title, Is.EqualTo("README.md"), "Tab title should be README.md");
             Assert.That(tab.FilePath, Is.EqualTo("/test/path/README.md"), "Tab file path should be correct");
             Assert.That(tab.IsActive, Is.True, "Tab should be active");
-            Assert.That(viewModel.ActiveTab, Is.EqualTo(tab), "Active tab should be set");
+            Assert.That(viewModel.EditorTabBar.ActiveTab, Is.EqualTo(tab), "Active tab should be set");
         });
 
-        var originalTab = viewModel.EditorTabs.First();
+        var originalTab = viewModel.EditorTabBar.EditorTabs.First();
         var originalTabId = originalTab.Id;
 
         // Now simulate opening the same file via error navigation or other method
         // by calling OpenFileAsync directly with the same file path
-        await viewModel.OpenFileAsync("/test/path/README.md");
+        await viewModel.EditorTabBar.OpenFileAsync("/test/path/README.md");
 
         Assert.Multiple(() =>
         {
             // Should still have only one tab (not duplicated)
-            Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(1), "Should still have only one tab after second open");
+            Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(1), "Should still have only one tab after second open");
             
             // Should be the same tab instance
-            var currentTab = viewModel.EditorTabs.First();
+            var currentTab = viewModel.EditorTabBar.EditorTabs.First();
             Assert.That(currentTab.Id, Is.EqualTo(originalTabId), "Should be the same tab instance");
             Assert.That(currentTab, Is.EqualTo(originalTab), "Should be the exact same tab object");
             
             // Tab should still be active
             Assert.That(currentTab.IsActive, Is.True, "Tab should remain active");
-            Assert.That(viewModel.ActiveTab, Is.EqualTo(currentTab), "Active tab should remain the same");
+            Assert.That(viewModel.EditorTabBar.ActiveTab, Is.EqualTo(currentTab), "Active tab should remain the same");
         });
 
         // Test with different path representations that should resolve to the same file
         // Test with path that has extra slashes or path separators
         var pathWithExtraSlashes = "/test/path//README.md";
-        await viewModel.OpenFileAsync(pathWithExtraSlashes);
+        await viewModel.EditorTabBar.OpenFileAsync(pathWithExtraSlashes);
 
         Assert.Multiple(() =>
         {
             // Should still have only one tab since paths normalize to the same file
-            Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(1), "Should still have only one tab after opening with extra slashes");
-            Assert.That(viewModel.EditorTabs.First().Id, Is.EqualTo(originalTabId), "Should still be the same tab");
+            Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(1), "Should still have only one tab after opening with extra slashes");
+            Assert.That(viewModel.EditorTabBar.EditorTabs.First().Id, Is.EqualTo(originalTabId), "Should still be the same tab");
             
             // Active tab should remain unchanged
-            Assert.That(viewModel.ActiveTab, Is.EqualTo(originalTab), "Active tab should remain the same");
-            Assert.That(viewModel.ActiveTab!.IsActive, Is.True, "Active tab should still be active");
+            Assert.That(viewModel.EditorTabBar.ActiveTab, Is.EqualTo(originalTab), "Active tab should remain the same");
+            Assert.That(viewModel.EditorTabBar.ActiveTab!.IsActive, Is.True, "Active tab should still be active");
         });
 
         // Test with path that has redundant path components (../)
         var pathWithDotDot = "/test/other/../path/README.md";
-        await viewModel.OpenFileAsync(pathWithDotDot);
+        await viewModel.EditorTabBar.OpenFileAsync(pathWithDotDot);
 
         Assert.Multiple(() =>
         {
             // Should still have only one tab since paths normalize to the same file
-            Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(1), "Should still have only one tab after opening with ../ path");
-            Assert.That(viewModel.EditorTabs.First().Id, Is.EqualTo(originalTabId), "Should still be the same tab");
+            Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(1), "Should still have only one tab after opening with ../ path");
+            Assert.That(viewModel.EditorTabBar.EditorTabs.First().Id, Is.EqualTo(originalTabId), "Should still be the same tab");
             
             // Active tab should remain unchanged
-            Assert.That(viewModel.ActiveTab, Is.EqualTo(originalTab), "Active tab should remain the same");
-            Assert.That(viewModel.ActiveTab!.IsActive, Is.True, "Active tab should still be active");
+            Assert.That(viewModel.EditorTabBar.ActiveTab, Is.EqualTo(originalTab), "Active tab should remain the same");
+            Assert.That(viewModel.EditorTabBar.ActiveTab!.IsActive, Is.True, "Active tab should still be active");
         });
     }
 
@@ -1800,22 +1828,22 @@ public class MainWindowTests
         var viewModel = await SetupWindowAndWaitForLoadAsync(window);
 
         // First open a file with lowercase path
-        await viewModel.OpenFileAsync("/test/path/readme.md");
+        await viewModel.EditorTabBar.OpenFileAsync("/test/path/readme.md");
 
-        Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(1), "One tab should be open");
-        var originalTab = viewModel.EditorTabs.First();
+        Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(1), "One tab should be open");
+        var originalTab = viewModel.EditorTabBar.EditorTabs.First();
         var originalTabId = originalTab.Id;
 
         // Try opening with different case - should reuse existing tab
-        await viewModel.OpenFileAsync("/test/path/README.md");
-        await viewModel.OpenFileAsync("/TEST/PATH/README.MD");
+        await viewModel.EditorTabBar.OpenFileAsync("/test/path/README.md");
+        await viewModel.EditorTabBar.OpenFileAsync("/TEST/PATH/README.MD");
         
         Assert.Multiple(() =>
         {
             // Should still have only one tab
-            Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(1), "Should have only one tab despite different case paths");
-            Assert.That(viewModel.EditorTabs.First().Id, Is.EqualTo(originalTabId), "Should be the same tab");
-            Assert.That(viewModel.ActiveTab, Is.EqualTo(originalTab), "Active tab should remain the same");
+            Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(1), "Should have only one tab despite different case paths");
+            Assert.That(viewModel.EditorTabBar.EditorTabs.First().Id, Is.EqualTo(originalTabId), "Should be the same tab");
+            Assert.That(viewModel.EditorTabBar.ActiveTab, Is.EqualTo(originalTab), "Active tab should remain the same");
         });
     }
 
@@ -1826,26 +1854,26 @@ public class MainWindowTests
         var viewModel = await SetupWindowAndWaitForLoadAsync(window);
 
         // Open first file
-        await viewModel.OpenFileAsync("/test/path/README.md");
-        Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(1), "One tab should be open for first file");
+        await viewModel.EditorTabBar.OpenFileAsync("/test/path/README.md");
+        Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(1), "One tab should be open for first file");
         
         // Open second file - should create a new tab
-        await viewModel.OpenFileAsync("/test/path/different-file.md");
+        await viewModel.EditorTabBar.OpenFileAsync("/test/path/different-file.md");
         
         Assert.Multiple(() =>
         {
             // Should have two tabs for different files
-            Assert.That(viewModel.EditorTabs.Count, Is.EqualTo(2), "Should have two tabs for different files");
+            Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(2), "Should have two tabs for different files");
             
-            var readmeTab = viewModel.EditorTabs.FirstOrDefault(t => t.FilePath.Contains("README.md"));
-            var differentTab = viewModel.EditorTabs.FirstOrDefault(t => t.FilePath.Contains("different-file.md"));
+            var readmeTab = viewModel.EditorTabBar.EditorTabs.FirstOrDefault(t => t.FilePath.Contains("README.md"));
+            var differentTab = viewModel.EditorTabBar.EditorTabs.FirstOrDefault(t => t.FilePath.Contains("different-file.md"));
             
             Assert.That(readmeTab, Is.Not.Null, "README tab should exist");
             Assert.That(differentTab, Is.Not.Null, "Different file tab should exist");
             Assert.That(readmeTab!.Id, Is.Not.EqualTo(differentTab!.Id), "Tabs should have different IDs");
             
             // The most recently opened file should be active
-            Assert.That(viewModel.ActiveTab, Is.EqualTo(differentTab), "Most recently opened file should be active");
+            Assert.That(viewModel.EditorTabBar.ActiveTab, Is.EqualTo(differentTab), "Most recently opened file should be active");
         });
     }
 }

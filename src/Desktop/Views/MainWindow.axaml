@@ -23,9 +23,9 @@
                 <MenuItem Header="Errors" Command="{Binding ShowErrorsCommand}" />
             </MenuItem>
             <MenuItem Header="Build">
-                <MenuItem Header="Build documentation" Command="{Binding BuildDocumentationCommand}" />
-                <MenuItem Header="Validate" Command="{Binding ValidateCommand}" />
-                <MenuItem Header="Validate All" Command="{Binding ValidateAllCommand}" />
+                <MenuItem Header="Build documentation" Command="{Binding EditorContent.BuildDocumentationCommand}" />
+                <MenuItem Header="Validate" Command="{Binding EditorContent.ValidateCommand}" />
+                <MenuItem Header="Validate All" Command="{Binding EditorContent.ValidateAllCommand}" />
             </MenuItem>
         </Menu>
         
@@ -137,7 +137,7 @@
                     <!-- Tab Bar -->
                     <Border Grid.Row="0" Background="#2D2D30" BorderBrush="#3E3E42" BorderThickness="0,0,0,1">
                         <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                            <ItemsControl ItemsSource="{Binding EditorTabs}" Margin="5,0">
+                            <ItemsControl ItemsSource="{Binding EditorTabBar.EditorTabs}" Margin="5,0">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
                                         <StackPanel Orientation="Horizontal" />
@@ -183,7 +183,7 @@
                     <ScrollViewer Grid.Row="1" Name="EditorScrollViewer">
                         <Grid>
                             <TextBox Name="DocumentEditor" 
-                                    Text="{Binding ActiveTab.Content, Mode=TwoWay}"
+                                    Text="{Binding EditorContent.ActiveTab.Content, Mode=TwoWay}"
                                     Background="#1E1E1E" 
                                     Foreground="#D4D4D4"
                                     CaretBrush="#FFFFFF"
@@ -215,9 +215,9 @@
                             
                             <!-- Validation Error Overlay -->
                             <controls:ValidationErrorOverlay 
-                                ValidationResult="{Binding CurrentValidationResult}"
+                                ValidationResult="{Binding EditorContent.CurrentValidationResult}"
                                 TargetTextBox="{Binding #DocumentEditor}"
-                                CurrentFileName="{Binding ActiveFileName}"
+                                CurrentFileName="{Binding EditorContent.ActiveFileName}"
                                 IsHitTestVisible="False" />
                         </Grid>
                     </ScrollViewer>

@@ -35,13 +35,22 @@ public class ErrorNavigationTests
             DefaultOutputFolder = "/output"
         });
 
+        var stateLogger = Substitute.For<ILogger<EditorStateService>>();
+        var tabBarLogger = Substitute.For<ILogger<EditorTabBarViewModel>>();
+        var contentLogger = Substitute.For<ILogger<EditorContentViewModel>>();
+        
+        var editorStateService = new EditorStateService(stateLogger);
+        var editorTabBarViewModel = new EditorTabBarViewModel(tabBarLogger, fileService, editorStateService);
+        var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService);
+        
         var viewModel = new MainWindowViewModel(
             logger, 
             options, 
             fileService, 
             serviceProvider,
-            markdownCombinationService,
-            markdownFileCollectorService);
+            editorStateService,
+            editorTabBarViewModel,
+            editorContentViewModel);
 
         var validationResult = new ValidationResult
         {
@@ -122,13 +131,22 @@ public class ErrorNavigationTests
             DefaultOutputFolder = "/output"
         });
 
+        var stateLogger = Substitute.For<ILogger<EditorStateService>>();
+        var tabBarLogger = Substitute.For<ILogger<EditorTabBarViewModel>>();
+        var contentLogger = Substitute.For<ILogger<EditorContentViewModel>>();
+        
+        var editorStateService = new EditorStateService(stateLogger);
+        var editorTabBarViewModel = new EditorTabBarViewModel(tabBarLogger, fileService, editorStateService);
+        var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService);
+        
         var viewModel = new MainWindowViewModel(
             logger, 
             options, 
             fileService, 
             serviceProvider,
-            markdownCombinationService,
-            markdownFileCollectorService);
+            editorStateService,
+            editorTabBarViewModel,
+            editorContentViewModel);
 
         var validationResult = new ValidationResult
         {

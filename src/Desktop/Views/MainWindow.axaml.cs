@@ -30,7 +30,7 @@ public partial class MainWindow : Window
         Loaded += OnWindowLoaded;
     }
     
-    private void OnWindowLoaded(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    private async void OnWindowLoaded(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         // Find the BottomOutput TextBox and set up UI logging
         var bottomOutput = this.FindControl<TextBox>("BottomOutput");
@@ -44,6 +44,12 @@ public partial class MainWindow : Window
             var logger = App.ServiceProvider.GetRequiredService<ILogger<MainWindow>>();
             logger.LogInformation("UI logging initialized successfully!");
             logger.LogInformation("All application logs will now appear in the UI log output.");
+        }
+        
+        // Initialize the view model after UI is fully loaded
+        if (DataContext is MainWindowViewModel viewModel)
+        {
+            await viewModel.InitializeAsync();
         }
     }
     

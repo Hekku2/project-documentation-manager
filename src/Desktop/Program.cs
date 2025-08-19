@@ -74,6 +74,8 @@ class Program
                 
                 // Register ViewModels
                 services.AddScoped<Desktop.ViewModels.MainWindowViewModel>();
+                services.AddScoped<Desktop.ViewModels.EditorTabBarViewModel>();
+                services.AddScoped<Desktop.ViewModels.EditorContentViewModel>();
                 services.AddScoped<Desktop.ViewModels.BuildConfirmationDialogViewModel>();
                 
                 // Register services here
@@ -90,6 +92,7 @@ class Program
                 
                 // Register application services
                 services.AddSingleton<Desktop.Services.IFileService, Desktop.Services.FileService>();
+                services.AddSingleton<Desktop.Services.IEditorStateService, Desktop.Services.EditorStateService>();
                 
                 // Register business services
                 services.AddScoped<Business.Services.IMarkdownCombinationService, Business.Services.MarkdownCombinationService>();

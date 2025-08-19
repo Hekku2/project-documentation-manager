@@ -44,6 +44,9 @@ public class FileSystemMonitoringTests
     private static (MainWindow window, IFileService fileService, MainWindowViewModel viewModel) CreateMainWindowWithMonitoring()
     {
         var vmLogger = new LoggerFactory().CreateLogger<MainWindowViewModel>();
+        var tabBarLogger = new LoggerFactory().CreateLogger<EditorTabBarViewModel>();
+        var contentLogger = new LoggerFactory().CreateLogger<EditorContentViewModel>();
+        var stateLogger = new LoggerFactory().CreateLogger<EditorStateService>();
         var options = Options.Create(new ApplicationOptions());
         var fileService = Substitute.For<IFileService>();
         var serviceProvider = Substitute.For<IServiceProvider>();
@@ -57,7 +60,11 @@ public class FileSystemMonitoringTests
         var markdownCombinationService = Substitute.For<IMarkdownCombinationService>();
         var markdownFileCollectorService = Substitute.For<IMarkdownFileCollectorService>();
         
-        var viewModel = new MainWindowViewModel(vmLogger, options, fileService, serviceProvider, markdownCombinationService, markdownFileCollectorService);
+        var editorStateService = new EditorStateService(stateLogger);
+        var editorTabBarViewModel = new EditorTabBarViewModel(tabBarLogger, fileService, editorStateService);
+        var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService);
+        
+        var viewModel = new MainWindowViewModel(vmLogger, options, fileService, serviceProvider, editorStateService, editorTabBarViewModel, editorContentViewModel);
         var window = new MainWindow(viewModel);
         
         return (window, fileService, viewModel);
