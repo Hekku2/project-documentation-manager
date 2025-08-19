@@ -124,7 +124,7 @@ public class EditorTabBarViewModel : ViewModelBase
     public async Task SaveActiveFileAsync()
     {
         var activeTab = ActiveTab;
-        if (activeTab == null || !activeTab.IsModified)
+        if (activeTab == null || !activeTab.IsModified || activeTab.FilePath == null || activeTab.Content == null)
             return;
 
         try
@@ -164,8 +164,8 @@ public class EditorTabBarViewModel : ViewModelBase
             {
                 Id = "settings",
                 Title = "Settings",
-                FilePath = "", // No file path for settings tab
-                Content = "", // No content for settings tab
+                FilePath = null, // No file path for settings tab
+                Content = null, // No content for settings tab
                 IsModified = false,
                 IsActive = true,
                 TabType = TabType.Settings

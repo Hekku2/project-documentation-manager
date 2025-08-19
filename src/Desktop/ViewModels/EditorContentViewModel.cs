@@ -77,9 +77,9 @@ public class EditorContentViewModel : ViewModelBase
     private async void ValidateDocumentation()
     {
         var activeTab = ActiveTab;
-        if (activeTab == null)
+        if (activeTab == null || activeTab.FilePath == null)
         {
-            _logger.LogWarning("Validate requested but no active file");
+            _logger.LogWarning("Validate requested but no active file or file path");
             return;
         }
         
@@ -143,7 +143,7 @@ public class EditorContentViewModel : ViewModelBase
 
     private bool CanValidateDocumentation()
     {
-        return ActiveTab != null;
+        return ActiveTab != null && ActiveTab.FilePath != null;
     }
 
     private async void ValidateAllDocumentation()

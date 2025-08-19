@@ -6,7 +6,7 @@ namespace Desktop.ViewModels;
 
 public class EditorTabViewModel : ViewModelBase
 {
-    private string _content = string.Empty;
+    private string? _content;
     private bool _isModified;
     private bool _isActive;
 
@@ -24,10 +24,10 @@ public class EditorTabViewModel : ViewModelBase
 
     public string Id => Tab.Id;
     public string Title => Tab.Title;
-    public string FilePath => Tab.FilePath;
+    public string? FilePath => Tab.FilePath;
     public TabType TabType => Tab.TabType;
 
-    public string Content
+    public string? Content
     {
         get => _content;
         set
