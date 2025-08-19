@@ -28,7 +28,7 @@ public class FileSystemItemViewModel : ViewModelBase
         // For directories, add a placeholder to show the expand icon
         if (item.IsDirectory && item.HasChildren)
         {
-            Children.Add(new FileSystemItemViewModel(new FileSystemItem { Name = "Loading..." }));
+            Children.Add(new FileSystemItemViewModel(new FileSystemItem { Name = "Loading...", FullPath = "" }));
         }
         else if (!item.IsDirectory)
         {
@@ -234,7 +234,7 @@ public class FileSystemItemViewModel : ViewModelBase
                 if (hasChildren)
                 {
                     // Add a placeholder child to indicate it has children
-                    newItem.Children.Add(new FileSystemItem { Name = "Placeholder" });
+                    newItem.Children.Add(new FileSystemItem { Name = "Placeholder", FullPath = "" });
                 }
             }
             catch

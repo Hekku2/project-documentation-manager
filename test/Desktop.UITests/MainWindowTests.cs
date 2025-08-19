@@ -76,9 +76,9 @@ public class MainWindowTests
         IsDirectory = true,
         Children = 
         [
-            new() { Name = "src", IsDirectory = true },
-            new() { Name = "test", IsDirectory = true },
-            new() { Name = "README.md", IsDirectory = false }
+            new() { Name = "src", FullPath = "/test/src", IsDirectory = true },
+            new() { Name = "test", FullPath = "/test/test", IsDirectory = true },
+            new() { Name = "README.md", FullPath = "/test/README.md", IsDirectory = false }
         ]
     };
 

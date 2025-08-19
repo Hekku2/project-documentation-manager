@@ -8,7 +8,7 @@ namespace Desktop.ViewModels;
 
 public class BottomPanelTabViewModel : ViewModelBase
 {
-    private string _content = string.Empty;
+    private string? _content;
     private bool _isActive;
 
     public BottomPanelTabViewModel(BottomPanelTab tab)
@@ -28,7 +28,7 @@ public class BottomPanelTabViewModel : ViewModelBase
     public ObservableCollection<ErrorEntry> ErrorEntries => Tab.ErrorEntries;
     public ObservableCollection<LogEntry> LogEntries => Tab.LogEntries;
 
-    public string Content
+    public string? Content
     {
         get => _content;
         set
