@@ -204,7 +204,7 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
                 }
 
                 // Check for invalid characters in path (allow forward slash for paths)
-                var invalidChars = Path.GetInvalidFileNameChars().Where(c => c != '/').ToArray();
+                var invalidChars = Path.GetInvalidFileNameChars().Where(c => c != Path.DirectorySeparatorChar).ToArray();
                 if (fileName.IndexOfAny(invalidChars) >= 0)
                 {
                     result.Errors.Add(new ValidationIssue

@@ -82,21 +82,17 @@ public class ValidationErrorOverlay : Control
     {
         base.Render(context);
 
-        if (ValidationResult == null || ValidationResult.IsValid || TargetTextBox == null)
-            return;
+        var errors = ValidationResult?.GetErrorsForFile(CurrentFileName) ?? [];
 
-        DrawErrorUnderlines(context);
+        DrawErrorUnderlines(context, errors);
     }
 
-    private void DrawErrorUnderlines(DrawingContext context)
+    private void DrawErrorUnderlines(DrawingContext context, List<ValidationIssue> errors)
     {
         if (TargetTextBox?.Text == null)
             return;
 
-        // Filter errors to only show those for the current file
-        var filteredErrors = ValidationResult!.Errors.Where(error => error.IsFromFile(CurrentFileName)).ToList();
-
-        var errorLines = filteredErrors
+        var errorLines = errors
             .Where(e => e.LineNumber.HasValue)
             .Select(e => e.LineNumber!.Value)
             .Distinct()

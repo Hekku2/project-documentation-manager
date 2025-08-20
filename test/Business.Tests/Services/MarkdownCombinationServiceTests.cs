@@ -568,7 +568,7 @@ public class MarkdownCombinationServiceTests
     public void Validate_WithInvalidFilenameCharacters_ReturnsErrorResult()
     {
         // Arrange - Use one or more invalid filename characters for the current platform
-        var invalidChars = new string(Path.GetInvalidFileNameChars().Where(c => c != '\0').Take(2).ToArray());
+        var invalidChars = new string(Path.GetInvalidFileNameChars().Where(c => c != Path.DirectorySeparatorChar).Take(2).ToArray());
         var invalidFileName = $"invalid{invalidChars}file.mdsrc";
         var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = $"# Title\n\n<MarkDownExtension operation=\"insert\" file=\"{invalidFileName}\" />" };
         var sourceDocuments = new List<MarkdownDocument>();
