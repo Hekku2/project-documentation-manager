@@ -10,6 +10,7 @@ namespace Business.Services;
 public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logger) : IMarkdownCombinationService
 {
     private static readonly Regex InsertDirectiveRegex = new(@"<MarkDownExtension\s+operation=""insert""\s+file=""([^""]*)""\s*/>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex AnyMarkdownExtensionRegex = new(@"<MarkDownExtension[^>]*>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     public IEnumerable<MarkdownDocument> BuildDocumentation(
         IEnumerable<MarkdownDocument> templateDocuments,
@@ -181,7 +182,55 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
         for (int lineIndex = 0; lineIndex < lines.Length; lineIndex++)
         {
             var line = lines[lineIndex];
-            var matches = InsertDirectiveRegex.Matches(line);
+            
+            // First check for any MarkdownExtension directives (including malformed ones)
+            var allDirectives = AnyMarkdownExtensionRegex.Matches(line);
+            var validDirectives = InsertDirectiveRegex.Matches(line);
+            
+            // Check for malformed directives
+            if (allDirectives.Count > validDirectives.Count)
+            {
+                foreach (Match anyMatch in allDirectives)
+                {
+                    var directive = anyMatch.Value;
+                    bool isValid = validDirectives.Cast<Match>().Any(validMatch => validMatch.Value == directive);
+                    
+                    if (!isValid)
+                    {
+                        var lineNumber = lineIndex + 1;
+                        string errorMessage;
+                        
+                        if (!directive.Contains("operation="))
+                        {
+                            errorMessage = "MarkDownExtension directive is missing 'operation' attribute";
+                        }
+                        else if (!directive.Contains("operation=\"insert\""))
+                        {
+                            errorMessage = "MarkDownExtension directive has invalid operation. Only 'insert' is supported";
+                        }
+                        else if (!directive.Contains("file="))
+                        {
+                            errorMessage = "MarkDownExtension directive is missing 'file' attribute";
+                        }
+                        else
+                        {
+                            errorMessage = "MarkDownExtension directive is malformed";
+                        }
+                        
+                        result.Errors.Add(new ValidationIssue
+                        {
+                            Message = errorMessage,
+                            DirectivePath = directive,
+                            SourceFile = templateDocument.FilePath,
+                            LineNumber = lineNumber,
+                            SourceContext = line.Trim()
+                        });
+                    }
+                }
+            }
+            
+            // Process valid directives
+            var matches = validDirectives;
             
             foreach (Match match in matches)
             {

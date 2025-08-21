@@ -741,6 +741,129 @@ public class MarkdownCombinationServiceTests
     }
 
     [Test]
+    public void Validate_WithMissingOperationAttribute_ReturnsErrorResult()
+    {
+        // Arrange
+        var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension file=\"common/common.mdsrc\" />" };
+        var sourceDocuments = new List<MarkdownDocument>
+        {
+            new MarkdownDocument { FileName = "common/common.mdsrc", FilePath = "/test/common/common.mdsrc", Content = "Common content" }
+        };
+
+        // Act
+        var result = _service.Validate(templateDocument, sourceDocuments);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsValid, Is.False);
+            Assert.That(result.Errors, Has.Count.EqualTo(1));
+            Assert.That(result.Errors[0].Message, Is.EqualTo("MarkDownExtension directive is missing 'operation' attribute"));
+            Assert.That(result.Errors[0].DirectivePath, Is.EqualTo("<MarkDownExtension file=\"common/common.mdsrc\" />"));
+            Assert.That(result.Errors[0].LineNumber, Is.EqualTo(3));
+            Assert.That(result.Warnings, Is.Empty);
+        });
+    }
+
+    [Test]
+    public void Validate_WithMissingFileAttribute_ReturnsErrorResult()
+    {
+        // Arrange
+        var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" />" };
+        var sourceDocuments = new List<MarkdownDocument>();
+
+        // Act
+        var result = _service.Validate(templateDocument, sourceDocuments);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsValid, Is.False);
+            Assert.That(result.Errors, Has.Count.EqualTo(1));
+            Assert.That(result.Errors[0].Message, Is.EqualTo("MarkDownExtension directive is missing 'file' attribute"));
+            Assert.That(result.Errors[0].DirectivePath, Is.EqualTo("<MarkDownExtension operation=\"insert\" />"));
+            Assert.That(result.Errors[0].LineNumber, Is.EqualTo(3));
+            Assert.That(result.Warnings, Is.Empty);
+        });
+    }
+
+    [Test]
+    public void Validate_WithInvalidOperationValue_ReturnsErrorResult()
+    {
+        // Arrange
+        var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"no-operation-like this\" />" };
+        var sourceDocuments = new List<MarkdownDocument>();
+
+        // Act
+        var result = _service.Validate(templateDocument, sourceDocuments);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsValid, Is.False);
+            Assert.That(result.Errors, Has.Count.EqualTo(1));
+            Assert.That(result.Errors[0].Message, Is.EqualTo("MarkDownExtension directive has invalid operation. Only 'insert' is supported"));
+            Assert.That(result.Errors[0].DirectivePath, Is.EqualTo("<MarkDownExtension operation=\"no-operation-like this\" />"));
+            Assert.That(result.Errors[0].LineNumber, Is.EqualTo(3));
+            Assert.That(result.Warnings, Is.Empty);
+        });
+    }
+
+    [Test]
+    public void Validate_WithAllErrorCasesFromBasicErrors_ReturnsAppropriateErrors()
+    {
+        // Arrange - This matches the content from example-projects/errors/basic-errors.mdext
+        var templateDocument = new MarkdownDocument 
+        { 
+            FileName = "basic-errors.mdext", 
+            FilePath = "/test/basic-errors.mdext", 
+            Content = @"# Error showcase
+
+This file is meant to be used as a testcase for showing errors
+
+Missing operation attribute
+<MarkDownExtension file=""common/common.mdsrc"" />
+
+Unknown operation attribute
+<MarkDownExtension operation=""no-operation-like this"" />
+
+Missing file attribute
+<MarkDownExtension operation=""insert"" />
+
+Missing file
+<MarkDownExtension operation=""insert"" file=""im-not-found.mdsrc"" />"
+        };
+        var sourceDocuments = new List<MarkdownDocument>
+        {
+            new MarkdownDocument { FileName = "common/common.mdsrc", FilePath = "/test/common/common.mdsrc", Content = "Common content" }
+        };
+
+        // Act
+        var result = _service.Validate(templateDocument, sourceDocuments);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsValid, Is.False);
+            Assert.That(result.Errors, Has.Count.EqualTo(4));
+            
+            // Check for missing operation attribute error
+            Assert.That(result.Errors.Any(e => e.Message.Contains("MarkDownExtension directive is missing 'operation' attribute")), Is.True);
+            
+            // Check for invalid operation error
+            Assert.That(result.Errors.Any(e => e.Message.Contains("MarkDownExtension directive has invalid operation. Only 'insert' is supported")), Is.True);
+            
+            // Check for missing file attribute error
+            Assert.That(result.Errors.Any(e => e.Message.Contains("MarkDownExtension directive is missing 'file' attribute")), Is.True);
+            
+            // Check for missing source file error
+            Assert.That(result.Errors.Any(e => e.Message.Contains("Source document not found: 'im-not-found.mdsrc'")), Is.True);
+            
+            Assert.That(result.Warnings, Is.Empty);
+        });
+    }
+
+    [Test]
     public void Validate_WithMixedValidAndInvalidDirectives_ReturnsAppropriateResults()
     {
         // Arrange
