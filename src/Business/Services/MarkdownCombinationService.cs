@@ -148,29 +148,6 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
         return processedContent;
     }
 
-    public ValidationResult Validate(MarkdownDocument templateDocument, IEnumerable<MarkdownDocument> sourceDocuments)
-    {
-        if (templateDocument == null)
-            throw new ArgumentNullException(nameof(templateDocument));
-        
-        if (sourceDocuments == null)
-            throw new ArgumentNullException(nameof(sourceDocuments));
-
-        var result = new ValidationResult();
-        var sourceDictionary = sourceDocuments.ToDictionary(
-            doc => doc.FileName, 
-            doc => doc.Content, 
-            StringComparer.OrdinalIgnoreCase);
-
-        if (string.IsNullOrEmpty(templateDocument.Content))
-        {
-            return result; // Empty content is valid
-        }
-
-        ValidateInsertDirectives(templateDocument, sourceDictionary, result);
-        
-        return result;
-    }
 
     private void ValidateInsertDirectives(MarkdownDocument templateDocument, Dictionary<string, string> sourceDictionary, ValidationResult result)
     {
@@ -344,7 +321,7 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
         }
     }
 
-    public ValidationResult ValidateAll(IEnumerable<MarkdownDocument> templateDocuments, IEnumerable<MarkdownDocument> sourceDocuments)
+    public ValidationResult Validate(IEnumerable<MarkdownDocument> templateDocuments, IEnumerable<MarkdownDocument> sourceDocuments)
     {
         if (templateDocuments == null)
             throw new ArgumentNullException(nameof(templateDocuments));
@@ -362,7 +339,17 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
         {
             logger.LogDebug("Validating template: {TemplateFileName}", template.FileName);
             
-            var validationResult = Validate(template, sourceList);
+            var result = new ValidationResult();
+            var sourceDictionary = sourceList.ToDictionary(
+                doc => doc.FileName, 
+                doc => doc.Content, 
+                StringComparer.OrdinalIgnoreCase);
+
+            if (!string.IsNullOrEmpty(template.Content))
+            {
+                ValidateInsertDirectives(template, sourceDictionary, result);
+            }
+            var validationResult = result;
             
             // Add template filename context to errors and warnings
             foreach (var error in validationResult.Errors)

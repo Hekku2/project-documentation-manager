@@ -84,7 +84,7 @@ public class EditorTabBarViewModel : ViewModelBase
         }
     }
 
-    public void SetActiveTab(EditorTabViewModel tab)
+    public void SetActiveTab(EditorTabViewModel? tab)
     {
         _editorStateService.SetActiveTab(tab);
         OnPropertyChanged(nameof(ActiveTab));

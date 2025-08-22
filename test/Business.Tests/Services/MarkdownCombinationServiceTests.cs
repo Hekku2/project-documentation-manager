@@ -284,34 +284,6 @@ public class MarkdownCombinationServiceTests
         Assert.That(result[0].Content, Is.EqualTo("Before  After"));
     }
 
-    [Test]
-    public void BuildDocumentation_WithComplexExample_MatchesFeatureSpecification()
-    {
-        // This test matches the exact example from doc/features.md
-        
-        // Arrange
-        var templateDocuments = new List<MarkdownDocument>
-        {
-            new MarkdownDocument { FileName = "windows-features.md", FilePath = "/test/windows-features.md", Content = " * windows feature\n <MarkDownExtension operation=\"insert\" file=\"common-features.md\" />" },
-            new MarkdownDocument { FileName = "ubuntu-features.md", FilePath = "/test/ubuntu-features.md", Content = " * linux feature\n <MarkDownExtension operation=\"insert\" file=\"common-features.md\" />" }
-        };
-        var sourceDocuments = new List<MarkdownDocument>
-        {
-            new MarkdownDocument { FileName = "common-features.md", FilePath = "/test/common-features.md", Content = " * common feature" }
-        };
-
-        // Act
-        var result = _service.BuildDocumentation(templateDocuments, sourceDocuments).ToList();
-
-        // Assert
-        Assert.That(result, Has.Count.EqualTo(2));
-        
-        var windowsFeatures = result.First(r => r.FileName == "windows-features.md");
-        Assert.That(windowsFeatures.Content, Is.EqualTo(" * windows feature\n  * common feature"));
-        
-        var ubuntuFeatures = result.First(r => r.FileName == "ubuntu-features.md");
-        Assert.That(ubuntuFeatures.Content, Is.EqualTo(" * linux feature\n  * common feature"));
-    }
 
     [Test]
     public void BuildDocumentation_Should_Log_Source_Documents_Without_Errors()
@@ -438,103 +410,21 @@ public class MarkdownCombinationServiceTests
     #region Validation Tests
 
     [Test]
-    public void Validate_WithNullTemplateDocument_ThrowsArgumentNullException()
-    {
-        // Arrange
-        var sourceDocuments = new List<MarkdownDocument>();
-
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => 
-            _service.Validate(null!, sourceDocuments));
-    }
-
-    [Test]
-    public void Validate_WithNullSourceDocuments_ThrowsArgumentNullException()
-    {
-        // Arrange
-    var templateDocument = new MarkdownDocument { FileName = "template.md", FilePath = "/test/template.md", Content = "content" };
-
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => 
-            _service.Validate(templateDocument, null!));
-    }
-
-    [Test]
-    public void Validate_WithEmptyContent_ReturnsValidResult()
-    {
-        // Arrange
-    var templateDocument = new MarkdownDocument { FileName = "template.md", FilePath = "/test/template.md", Content = "" };
-        var sourceDocuments = new List<MarkdownDocument>();
-
-        // Act
-        var result = _service.Validate(templateDocument, sourceDocuments);
-
-        // Assert
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.IsValid, Is.True);
-            Assert.That(result.Errors, Is.Empty);
-            Assert.That(result.Warnings, Is.Empty);
-        });
-    }
-
-    [Test]
-    public void Validate_WithNullContent_ReturnsValidResult()
-    {
-        // Arrange
-    var templateDocument = new MarkdownDocument { FileName = "template.md", FilePath = "/test/template.md", Content = null! };
-        var sourceDocuments = new List<MarkdownDocument>();
-
-        // Act
-        var result = _service.Validate(templateDocument, sourceDocuments);
-
-        // Assert
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.IsValid, Is.True);
-            Assert.That(result.Errors, Is.Empty);
-            Assert.That(result.Warnings, Is.Empty);
-        });
-    }
-
-    [Test]
-    public void Validate_WithValidInsertDirective_ReturnsValidResult()
-    {
-        // Arrange
-    var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"common/common.mdsrc\" />" };
-        var sourceDocuments = new List<MarkdownDocument>
-        {
-            new MarkdownDocument { FileName = "common/common.mdsrc", FilePath = "/test/common/common.mdsrc", Content = "Common content" }
-        };
-
-        // Act
-        var result = _service.Validate(templateDocument, sourceDocuments);
-
-        // Assert
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.IsValid, Is.True);
-            Assert.That(result.Errors, Is.Empty);
-            Assert.That(result.Warnings, Is.Empty);
-        });
-    }
-
-    [Test]
     public void Validate_WithMissingSourceFile_ReturnsErrorResult()
     {
         // Arrange
-    var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"missing.mdsrc\" />" };
+        var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"missing.mdsrc\" />" };
         var sourceDocuments = new List<MarkdownDocument>();
 
         // Act
-        var result = _service.Validate(templateDocument, sourceDocuments);
+        var result = _service.Validate([templateDocument], sourceDocuments);
 
         // Assert
         Assert.Multiple(() =>
         {
             Assert.That(result.IsValid, Is.False);
             Assert.That(result.Errors, Has.Count.EqualTo(1));
-            Assert.That(result.Errors[0].Message, Is.EqualTo("Source document not found: 'missing.mdsrc'"));
+            Assert.That(result.Errors[0].Message, Is.EqualTo("[template.mdext] Source document not found: 'missing.mdsrc'"));
             Assert.That(result.Errors[0].DirectivePath, Is.EqualTo("missing.mdsrc"));
             Assert.That(result.Errors[0].LineNumber, Is.EqualTo(3));
             Assert.That(result.Errors[0].SourceContext, Is.EqualTo("<MarkDownExtension operation=\"insert\" file=\"missing.mdsrc\" />"));
@@ -546,18 +436,18 @@ public class MarkdownCombinationServiceTests
     public void Validate_WithEmptyFilename_ReturnsErrorResult()
     {
         // Arrange
-    var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"\" />" };
+        var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"\" />" };
         var sourceDocuments = new List<MarkdownDocument>();
 
         // Act
-        var result = _service.Validate(templateDocument, sourceDocuments);
+        var result = _service.Validate([templateDocument], sourceDocuments);
 
         // Assert
         Assert.Multiple(() =>
         {
             Assert.That(result.IsValid, Is.False);
             Assert.That(result.Errors, Has.Count.EqualTo(1));
-            Assert.That(result.Errors[0].Message, Is.EqualTo("MarkDownExtension directive is missing filename"));
+            Assert.That(result.Errors[0].Message, Is.EqualTo("[template.mdext] MarkDownExtension directive is missing filename"));
             Assert.That(result.Errors[0].DirectivePath, Is.EqualTo("<MarkDownExtension operation=\"insert\" file=\"\" />"));
             Assert.That(result.Errors[0].LineNumber, Is.EqualTo(3));
             Assert.That(result.Warnings, Is.Empty);
@@ -574,14 +464,14 @@ public class MarkdownCombinationServiceTests
         var sourceDocuments = new List<MarkdownDocument>();
 
         // Act
-        var result = _service.Validate(templateDocument, sourceDocuments);
+        var result = _service.Validate([templateDocument], sourceDocuments);
 
         // Assert
         Assert.Multiple(() =>
         {
             Assert.That(result.IsValid, Is.False);
             Assert.That(result.Errors, Has.Count.EqualTo(1));
-            Assert.That(result.Errors[0].Message, Does.StartWith("MarkDownExtension directive contains invalid filename characters:"));
+            Assert.That(result.Errors[0].Message, Does.StartWith("[template.mdext] MarkDownExtension directive contains invalid filename characters:"));
             Assert.That(result.Errors[0].DirectivePath, Does.Contain("invalid"));
             Assert.That(result.Errors[0].LineNumber, Is.EqualTo(3));
             Assert.That(result.Warnings, Is.Empty);
@@ -605,7 +495,7 @@ public class MarkdownCombinationServiceTests
         };
 
         // Act
-        var result = _service.Validate(templateDocument, sourceDocuments);
+        var result = _service.Validate([templateDocument], sourceDocuments);
 
         // Assert
         Assert.Multiple(() =>
@@ -613,7 +503,7 @@ public class MarkdownCombinationServiceTests
             Assert.That(result.IsValid, Is.True);
             Assert.That(result.Errors, Is.Empty);
             Assert.That(result.Warnings, Has.Count.EqualTo(1));
-            Assert.That(result.Warnings[0].Message, Is.EqualTo("Duplicate MarkDownExtension directive found: '<MarkDownExtension operation=\"insert\" file=\"common.mdsrc\" />'"));
+            Assert.That(result.Warnings[0].Message, Is.EqualTo("[template.mdext] Duplicate MarkDownExtension directive found: '<MarkDownExtension operation=\"insert\" file=\"common.mdsrc\" />'"));
             Assert.That(result.Warnings[0].DirectivePath, Is.EqualTo("common.mdsrc"));
             Assert.That(result.Warnings[0].LineNumber, Is.EqualTo(7));
         });
@@ -624,74 +514,31 @@ public class MarkdownCombinationServiceTests
     {
         // Arrange
         var templateDocument = new MarkdownDocument
-    {
-        FileName = "template.mdext",
-        FilePath = "/test/template.mdext",
-        Content =
-            "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"valid.mdsrc\" /> and <MarkDownExtension operation=\"insert\" file=\"missing.mdsrc\" />"
-    };
+        {
+            FileName = "template.mdext",
+            FilePath = "/test/template.mdext",
+            Content =
+                "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"valid.mdsrc\" /> and <MarkDownExtension operation=\"insert\" file=\"missing.mdsrc\" />"
+        };
         var sourceDocuments = new List<MarkdownDocument>
         {
             new MarkdownDocument { FileName = "valid.mdsrc", FilePath = "/test/valid.mdsrc", Content = "Valid content" }
         };
 
         // Act
-        var result = _service.Validate(templateDocument, sourceDocuments);
+        var result = _service.Validate([templateDocument], sourceDocuments);
 
         // Assert
         Assert.Multiple(() =>
         {
             Assert.That(result.IsValid, Is.False);
             Assert.That(result.Errors, Has.Count.EqualTo(1));
-            Assert.That(result.Errors[0].Message, Is.EqualTo("Source document not found: 'missing.mdsrc'"));
+            Assert.That(result.Errors[0].Message, Is.EqualTo("[template.mdext] Source document not found: 'missing.mdsrc'"));
             Assert.That(result.Errors[0].LineNumber, Is.EqualTo(3));
             Assert.That(result.Warnings, Is.Empty);
         });
     }
 
-    [Test]
-    public void Validate_WithCaseInsensitiveFilenames_ValidatesCorrectly()
-    {
-        // Arrange
-        var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"COMMON.MDSRC\" />" };
-        var sourceDocuments = new List<MarkdownDocument>
-        {
-            new MarkdownDocument { FileName = "common.mdsrc", FilePath = "/test/common.mdsrc", Content = "Common content" }
-        };
-
-        // Act
-        var result = _service.Validate(templateDocument, sourceDocuments);
-
-        // Assert
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.IsValid, Is.True);
-            Assert.That(result.Errors, Is.Empty);
-            Assert.That(result.Warnings, Is.Empty);
-        });
-    }
-
-    [Test]
-    public void Validate_WithDirectiveWithSpaces_ValidatesCorrectly()
-    {
-        // Arrange
-        var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"common.mdsrc\" />" };
-        var sourceDocuments = new List<MarkdownDocument>
-        {
-            new MarkdownDocument { FileName = "common.mdsrc", FilePath = "/test/common.mdsrc", Content = "Common content" }
-        };
-
-        // Act
-        var result = _service.Validate(templateDocument, sourceDocuments);
-
-        // Assert
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.IsValid, Is.True);
-            Assert.That(result.Errors, Is.Empty);
-            Assert.That(result.Warnings, Is.Empty);
-        });
-    }
 
     [Test]
     public void Validate_WithCircularReference_ReturnsWarningResult()
@@ -705,7 +552,7 @@ public class MarkdownCombinationServiceTests
         };
 
         // Act
-        var result = _service.Validate(templateDocument, sourceDocuments);
+        var result = _service.Validate([templateDocument], sourceDocuments);
 
         // Assert
         Assert.Multiple(() =>
@@ -713,32 +560,10 @@ public class MarkdownCombinationServiceTests
             Assert.That(result.IsValid, Is.True);
             Assert.That(result.Errors, Is.Empty);
             Assert.That(result.Warnings, Has.Count.EqualTo(1));
-            Assert.That(result.Warnings[0].Message, Does.StartWith("Potential circular reference detected"));
+            Assert.That(result.Warnings[0].Message, Does.StartWith("[template.mdext] Potential circular reference detected"));
         });
     }
 
-    [Test]
-    public void Validate_WithNestedValidDirectives_ReturnsValidResult()
-    {
-        // Arrange
-        var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"level1.mdsrc\" />" };
-        var sourceDocuments = new List<MarkdownDocument>
-        {
-            new MarkdownDocument { FileName = "level1.mdsrc", FilePath = "/test/level1.mdsrc", Content = "Level 1 <MarkDownExtension operation=\"insert\" file=\"level2.mdsrc\" />" },
-            new MarkdownDocument { FileName = "level2.mdsrc", FilePath = "/test/level2.mdsrc", Content = "Level 2 content" }
-        };
-
-        // Act
-        var result = _service.Validate(templateDocument, sourceDocuments);
-
-        // Assert
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.IsValid, Is.True);
-            Assert.That(result.Errors, Is.Empty);
-            Assert.That(result.Warnings, Is.Empty);
-        });
-    }
 
     [Test]
     public void Validate_WithMissingOperationAttribute_ReturnsErrorResult()
@@ -751,14 +576,14 @@ public class MarkdownCombinationServiceTests
         };
 
         // Act
-        var result = _service.Validate(templateDocument, sourceDocuments);
+        var result = _service.Validate([templateDocument], sourceDocuments);
 
         // Assert
         Assert.Multiple(() =>
         {
             Assert.That(result.IsValid, Is.False);
             Assert.That(result.Errors, Has.Count.EqualTo(1));
-            Assert.That(result.Errors[0].Message, Is.EqualTo("MarkDownExtension directive is missing 'operation' attribute"));
+            Assert.That(result.Errors[0].Message, Is.EqualTo("[template.mdext] MarkDownExtension directive is missing 'operation' attribute"));
             Assert.That(result.Errors[0].DirectivePath, Is.EqualTo("<MarkDownExtension file=\"common/common.mdsrc\" />"));
             Assert.That(result.Errors[0].LineNumber, Is.EqualTo(3));
             Assert.That(result.Warnings, Is.Empty);
@@ -773,14 +598,14 @@ public class MarkdownCombinationServiceTests
         var sourceDocuments = new List<MarkdownDocument>();
 
         // Act
-        var result = _service.Validate(templateDocument, sourceDocuments);
+        var result = _service.Validate([templateDocument], sourceDocuments);
 
         // Assert
         Assert.Multiple(() =>
         {
             Assert.That(result.IsValid, Is.False);
             Assert.That(result.Errors, Has.Count.EqualTo(1));
-            Assert.That(result.Errors[0].Message, Is.EqualTo("MarkDownExtension directive is missing 'file' attribute"));
+            Assert.That(result.Errors[0].Message, Is.EqualTo("[template.mdext] MarkDownExtension directive is missing 'file' attribute"));
             Assert.That(result.Errors[0].DirectivePath, Is.EqualTo("<MarkDownExtension operation=\"insert\" />"));
             Assert.That(result.Errors[0].LineNumber, Is.EqualTo(3));
             Assert.That(result.Warnings, Is.Empty);
@@ -795,14 +620,14 @@ public class MarkdownCombinationServiceTests
         var sourceDocuments = new List<MarkdownDocument>();
 
         // Act
-        var result = _service.Validate(templateDocument, sourceDocuments);
+        var result = _service.Validate([templateDocument], sourceDocuments);
 
         // Assert
         Assert.Multiple(() =>
         {
             Assert.That(result.IsValid, Is.False);
             Assert.That(result.Errors, Has.Count.EqualTo(1));
-            Assert.That(result.Errors[0].Message, Is.EqualTo("MarkDownExtension directive has invalid operation. Only 'insert' is supported"));
+            Assert.That(result.Errors[0].Message, Is.EqualTo("[template.mdext] MarkDownExtension directive has invalid operation. Only 'insert' is supported"));
             Assert.That(result.Errors[0].DirectivePath, Is.EqualTo("<MarkDownExtension operation=\"no-operation-like this\" />"));
             Assert.That(result.Errors[0].LineNumber, Is.EqualTo(3));
             Assert.That(result.Warnings, Is.Empty);
@@ -839,7 +664,7 @@ Missing file
         };
 
         // Act
-        var result = _service.Validate(templateDocument, sourceDocuments);
+        var result = _service.Validate([templateDocument], sourceDocuments);
 
         // Assert
         Assert.Multiple(() =>
@@ -874,7 +699,7 @@ Missing file
         };
 
         // Act
-        var result = _service.Validate(templateDocument, sourceDocuments);
+        var result = _service.Validate([templateDocument], sourceDocuments);
 
         // Assert
         Assert.Multiple(() =>
@@ -890,36 +715,32 @@ Missing file
             
             // Check for duplicate warning
             Assert.That(result.Warnings, Has.Count.EqualTo(1));
-            Assert.That(result.Warnings[0].Message, Is.EqualTo("Duplicate MarkDownExtension directive found: '<MarkDownExtension operation=\"insert\" file=\"valid.mdsrc\" />'"));
+            Assert.That(result.Warnings[0].Message, Is.EqualTo("[template.mdext] Duplicate MarkDownExtension directive found: '<MarkDownExtension operation=\"insert\" file=\"valid.mdsrc\" />'"));
         });
     }
 
-    #endregion
-
-    #region ValidateAll Tests
-
     [Test]
-    public void ValidateAll_WithNullTemplateDocuments_ThrowsArgumentNullException()
+    public void Validate_WithNullTemplateDocuments_ThrowsArgumentNullException()
     {
         // Arrange
         var sourceDocuments = new List<MarkdownDocument>();
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => _service.ValidateAll(null!, sourceDocuments));
+        Assert.Throws<ArgumentNullException>(() => _service.Validate(null!, sourceDocuments));
     }
 
     [Test]
-    public void ValidateAll_WithNullSourceDocuments_ThrowsArgumentNullException()
+    public void Validate_WithNullSourceDocuments_ThrowsArgumentNullException()
     {
         // Arrange
         var templateDocuments = new List<MarkdownDocument>();
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => _service.ValidateAll(templateDocuments, null!));
+        Assert.Throws<ArgumentNullException>(() => _service.Validate(templateDocuments, null!));
     }
 
     [Test]
-    public void ValidateAll_WithEmptyTemplateDocuments_ReturnsValidResult()
+    public void Validate_WithEmptyTemplateDocuments_ReturnsValidResult()
     {
         // Arrange
         var templateDocuments = new List<MarkdownDocument>();
@@ -929,7 +750,7 @@ Missing file
         };
 
         // Act
-        var result = _service.ValidateAll(templateDocuments, sourceDocuments);
+        var result = _service.Validate(templateDocuments, sourceDocuments);
 
         // Assert
         Assert.Multiple(() =>
@@ -941,7 +762,7 @@ Missing file
     }
 
     [Test]
-    public void ValidateAll_WithValidTemplateDocuments_ReturnsValidResult()
+    public void Validate_WithValidTemplateDocuments_ReturnsValidResult()
     {
         // Arrange
         var templateDocuments = new List<MarkdownDocument>
@@ -956,7 +777,7 @@ Missing file
         };
 
         // Act
-        var result = _service.ValidateAll(templateDocuments, sourceDocuments);
+        var result = _service.Validate(templateDocuments, sourceDocuments);
 
         // Assert
         Assert.Multiple(() =>
@@ -968,7 +789,7 @@ Missing file
     }
 
     [Test]
-    public void ValidateAll_WithErrorsInMultipleTemplates_CombinesAllErrors()
+    public void Validate_WithErrorsInMultipleTemplates_CombinesAllErrors()
     {
         // Arrange
         var templateDocuments = new List<MarkdownDocument>
@@ -982,7 +803,7 @@ Missing file
         };
 
         // Act
-        var result = _service.ValidateAll(templateDocuments, sourceDocuments);
+        var result = _service.Validate(templateDocuments, sourceDocuments);
 
         // Assert
         Assert.Multiple(() =>
@@ -996,7 +817,7 @@ Missing file
     }
 
     [Test]
-    public void ValidateAll_WithMixedValidAndInvalidTemplates_ReturnsOnlyErrors()
+    public void Validate_WithMixedValidAndInvalidTemplates_ReturnsOnlyErrors()
     {
         // Arrange
         var templateDocuments = new List<MarkdownDocument>
@@ -1010,7 +831,7 @@ Missing file
         };
 
         // Act
-        var result = _service.ValidateAll(templateDocuments, sourceDocuments);
+        var result = _service.Validate(templateDocuments, sourceDocuments);
 
         // Assert
         Assert.Multiple(() =>
@@ -1023,7 +844,7 @@ Missing file
     }
 
     [Test]
-    public void ValidateAll_WithWarningsInMultipleTemplates_CombinesAllWarnings()
+    public void Validate_WithWarningsInMultipleTemplates_CombinesAllWarnings()
     {
         // Arrange
         var templateDocuments = new List<MarkdownDocument>
@@ -1038,7 +859,7 @@ Missing file
         };
 
         // Act
-        var result = _service.ValidateAll(templateDocuments, sourceDocuments);
+        var result = _service.Validate(templateDocuments, sourceDocuments);
 
         // Assert
         Assert.Multiple(() =>

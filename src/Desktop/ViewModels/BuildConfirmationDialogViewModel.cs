@@ -138,7 +138,7 @@ public class BuildConfirmationDialogViewModel : ViewModelBase
         await Task.Run(() =>
         {
             // Use the new ValidateAll method for better efficiency
-            combinedValidationResult = _combinationService.ValidateAll(templateFiles, sourceFiles);
+            combinedValidationResult = _combinationService.Validate(templateFiles, sourceFiles);
             
             // Create error list for build failure checking
             foreach (var error in combinedValidationResult.Errors)

@@ -111,7 +111,7 @@ public class EditorContentViewModel : ViewModelBase
             var sourceDocuments = await _markdownFileCollectorService.CollectSourceFilesAsync(fileDirectory);
             
             // Validate the template document
-            var validationResult = _markdownCombinationService.Validate(templateDocument, sourceDocuments);
+            var validationResult = _markdownCombinationService.Validate([templateDocument], sourceDocuments);
             
             // Store validation results for UI highlighting
             _editorStateService.CurrentValidationResult = validationResult;
@@ -167,7 +167,7 @@ public class EditorContentViewModel : ViewModelBase
                 templateFiles.Count(), sourceFiles.Count());
             
             // Validate all templates
-            var validationResult = _markdownCombinationService.ValidateAll(templateFiles, sourceFiles);
+            var validationResult = _markdownCombinationService.Validate(templateFiles, sourceFiles);
             
             // Store validation results for UI highlighting
             _editorStateService.CurrentValidationResult = validationResult;

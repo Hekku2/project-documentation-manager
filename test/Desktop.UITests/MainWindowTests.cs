@@ -1103,9 +1103,9 @@ public class MainWindowTests
 
         mockFileCollector.CollectAllMarkdownFilesAsync("/test/project")
             .Returns((templateFiles, sourceFiles));
-        mockCombination.Validate(Arg.Any<MarkdownDocument>(), Arg.Any<IEnumerable<MarkdownDocument>>())
+        mockCombination.Validate(Arg.Any<IEnumerable<MarkdownDocument>>(), Arg.Any<IEnumerable<MarkdownDocument>>())
             .Returns(new ValidationResult());
-        mockCombination.ValidateAll(Arg.Any<IEnumerable<MarkdownDocument>>(), Arg.Any<IEnumerable<MarkdownDocument>>())
+        mockCombination.Validate(Arg.Any<IEnumerable<MarkdownDocument>>(), Arg.Any<IEnumerable<MarkdownDocument>>())
             .Returns(new ValidationResult());
         mockCombination.BuildDocumentation(templateFiles, sourceFiles)
             .Returns(processedDocuments);
@@ -1134,7 +1134,7 @@ public class MainWindowTests
 
             // Verify services were called correctly
             mockFileCollector.Received(1).CollectAllMarkdownFilesAsync("/test/project");
-            mockCombination.Received(1).ValidateAll(Arg.Any<IEnumerable<MarkdownDocument>>(), Arg.Any<IEnumerable<MarkdownDocument>>());
+            mockCombination.Received(1).Validate(Arg.Any<IEnumerable<MarkdownDocument>>(), Arg.Any<IEnumerable<MarkdownDocument>>());
             mockCombination.Received(1).BuildDocumentation(templateFiles, sourceFiles);
             mockFileWriter.Received(1).WriteDocumentsToFolderAsync(processedDocuments, "/test/project/output");
         });
@@ -1626,7 +1626,7 @@ public class MainWindowTests
         };
 
         var mockCombinationService = Substitute.For<IMarkdownCombinationService>();
-        mockCombinationService.ValidateAll(Arg.Any<IEnumerable<MarkdownDocument>>(), Arg.Any<IEnumerable<MarkdownDocument>>())
+        mockCombinationService.Validate(Arg.Any<IEnumerable<MarkdownDocument>>(), Arg.Any<IEnumerable<MarkdownDocument>>())
             .Returns(mockValidationResult);
 
         // Replace the services using reflection to inject our mocks into EditorContentViewModel
@@ -1648,7 +1648,7 @@ public class MainWindowTests
         {
             // Verify that services were called
             mockFileCollector.Received(1).CollectAllMarkdownFilesAsync(Arg.Any<string>());
-            mockCombinationService.Received(1).ValidateAll(Arg.Any<IEnumerable<MarkdownDocument>>(), Arg.Any<IEnumerable<MarkdownDocument>>());
+            mockCombinationService.Received(1).Validate(Arg.Any<IEnumerable<MarkdownDocument>>(), Arg.Any<IEnumerable<MarkdownDocument>>());
             
             // Verify that error panel is shown with validation results
             Assert.That(viewModel.IsBottomPanelVisible, Is.True, "Bottom panel should be visible for errors");
