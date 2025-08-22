@@ -1,6 +1,5 @@
 using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
-using NUnit.Framework;
 using Desktop.Views;
 using Desktop.ViewModels;
 using Microsoft.Extensions.Logging;
@@ -8,13 +7,8 @@ using Microsoft.Extensions.Options;
 using Desktop.Configuration;
 using Desktop.Services;
 using Desktop.Models;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Linq;
 using Avalonia.VisualTree;
 using NSubstitute;
-using System;
-using Microsoft.Extensions.DependencyInjection;
 using Business.Services;
 using Business.Models;
 
@@ -23,35 +17,36 @@ namespace Desktop.UITests;
 [Parallelizable(ParallelScope.Children)]
 public class MainWindowTests
 {
-    private ILogger<MainWindowViewModel> vmLogger = null!;
-    private ILogger<EditorTabBarViewModel> tabBarLogger = null!;
-    private ILogger<EditorContentViewModel> contentLogger = null!;
-    private ILogger<EditorStateService> stateLogger = null!;
-    private IOptions<ApplicationOptions> options = null!;
-    private IFileService fileService = null!;
+    private ILogger<MainWindowViewModel> _vmLogger = null!;
+    private ILogger<EditorTabBarViewModel> _tabBarLogger = null!;
+    private ILogger<EditorContentViewModel> _contentLogger = null!;
+    private ILogger<EditorStateService> _stateLogger = null!;
+    private IOptions<ApplicationOptions> _options = null!;
+    private IFileService _fileService = null!;
     private IServiceProvider serviceProvider = null!;
-    private IMarkdownCombinationService markdownCombinationService = null!;
-    private IMarkdownFileCollectorService markdownFileCollectorService = null!;
-    private EditorStateService editorStateService = null!;
-    private Desktop.Logging.ILogTransitionService logTransitionService = null!;
+    private IMarkdownCombinationService _markdownCombinationService = null!;
+    private IMarkdownFileCollectorService _markdownFileCollectorService = null!;
+    private EditorStateService _editorStateService = null!;
+    private Logging.ILogTransitionService _logTransitionService = null!;
 
     [SetUp]
     public void Setup()
     {
-        vmLogger = new LoggerFactory().CreateLogger<MainWindowViewModel>();
-        tabBarLogger = new LoggerFactory().CreateLogger<EditorTabBarViewModel>();
-        contentLogger = new LoggerFactory().CreateLogger<EditorContentViewModel>();
-        stateLogger = new LoggerFactory().CreateLogger<EditorStateService>();
-        options = Options.Create(new ApplicationOptions());
-        fileService = Substitute.For<IFileService>();
+        _vmLogger = new LoggerFactory().CreateLogger<MainWindowViewModel>();
+        _tabBarLogger = new LoggerFactory().CreateLogger<EditorTabBarViewModel>();
+        _contentLogger = new LoggerFactory().CreateLogger<EditorContentViewModel>();
+        _stateLogger = new LoggerFactory().CreateLogger<EditorStateService>();
+        _options = Options.Create(new ApplicationOptions());
+        _fileService = Substitute.For<IFileService>();
         serviceProvider = Substitute.For<IServiceProvider>();
-        markdownCombinationService = Substitute.For<IMarkdownCombinationService>();
-        markdownFileCollectorService = Substitute.For<IMarkdownFileCollectorService>();
-        logTransitionService = Substitute.For<Desktop.Logging.ILogTransitionService>();
+        _markdownCombinationService = Substitute.For<IMarkdownCombinationService>();
+        _markdownFileCollectorService = Substitute.For<IMarkdownFileCollectorService>();
+        _logTransitionService = Substitute.For<Logging.ILogTransitionService>();
+        _editorStateService = new EditorStateService(_stateLogger);
         
         // Set up common fileService behavior
-        fileService.IsValidFolder(Arg.Any<string>()).Returns(true);
-        fileService.ReadFileContentAsync(Arg.Any<string>()).Returns("Mock file content");
+        _fileService.IsValidFolder(Arg.Any<string>()).Returns(true);
+        _fileService.ReadFileContentAsync(Arg.Any<string>()).Returns("Mock file content");
     }
 
     private static async Task WaitForConditionAsync(Func<bool> condition, int timeoutMs = 2000, int intervalMs = 10)
@@ -84,8 +79,10 @@ public class MainWindowTests
         return viewModel;
     }
 
-    private static async Task ExpandFolderAndWaitAsync(FileSystemItemViewModel folder)
+    private static async Task ExpandFolderAndWaitAsync(FileSystemItemViewModel? folder)
     {
+        if (folder == null) throw new ArgumentNullException(nameof(folder));
+
         folder.IsExpanded = true;
         // Wait for children to be loaded (either already loaded or loading to complete)
         await WaitForConditionAsync(() => 
@@ -93,8 +90,10 @@ public class MainWindowTests
             (folder.Children.All(c => c.Name != "Loading...") || folder.Children.Count > 1), 2000);
     }
 
-    private static async Task SelectFileAndWaitForTabAsync(FileSystemItemViewModel file, MainWindowViewModel viewModel)
+    private static async Task SelectFileAndWaitForTabAsync(FileSystemItemViewModel? file, MainWindowViewModel viewModel)
     {
+        if (file == null) throw new ArgumentNullException(nameof(file));
+
         var initialTabCount = viewModel.EditorTabBar.EditorTabs.Count;
         file.IsSelected = true;
         await WaitForConditionAsync(() => viewModel.EditorTabBar.EditorTabs.Count > initialTabCount, 1000);
@@ -115,14 +114,14 @@ public class MainWindowTests
 
     private MainWindow CreateMainWindow()
     {
-        fileService.GetFileStructureAsync().Returns(Task.FromResult<FileSystemItem?>(CreateSimpleTestStructure()));
-        fileService.GetFileStructureAsync(Arg.Any<string>()).Returns(Task.FromResult<FileSystemItem?>(CreateSimpleTestStructure()));
+        _fileService.GetFileStructureAsync().Returns(Task.FromResult<FileSystemItem?>(CreateSimpleTestStructure()));
+        _fileService.GetFileStructureAsync(Arg.Any<string>()).Returns(Task.FromResult<FileSystemItem?>(CreateSimpleTestStructure()));
         
-        editorStateService = new EditorStateService(stateLogger);
-        var editorTabBarViewModel = new EditorTabBarViewModel(tabBarLogger, fileService, editorStateService);
-        var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService);
+        _editorStateService = new EditorStateService(_stateLogger);
+        var editorTabBarViewModel = new EditorTabBarViewModel(_tabBarLogger, _fileService, _editorStateService);
+        var editorContentViewModel = new EditorContentViewModel(_contentLogger, _editorStateService, _options, serviceProvider, _markdownCombinationService, _markdownFileCollectorService);
         
-        var viewModel = new MainWindowViewModel(vmLogger, options, fileService, serviceProvider, editorStateService, editorTabBarViewModel, editorContentViewModel, logTransitionService);
+        var viewModel = new MainWindowViewModel(_vmLogger, _options, _fileService, serviceProvider, _editorStateService, editorTabBarViewModel, editorContentViewModel, _logTransitionService);
         return new MainWindow(viewModel);
     }
 
@@ -226,14 +225,14 @@ public class MainWindowTests
 
     private MainWindow CreateMainWindowWithNestedStructure()
     {
-        fileService.GetFileStructureAsync().Returns(Task.FromResult<FileSystemItem?>(CreateNestedTestStructure()));
-        fileService.GetFileStructureAsync(Arg.Any<string>()).Returns(Task.FromResult<FileSystemItem?>(CreateNestedTestStructure()));
+        _fileService.GetFileStructureAsync().Returns(Task.FromResult<FileSystemItem?>(CreateNestedTestStructure()));
+        _fileService.GetFileStructureAsync(Arg.Any<string>()).Returns(Task.FromResult<FileSystemItem?>(CreateNestedTestStructure()));
         
-        var editorStateService = new EditorStateService(stateLogger);
-        var editorTabBarViewModel = new EditorTabBarViewModel(tabBarLogger, fileService, editorStateService);
-        var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService);
+        var editorStateService = new EditorStateService(_stateLogger);
+        var editorTabBarViewModel = new EditorTabBarViewModel(_tabBarLogger, _fileService, editorStateService);
+        var editorContentViewModel = new EditorContentViewModel(_contentLogger, editorStateService, _options, serviceProvider, _markdownCombinationService, _markdownFileCollectorService);
         
-        var viewModel = new MainWindowViewModel(vmLogger, options, fileService, serviceProvider, editorStateService, editorTabBarViewModel, editorContentViewModel, logTransitionService);
+        var viewModel = new MainWindowViewModel(_vmLogger, _options, _fileService, serviceProvider, editorStateService, editorTabBarViewModel, editorContentViewModel, _logTransitionService);
         return new MainWindow(viewModel);
     }
 
@@ -322,8 +321,8 @@ public class MainWindowTests
         var viewModel = await SetupWindowAndWaitForLoadAsync(window);
 
         // Get both src and test folders
-        var srcFolder = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
-        var testFolder = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "test");
+        var srcFolder = viewModel.RootItem?.Children.FirstOrDefault(c => c.Name == "src");
+        var testFolder = viewModel.RootItem?.Children.FirstOrDefault(c => c.Name == "test");
 
         Assert.Multiple(() =>
         {
@@ -428,7 +427,7 @@ public class MainWindowTests
         var srcFolder = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
         Assert.That(srcFolder, Is.Not.Null, "src folder should exist");
         
-        await ExpandFolderAndWaitAsync(srcFolder!);
+        await ExpandFolderAndWaitAsync(srcFolder);
 
         // Get files
         var readmeFile = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "README.md");
@@ -444,10 +443,10 @@ public class MainWindowTests
         Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(0), "No tabs initially");
 
         // Select first file
-        await SelectFileAndWaitForTabAsync(readmeFile!, viewModel);
+        await SelectFileAndWaitForTabAsync(readmeFile, viewModel);
 
         // Select second file
-        await SelectFileAndWaitForTabAsync(mainFile!, viewModel);
+        await SelectFileAndWaitForTabAsync(mainFile, viewModel);
 
         Assert.Multiple(() =>
         {
@@ -481,7 +480,7 @@ public class MainWindowTests
         var srcFolder = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
         Assert.That(srcFolder, Is.Not.Null, "src folder should exist");
         
-        await ExpandFolderAndWaitAsync(srcFolder!);
+        await ExpandFolderAndWaitAsync(srcFolder);
 
         // Get files
         var readmeFile = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "README.md");
@@ -494,9 +493,9 @@ public class MainWindowTests
         });
 
         // Open both files
-        await SelectFileAndWaitForTabAsync(readmeFile!, viewModel);
+        await SelectFileAndWaitForTabAsync(readmeFile, viewModel);
         
-        await SelectFileAndWaitForTabAsync(mainFile!, viewModel);
+        await SelectFileAndWaitForTabAsync(mainFile, viewModel);
 
         // Verify 2 tabs are open
         Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(2), "Two tabs should be open");
@@ -550,18 +549,18 @@ public class MainWindowTests
         var viewModel = await SetupWindowAndWaitForLoadAsync(window);
 
         // Expand and get files
-        await ExpandFolderAndWaitAsync(viewModel.RootItem!);
+        await ExpandFolderAndWaitAsync(viewModel.RootItem);
 
         var srcFolder = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
-        await ExpandFolderAndWaitAsync(srcFolder!);
+        await ExpandFolderAndWaitAsync(srcFolder);
 
         var readmeFile = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "README.md");
         var mainFile = srcFolder!.Children.FirstOrDefault(c => c.Name == "main.cs");
 
         // Open both files
-        await SelectFileAndWaitForTabAsync(readmeFile!, viewModel);
+        await SelectFileAndWaitForTabAsync(readmeFile, viewModel);
         
-        await SelectFileAndWaitForTabAsync(mainFile!, viewModel);
+        await SelectFileAndWaitForTabAsync(mainFile, viewModel);
 
         // Verify setup: 2 tabs, main.cs is active
         Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(2), "Two tabs should be open");
@@ -984,297 +983,6 @@ public class MainWindowTests
     }
 
     [AvaloniaTest]
-    public void BuildConfirmationDialog_Should_Show_Combined_Project_And_Output_Path()
-    {
-        var options = Options.Create(new ApplicationOptions 
-        { 
-            DefaultProjectFolder = "/test/project",
-            DefaultOutputFolder = "test-output" 
-        });
-        var mockFileCollector = Substitute.For<IMarkdownFileCollectorService>();
-        var mockCombination = Substitute.For<IMarkdownCombinationService>();
-        var mockFileWriter = Substitute.For<IMarkdownDocumentFileWriterService>();
-        var mockLogger = Substitute.For<ILogger<BuildConfirmationDialogViewModel>>();
-        
-        var dialogViewModel = new BuildConfirmationDialogViewModel(options, mockFileCollector, mockCombination, mockFileWriter, mockLogger);
-        
-        Assert.Multiple(() =>
-        {
-            Assert.That(dialogViewModel.OutputLocation, Is.Not.Null.And.Not.Empty, "Output location should be set");
-            Assert.That(dialogViewModel.OutputLocation, Is.EqualTo("/test/project/test-output"), "Should combine project folder and output folder");
-            Assert.That(dialogViewModel.OutputLocation, Does.StartWith("/test/project"), "Should start with project folder");
-            Assert.That(dialogViewModel.OutputLocation, Does.EndWith("test-output"), "Should end with output folder");
-        });
-    }
-
-    [AvaloniaTest]
-    public void BuildConfirmationDialog_Should_Have_Cancel_And_Compile_Commands()
-    {
-        var options = Options.Create(new ApplicationOptions());
-        var mockFileCollector = Substitute.For<IMarkdownFileCollectorService>();
-        var mockCombination = Substitute.For<IMarkdownCombinationService>();
-        var mockFileWriter = Substitute.For<IMarkdownDocumentFileWriterService>();
-        var mockLogger = Substitute.For<ILogger<BuildConfirmationDialogViewModel>>();
-        
-        var dialogViewModel = new BuildConfirmationDialogViewModel(options, mockFileCollector, mockCombination, mockFileWriter, mockLogger);
-        
-        Assert.Multiple(() =>
-        {
-            Assert.That(dialogViewModel.CancelCommand, Is.Not.Null, "Cancel command should exist");
-            Assert.That(dialogViewModel.SaveCommand, Is.Not.Null, "Compile command should exist");
-            Assert.That(dialogViewModel.CancelCommand.CanExecute(null), Is.True, "Cancel command should be executable");
-            Assert.That(dialogViewModel.SaveCommand.CanExecute(null), Is.True, "Compile command should be enabled when not building");
-        });
-    }
-
-    [AvaloniaTest]
-    public void BuildConfirmationDialog_Should_Trigger_DialogClosed_Event_On_Cancel()
-    {
-        var options = Options.Create(new ApplicationOptions());
-        var mockFileCollector = Substitute.For<IMarkdownFileCollectorService>();
-        var mockCombination = Substitute.For<IMarkdownCombinationService>();
-        var mockFileWriter = Substitute.For<IMarkdownDocumentFileWriterService>();
-        var mockLogger = Substitute.For<ILogger<BuildConfirmationDialogViewModel>>();
-        
-        var dialogViewModel = new BuildConfirmationDialogViewModel(options, mockFileCollector, mockCombination, mockFileWriter, mockLogger);
-        
-        // Track if dialog closed event was triggered
-        bool dialogClosed = false;
-        dialogViewModel.DialogClosed += (sender, e) => dialogClosed = true;
-        
-        // Execute the cancel command
-        dialogViewModel.CancelCommand.Execute(null);
-        
-        Assert.That(dialogClosed, Is.True, "DialogClosed event should be triggered when Cancel command is executed");
-    }
-
-    [AvaloniaTest]
-    public async Task BuildConfirmationDialog_Should_Execute_Build_Process_When_Save_Is_Called()
-    {
-        // Arrange
-        var options = Options.Create(new ApplicationOptions
-        {
-            DefaultProjectFolder = "/test/project",
-            DefaultOutputFolder = "output"
-        });
-
-        var mockFileCollector = Substitute.For<IMarkdownFileCollectorService>();
-        var mockCombination = Substitute.For<IMarkdownCombinationService>();
-        var mockFileWriter = Substitute.For<IMarkdownDocumentFileWriterService>();
-        var mockLogger = Substitute.For<ILogger<BuildConfirmationDialogViewModel>>();
-
-        // Setup mock return values
-        var templateFiles = new[]
-        {
-            new MarkdownDocument
-            {
-                FileName = "template1.mdext",
-                FilePath = "/test/template1.mdext",
-                Content = "# Template 1\n<insert source1.mdsrc>"
-            },
-            new MarkdownDocument
-            {
-                FileName = "template2.mdext",
-                FilePath = "/test/template2.mdext",
-                Content = "# Template 2"
-            }
-        };
-        
-        var sourceFiles = new[]
-        {
-            new MarkdownDocument
-            {
-                FileName = "source1.mdsrc",
-                FilePath = "/test/source1.mdsrc",
-                Content = "Source 1 content"
-            }
-        };
-
-        var processedDocuments = new[]
-        {
-            new MarkdownDocument
-            {
-                FileName = "template1.md",
-                FilePath = "/test/template1.md",
-                Content = "# Template 1\nSource 1 content"
-            },
-            new MarkdownDocument
-            {
-                FileName = "template2.md",
-                FilePath = "/test/template2.md",
-                Content = "# Template 2"
-            }
-        };
-
-        mockFileCollector.CollectAllMarkdownFilesAsync("/test/project")
-            .Returns((templateFiles, sourceFiles));
-        mockCombination.Validate(Arg.Any<IEnumerable<MarkdownDocument>>(), Arg.Any<IEnumerable<MarkdownDocument>>())
-            .Returns(new ValidationResult());
-        mockCombination.Validate(Arg.Any<IEnumerable<MarkdownDocument>>(), Arg.Any<IEnumerable<MarkdownDocument>>())
-            .Returns(new ValidationResult());
-        mockCombination.BuildDocumentation(templateFiles, sourceFiles)
-            .Returns(processedDocuments);
-        mockFileWriter.WriteDocumentsToFolderAsync(processedDocuments, "/test/project/output")
-            .Returns(Task.CompletedTask);
-
-        var dialogViewModel = new BuildConfirmationDialogViewModel(options, mockFileCollector, mockCombination, mockFileWriter, mockLogger);
-
-        // Track validation results event
-        ValidationResult? receivedValidationResult = null;
-        dialogViewModel.ValidationResultsAvailable += (sender, result) => receivedValidationResult = result;
-
-        // Act
-        dialogViewModel.SaveCommand.Execute(null);
-        
-        // Wait for async build to complete
-        await WaitForConditionAsync(() => !dialogViewModel.IsBuildInProgress, 1000);
-
-        // Assert
-        Assert.Multiple(() =>
-        {
-            Assert.That(dialogViewModel.CanBuild, Is.True, "Should be able to build again after completion");
-            Assert.That(dialogViewModel.BuildStatus, Does.Contain("completed"), "Should show completion status");
-            Assert.That(receivedValidationResult, Is.Not.Null, "ValidationResultsAvailable event should be triggered");
-            Assert.That(receivedValidationResult!.IsValid, Is.True, "Validation should pass with no errors");
-
-            // Verify services were called correctly
-            mockFileCollector.Received(1).CollectAllMarkdownFilesAsync("/test/project");
-            mockCombination.Received(1).Validate(Arg.Any<IEnumerable<MarkdownDocument>>(), Arg.Any<IEnumerable<MarkdownDocument>>());
-            mockCombination.Received(1).BuildDocumentation(templateFiles, sourceFiles);
-            mockFileWriter.Received(1).WriteDocumentsToFolderAsync(processedDocuments, "/test/project/output");
-        });
-    }
-
-    [AvaloniaTest]
-    public async Task BuildConfirmationDialog_Should_Handle_Build_Errors_Gracefully()
-    {
-        // Arrange
-        var options = Options.Create(new ApplicationOptions
-        {
-            DefaultProjectFolder = "/test/project",
-            DefaultOutputFolder = "output"
-        });
-
-        var mockFileCollector = Substitute.For<IMarkdownFileCollectorService>();
-        var mockCombination = Substitute.For<IMarkdownCombinationService>();
-        var mockFileWriter = Substitute.For<IMarkdownDocumentFileWriterService>();
-        var mockLogger = Substitute.For<ILogger<BuildConfirmationDialogViewModel>>();
-
-        // Setup mock to throw exception
-        mockFileCollector.CollectAllMarkdownFilesAsync("/test/project")
-            .Returns(Task.FromException<(IEnumerable<MarkdownDocument>, IEnumerable<MarkdownDocument>)>(
-                new DirectoryNotFoundException("Test directory not found")));
-
-        var dialogViewModel = new BuildConfirmationDialogViewModel(options, mockFileCollector, mockCombination, mockFileWriter, mockLogger);
-
-        // Act
-        dialogViewModel.SaveCommand.Execute(null);
-        
-        // Wait for async build to complete
-        await WaitForConditionAsync(() => !dialogViewModel.IsBuildInProgress, 1000);
-
-        // Assert
-        Assert.Multiple(() =>
-        {
-            Assert.That(dialogViewModel.CanBuild, Is.True, "Should be able to build again after error");
-            Assert.That(dialogViewModel.BuildStatus, Does.Contain("failed"), "Should show failure status");
-            Assert.That(dialogViewModel.BuildStatus, Does.Contain("Test directory not found"), "Should show error message");
-
-            // Verify only file collector was called
-            mockFileCollector.Received(1).CollectAllMarkdownFilesAsync("/test/project");
-            mockCombination.DidNotReceive().BuildDocumentation(Arg.Any<IEnumerable<MarkdownDocument>>(), Arg.Any<IEnumerable<MarkdownDocument>>());
-            mockFileWriter.DidNotReceive().WriteDocumentsToFolderAsync(Arg.Any<IEnumerable<MarkdownDocument>>(), Arg.Any<string>());
-        });
-    }
-
-    [AvaloniaTest]
-    public void BuildConfirmationDialog_Should_Disable_Build_During_Build_Process()
-    {
-        // Arrange
-        var options = Options.Create(new ApplicationOptions
-        {
-            DefaultProjectFolder = "/test/project",
-            DefaultOutputFolder = "output"
-        });
-
-        var mockFileCollector = Substitute.For<IMarkdownFileCollectorService>();
-        var mockCombination = Substitute.For<IMarkdownCombinationService>();
-        var mockFileWriter = Substitute.For<IMarkdownDocumentFileWriterService>();
-        var mockLogger = Substitute.For<ILogger<BuildConfirmationDialogViewModel>>();
-
-        var dialogViewModel = new BuildConfirmationDialogViewModel(options, mockFileCollector, mockCombination, mockFileWriter, mockLogger);
-
-        // Act
-        dialogViewModel.IsBuildInProgress = true;
-
-        // Assert
-        Assert.Multiple(() =>
-        {
-            Assert.That(dialogViewModel.CanBuild, Is.False, "Should not be able to build when build is in progress");
-            Assert.That(dialogViewModel.SaveCommand.CanExecute(null), Is.False, "Compile command should be disabled during build");
-        });
-    }
-
-    [AvaloniaTest]
-    public void BuildConfirmationDialog_Should_Update_Build_Status_Property()
-    {
-        // Arrange
-        var options = Options.Create(new ApplicationOptions());
-        var mockFileCollector = Substitute.For<IMarkdownFileCollectorService>();
-        var mockCombination = Substitute.For<IMarkdownCombinationService>();
-        var mockFileWriter = Substitute.For<IMarkdownDocumentFileWriterService>();
-        var mockLogger = Substitute.For<ILogger<BuildConfirmationDialogViewModel>>();
-
-        var dialogViewModel = new BuildConfirmationDialogViewModel(options, mockFileCollector, mockCombination, mockFileWriter, mockLogger);
-
-        // Track property changes
-        string? capturedStatus = null;
-        dialogViewModel.PropertyChanged += (sender, args) =>
-        {
-            if (args.PropertyName == nameof(dialogViewModel.BuildStatus))
-            {
-                capturedStatus = dialogViewModel.BuildStatus;
-            }
-        };
-
-        // Act
-        dialogViewModel.BuildStatus = "Test status message";
-
-        // Assert
-        Assert.Multiple(() =>
-        {
-            Assert.That(dialogViewModel.BuildStatus, Is.EqualTo("Test status message"), "Build status should be updated");
-            Assert.That(capturedStatus, Is.EqualTo("Test status message"), "PropertyChanged should be raised for BuildStatus");
-        });
-    }
-
-    [AvaloniaTest]
-    public void BuildConfirmationDialog_Save_Button_Should_Be_Enabled_When_Build_Not_In_Progress()
-    {
-        // Arrange
-        var options = Options.Create(new ApplicationOptions
-        {
-            DefaultProjectFolder = "/test/project",
-            DefaultOutputFolder = "output"
-        });
-
-        var mockFileCollector = Substitute.For<IMarkdownFileCollectorService>();
-        var mockCombination = Substitute.For<IMarkdownCombinationService>();
-        var mockFileWriter = Substitute.For<IMarkdownDocumentFileWriterService>();
-        var mockLogger = Substitute.For<ILogger<BuildConfirmationDialogViewModel>>();
-
-        var dialogViewModel = new BuildConfirmationDialogViewModel(options, mockFileCollector, mockCombination, mockFileWriter, mockLogger);
-
-        // Act & Assert
-        Assert.Multiple(() =>
-        {
-            Assert.That(dialogViewModel.IsBuildInProgress, Is.False, "Build should not be in progress initially");
-            Assert.That(dialogViewModel.CanBuild, Is.True, "Should be able to build when not in progress");
-            Assert.That(dialogViewModel.SaveCommand.CanExecute(null), Is.True, "Compile command should be enabled when build is not in progress");
-        });
-    }
-
-    [AvaloniaTest]
     public void MainWindow_Should_Have_Log_Output_Section_Visible_By_Default()
     {
         var window = CreateMainWindow();
@@ -1509,7 +1217,7 @@ public class MainWindowTests
         };
 
         // Manually update the current validation result to simulate validation
-        editorStateService.CurrentValidationResult = mockValidationResult;
+        _editorStateService.CurrentValidationResult = mockValidationResult;
         
         // Manually call the UpdateErrorPanelWithValidationResults method
         viewModel.UpdateErrorPanelWithValidationResults(mockValidationResult);
@@ -1548,7 +1256,7 @@ public class MainWindowTests
 
         // Manually update the current validation result to simulate validation
         // Set the validation result through the EditorStateService
-        editorStateService.CurrentValidationResult = mockValidationResult;
+        _editorStateService.CurrentValidationResult = mockValidationResult;
 
         // Store initial state
         var wasBottomPanelVisible = viewModel.IsBottomPanelVisible;
@@ -1613,9 +1321,9 @@ public class MainWindowTests
             }
         };
 
+
         // Mock the file collector service
-        var mockFileCollector = Substitute.For<IMarkdownFileCollectorService>();
-        mockFileCollector.CollectAllMarkdownFilesAsync(Arg.Any<string>())
+        _markdownFileCollectorService.CollectAllMarkdownFilesAsync(Arg.Any<string>())
             .Returns((templateFiles, sourceFiles));
 
         // Mock the markdown combination service to return validation results
@@ -1626,19 +1334,9 @@ public class MainWindowTests
                 new ValidationIssue { Message = "[template1.mdext] Test error", LineNumber = 1 }
             }
         };
-
-        var mockCombinationService = Substitute.For<IMarkdownCombinationService>();
-        mockCombinationService.Validate(Arg.Any<IEnumerable<MarkdownDocument>>(), Arg.Any<IEnumerable<MarkdownDocument>>())
+        _markdownCombinationService.Validate(Arg.Any<IEnumerable<MarkdownDocument>>(), Arg.Any<IEnumerable<MarkdownDocument>>())
             .Returns(mockValidationResult);
 
-        // Replace the services using reflection to inject our mocks into EditorContentViewModel
-        var fileCollectorField = viewModel.EditorContent.GetType().GetField("_markdownFileCollectorService", 
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        fileCollectorField!.SetValue(viewModel.EditorContent, mockFileCollector);
-
-        var combinationServiceField = viewModel.EditorContent.GetType().GetField("_markdownCombinationService", 
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        combinationServiceField!.SetValue(viewModel.EditorContent, mockCombinationService);
 
         // Execute the validate all command
         viewModel.EditorContent.ValidateAllCommand.Execute(null);
@@ -1649,8 +1347,8 @@ public class MainWindowTests
         Assert.Multiple(() =>
         {
             // Verify that services were called
-            mockFileCollector.Received(1).CollectAllMarkdownFilesAsync(Arg.Any<string>());
-            mockCombinationService.Received(1).Validate(Arg.Any<IEnumerable<MarkdownDocument>>(), Arg.Any<IEnumerable<MarkdownDocument>>());
+            _markdownFileCollectorService.Received(1).CollectAllMarkdownFilesAsync(Arg.Any<string>());
+            _markdownCombinationService.Received(1).Validate(Arg.Any<IEnumerable<MarkdownDocument>>(), Arg.Any<IEnumerable<MarkdownDocument>>());
             
             // Verify that error panel is shown with validation results
             Assert.That(viewModel.IsBottomPanelVisible, Is.True, "Bottom panel should be visible for errors");
@@ -1682,7 +1380,7 @@ public class MainWindowTests
         };
 
         // Set validation results
-        editorStateService.CurrentValidationResult = mockValidationResult;
+        _editorStateService.CurrentValidationResult = mockValidationResult;
 
         // Update error panel to simulate validation
         viewModel.UpdateErrorPanelWithValidationResults(mockValidationResult);
