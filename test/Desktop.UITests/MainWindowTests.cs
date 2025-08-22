@@ -1587,9 +1587,9 @@ public class MainWindowTests
         Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
         Assert.That(viewModel!.SaveCommand, Is.Not.Null, "SaveCommand should exist");
         
-        // Test that the command can be executed
+        // Test that the command cannot be executed when no file is active
         bool canExecute = viewModel.SaveCommand.CanExecute(null);
-        Assert.That(canExecute, Is.True, "SaveCommand should be executable");
+        Assert.That(canExecute, Is.False, "SaveCommand should not be executable when no file is active");
     }
 
     [AvaloniaTest]
@@ -1608,13 +1608,13 @@ public class MainWindowTests
         // Test that the SaveCommand exists and works (bound to the Save menu item)
         Assert.That(viewModel!.SaveCommand, Is.Not.Null, "SaveCommand should be available for menu binding");
         
-        // Test that the command can be executed
+        // Test that the command cannot be executed when no file is active
         bool canExecute = viewModel.SaveCommand.CanExecute(null);
-        Assert.That(canExecute, Is.True, "SaveCommand should be executable");
+        Assert.That(canExecute, Is.False, "SaveCommand should not be executable when no file is active");
     }
 
     [AvaloniaTest]
-    public void MainWindow_Save_Command_Should_Execute_Without_Error()
+    public async Task MainWindow_Save_Command_Should_Be_Enabled_When_File_Is_Active()
     {
         var window = CreateMainWindow();
         var viewModel = window.DataContext as MainWindowViewModel;
@@ -1622,16 +1622,36 @@ public class MainWindowTests
         Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
         Assert.That(viewModel!.SaveCommand, Is.Not.Null, "SaveCommand should exist");
 
-        // The SaveCommand should be able to execute even without an active file
-        // (the underlying SaveActiveFileAsync handles the case where there's nothing to save)
-        bool canExecute = viewModel.SaveCommand.CanExecute(null);
-        Assert.That(canExecute, Is.True, "SaveCommand should be executable");
+        // SaveCommand should not be executable when no file is active
+        bool canExecuteWithoutFile = viewModel.SaveCommand.CanExecute(null);
+        Assert.That(canExecuteWithoutFile, Is.False, "SaveCommand should not be executable when no file is active");
 
-        // Execute the save command - this should not throw an exception
-        // even if there's no active file to save
-        Assert.DoesNotThrow(() =>
+        // Open a file and verify SaveCommand becomes executable
+        await viewModel.InitializeAsync();
+        await Task.Delay(100); // Give initialization time to complete
+
+        // Simulate opening a file by creating a temporary file
+        var tempFile = Path.GetTempFileName();
+        try
         {
-            viewModel.SaveCommand.Execute(null);
-        }, "SaveCommand execution should not throw exception");
+            await File.WriteAllTextAsync(tempFile, "test content");
+            await viewModel.EditorTabBar.OpenFileAsync(tempFile);
+            await Task.Delay(100); // Give file opening time to complete
+
+            // Now SaveCommand should be executable
+            bool canExecuteWithFile = viewModel.SaveCommand.CanExecute(null);
+            Assert.That(canExecuteWithFile, Is.True, "SaveCommand should be executable when file is active");
+
+            // Execute the save command - this should not throw an exception
+            Assert.DoesNotThrow(() =>
+            {
+                viewModel.SaveCommand.Execute(null);
+            }, "SaveCommand execution should not throw exception when file is active");
+        }
+        finally
+        {
+            if (File.Exists(tempFile))
+                File.Delete(tempFile);
+        }
     }
 }

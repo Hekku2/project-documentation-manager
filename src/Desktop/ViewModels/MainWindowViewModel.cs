@@ -55,7 +55,7 @@ public class MainWindowViewModel : ViewModelBase
         ShowLogsCommand = new RelayCommand(ShowLogOutput);
         ShowErrorsCommand = new RelayCommand(ShowErrorOutput);
         SettingsCommand = new RelayCommand(OpenSettingsTab);
-        SaveCommand = new RelayCommand(async () => await SaveActiveFileAsync());
+        SaveCommand = new RelayCommand(async () => await SaveActiveFileAsync(), CanSave);
         
         _logger.LogInformation("MainWindowViewModel initialized");
         _logger.LogInformation("Default project folder: {Folder}", _applicationOptions.DefaultProjectFolder);
@@ -66,6 +66,9 @@ public class MainWindowViewModel : ViewModelBase
         
         // Subscribe to validation result changes for error panel updates
         _editorStateService.ValidationResultChanged += OnValidationResultChanged;
+        
+        // Subscribe to active tab changes to update command states
+        _editorStateService.ActiveTabChanged += OnActiveTabChangedForCommands;
         
         // Subscribe to build confirmation dialog events
         EditorContent.ShowBuildConfirmationDialog += OnShowBuildConfirmationDialog;
@@ -182,6 +185,20 @@ public class MainWindowViewModel : ViewModelBase
     public async Task SaveActiveFileAsync()
     {
         await EditorTabBar.SaveActiveFileAsync();
+    }
+
+    private bool CanSave()
+    {
+        var activeTab = _editorStateService.ActiveTab;
+        return activeTab != null && 
+               activeTab.FilePath != null && 
+               activeTab.TabType == TabType.File;
+    }
+
+    private void OnActiveTabChangedForCommands(object? sender, EditorTabViewModel? activeTab)
+    {
+        // Update command states when active tab changes
+        ((RelayCommand)SaveCommand).RaiseCanExecuteChanged();
     }
 
     private void RequestApplicationExit()
