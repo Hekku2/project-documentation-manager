@@ -1,0 +1,30 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="clr-namespace:Desktop.Controls"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="Desktop.Controls.ColoredLogDisplay">
+    
+    <ScrollViewer Name="LogScrollViewer" Background="#0E0E0E">
+        <ItemsControl Name="LogItemsControl">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="controls:LogDisplayEntry">
+                    <SelectableTextBlock FontFamily="monospace" 
+                                       FontSize="12" 
+                                       Margin="2,1"
+                                       Background="Transparent">
+                        <SelectableTextBlock.Inlines>
+                            <Run Text="{Binding TimestampText}" Foreground="#808080" />
+                            <Run Text="{Binding LevelText}" Foreground="{Binding LevelColor}" />
+                            <Run Text="{Binding CategoryText}" Foreground="#CCCCCC" />
+                            <Run Text="{Binding MessageText}" Foreground="#CCCCCC" />
+                            <Run Text="{Binding ExceptionText}" Foreground="#FF6B6B" />
+                        </SelectableTextBlock.Inlines>
+                    </SelectableTextBlock>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </ScrollViewer>
+    
+</UserControl>

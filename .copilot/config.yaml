@@ -1,0 +1,7 @@
+system_prompt: |
+  * Use net9.0
+  * Use C#
+  * Use Avalonia to create cross-platform desktop applications
+context:
+  - doc/design.md
+  - doc/structure.md
