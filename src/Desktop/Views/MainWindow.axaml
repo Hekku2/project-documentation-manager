@@ -16,6 +16,7 @@
         <!-- Menu Bar -->
         <Menu DockPanel.Dock="Top" Name="MainMenu">
             <MenuItem Header="File">
+                <MenuItem Header="Save" Command="{Binding SaveCommand}" />
                 <MenuItem Header="Settings" Command="{Binding SettingsCommand}" />
                 <MenuItem Header="Exit" Command="{Binding ExitCommand}" />
             </MenuItem>

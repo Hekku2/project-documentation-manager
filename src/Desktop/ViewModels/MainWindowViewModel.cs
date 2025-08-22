@@ -55,6 +55,7 @@ public class MainWindowViewModel : ViewModelBase
         ShowLogsCommand = new RelayCommand(ShowLogOutput);
         ShowErrorsCommand = new RelayCommand(ShowErrorOutput);
         SettingsCommand = new RelayCommand(OpenSettingsTab);
+        SaveCommand = new RelayCommand(async () => await SaveActiveFileAsync());
         
         _logger.LogInformation("MainWindowViewModel initialized");
         _logger.LogInformation("Default project folder: {Folder}", _applicationOptions.DefaultProjectFolder);
@@ -120,6 +121,8 @@ public class MainWindowViewModel : ViewModelBase
     public ICommand ShowErrorsCommand { get; }
     
     public ICommand SettingsCommand { get; }
+    
+    public ICommand SaveCommand { get; }
     
     public event EventHandler? ExitRequested;
     public event EventHandler<BuildConfirmationDialogViewModel>? ShowBuildConfirmationDialog;
