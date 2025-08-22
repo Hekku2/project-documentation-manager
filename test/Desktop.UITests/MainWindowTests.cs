@@ -1614,8 +1614,11 @@ public class MainWindowTests
     }
 
     [AvaloniaTest]
-    public async Task MainWindow_Save_Command_Should_Be_Enabled_When_File_Is_Active()
+    public async Task MainWindow_Save_Command_Should_Be_Enabled_When_File_Is_Modified()
     {
+        // Set up the file service to return success on write operations
+        _fileService.WriteFileContentAsync(Arg.Any<string>(), Arg.Any<string>()).Returns(true);
+        
         var window = CreateMainWindow();
         var viewModel = window.DataContext as MainWindowViewModel;
         
@@ -1626,9 +1629,8 @@ public class MainWindowTests
         bool canExecuteWithoutFile = viewModel.SaveCommand.CanExecute(null);
         Assert.That(canExecuteWithoutFile, Is.False, "SaveCommand should not be executable when no file is active");
 
-        // Open a file and verify SaveCommand becomes executable
+        // Open a file and verify SaveCommand is still not executable (file not modified)
         await viewModel.InitializeAsync();
-        await Task.Delay(100); // Give initialization time to complete
 
         // Simulate opening a file by creating a temporary file
         var tempFile = Path.GetTempFileName();
@@ -1636,17 +1638,41 @@ public class MainWindowTests
         {
             await File.WriteAllTextAsync(tempFile, "test content");
             await viewModel.EditorTabBar.OpenFileAsync(tempFile);
-            await Task.Delay(100); // Give file opening time to complete
+
+            // SaveCommand should not be executable when file is open but not modified
+            bool canExecuteUnmodifiedFile = viewModel.SaveCommand.CanExecute(null);
+            Assert.That(canExecuteUnmodifiedFile, Is.False, "SaveCommand should not be executable when file is unmodified");
+
+            // Modify the file content
+            var activeTab = viewModel.EditorTabBar.ActiveTab;
+            Assert.That(activeTab, Is.Not.Null, "Active tab should exist");
+            activeTab!.Content = "modified content";
 
             // Now SaveCommand should be executable
-            bool canExecuteWithFile = viewModel.SaveCommand.CanExecute(null);
-            Assert.That(canExecuteWithFile, Is.True, "SaveCommand should be executable when file is active");
+            bool canExecuteModifiedFile = viewModel.SaveCommand.CanExecute(null);
+            Assert.That(canExecuteModifiedFile, Is.True, "SaveCommand should be executable when file is modified");
 
             // Execute the save command - this should not throw an exception
             Assert.DoesNotThrow(() =>
             {
                 viewModel.SaveCommand.Execute(null);
-            }, "SaveCommand execution should not throw exception when file is active");
+            }, "SaveCommand execution should not throw exception when file is modified");
+
+            // Wait for the async save operation to complete
+            await Task.Run(async () =>
+            {
+                // Wait for the file to be saved (IsModified to become false)
+                for (int i = 0; i < 50; i++) // Wait up to 5 seconds
+                {
+                    if (!activeTab.IsModified)
+                        break;
+                    await Task.Delay(100);
+                }
+            });
+
+            // After saving, SaveCommand should not be executable again (file no longer modified)
+            bool canExecuteAfterSave = viewModel.SaveCommand.CanExecute(null);
+            Assert.That(canExecuteAfterSave, Is.False, "SaveCommand should not be executable after file is saved");
         }
         finally
         {

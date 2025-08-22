@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -28,6 +29,7 @@ public class MainWindowViewModel : ViewModelBase
     private FileSystemItemViewModel? _rootItem;
     private bool _isBottomPanelVisible = false;
     private BottomPanelTabViewModel? _activeBottomTab;
+    private EditorTabViewModel? _currentlySubscribedTab;
 
     public MainWindowViewModel(
         ILogger<MainWindowViewModel> logger, 
@@ -192,13 +194,36 @@ public class MainWindowViewModel : ViewModelBase
         var activeTab = _editorStateService.ActiveTab;
         return activeTab != null && 
                activeTab.FilePath != null && 
-               activeTab.TabType == TabType.File;
+               activeTab.TabType == TabType.File &&
+               activeTab.IsModified;
     }
 
     private void OnActiveTabChangedForCommands(object? sender, EditorTabViewModel? activeTab)
     {
+        // Unsubscribe from previous tab's property changes
+        if (_currentlySubscribedTab != null)
+        {
+            _currentlySubscribedTab.PropertyChanged -= OnActiveTabPropertyChanged;
+        }
+
+        // Subscribe to new active tab's property changes
+        _currentlySubscribedTab = activeTab;
+        if (_currentlySubscribedTab != null)
+        {
+            _currentlySubscribedTab.PropertyChanged += OnActiveTabPropertyChanged;
+        }
+
         // Update command states when active tab changes
         ((RelayCommand)SaveCommand).RaiseCanExecuteChanged();
+    }
+
+    private void OnActiveTabPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        // Update command states when IsModified property changes
+        if (e.PropertyName == nameof(EditorTabViewModel.IsModified))
+        {
+            ((RelayCommand)SaveCommand).RaiseCanExecuteChanged();
+        }
     }
 
     private void RequestApplicationExit()
