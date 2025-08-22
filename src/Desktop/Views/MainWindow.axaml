@@ -12,11 +12,15 @@
     x:DataType="vm:MainWindowViewModel"
     Width="1200" Height="800"
     Title="{Binding Title}">
+    
+    <Window.KeyBindings>
+        <KeyBinding Gesture="Ctrl+S" Command="{Binding SaveCommand}" />
+    </Window.KeyBindings>
     <DockPanel>
         <!-- Menu Bar -->
         <Menu DockPanel.Dock="Top" Name="MainMenu">
             <MenuItem Header="File">
-                <MenuItem Header="Save" Command="{Binding SaveCommand}" />
+                <MenuItem Header="Save" Command="{Binding SaveCommand}" InputGesture="Ctrl+S" />
                 <MenuItem Header="Settings" Command="{Binding SettingsCommand}" />
                 <MenuItem Header="Exit" Command="{Binding ExitCommand}" />
             </MenuItem>
