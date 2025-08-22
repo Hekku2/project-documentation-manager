@@ -23,6 +23,37 @@ namespace Desktop.UITests;
 [Parallelizable(ParallelScope.Children)]
 public class MainWindowTests
 {
+    private ILogger<MainWindowViewModel> vmLogger = null!;
+    private ILogger<EditorTabBarViewModel> tabBarLogger = null!;
+    private ILogger<EditorContentViewModel> contentLogger = null!;
+    private ILogger<EditorStateService> stateLogger = null!;
+    private IOptions<ApplicationOptions> options = null!;
+    private IFileService fileService = null!;
+    private IServiceProvider serviceProvider = null!;
+    private IMarkdownCombinationService markdownCombinationService = null!;
+    private IMarkdownFileCollectorService markdownFileCollectorService = null!;
+    private EditorStateService editorStateService = null!;
+    private Desktop.Logging.ILogTransitionService logTransitionService = null!;
+
+    [SetUp]
+    public void Setup()
+    {
+        vmLogger = new LoggerFactory().CreateLogger<MainWindowViewModel>();
+        tabBarLogger = new LoggerFactory().CreateLogger<EditorTabBarViewModel>();
+        contentLogger = new LoggerFactory().CreateLogger<EditorContentViewModel>();
+        stateLogger = new LoggerFactory().CreateLogger<EditorStateService>();
+        options = Options.Create(new ApplicationOptions());
+        fileService = Substitute.For<IFileService>();
+        serviceProvider = Substitute.For<IServiceProvider>();
+        markdownCombinationService = Substitute.For<IMarkdownCombinationService>();
+        markdownFileCollectorService = Substitute.For<IMarkdownFileCollectorService>();
+        logTransitionService = Substitute.For<Desktop.Logging.ILogTransitionService>();
+        
+        // Set up common fileService behavior
+        fileService.IsValidFolder(Arg.Any<string>()).Returns(true);
+        fileService.ReadFileContentAsync(Arg.Any<string>()).Returns("Mock file content");
+    }
+
     private static async Task WaitForConditionAsync(Func<bool> condition, int timeoutMs = 2000, int intervalMs = 10)
     {
         var maxWait = timeoutMs / intervalMs;
@@ -82,28 +113,15 @@ public class MainWindowTests
         ]
     };
 
-    private static MainWindow CreateMainWindow()
+    private MainWindow CreateMainWindow()
     {
-        var vmLogger = new LoggerFactory().CreateLogger<MainWindowViewModel>();
-        var tabBarLogger = new LoggerFactory().CreateLogger<EditorTabBarViewModel>();
-        var contentLogger = new LoggerFactory().CreateLogger<EditorContentViewModel>();
-        var stateLogger = new LoggerFactory().CreateLogger<EditorStateService>();
-        var options = Options.Create(new ApplicationOptions());
-        var fileService = Substitute.For<IFileService>();
-        var serviceProvider = Substitute.For<IServiceProvider>();
-        var markdownCombinationService = Substitute.For<IMarkdownCombinationService>();
-        var markdownFileCollectorService = Substitute.For<IMarkdownFileCollectorService>();
-        
         fileService.GetFileStructureAsync().Returns(Task.FromResult<FileSystemItem?>(CreateSimpleTestStructure()));
         fileService.GetFileStructureAsync(Arg.Any<string>()).Returns(Task.FromResult<FileSystemItem?>(CreateSimpleTestStructure()));
-        fileService.IsValidFolder(Arg.Any<string>()).Returns(true);
-        fileService.ReadFileContentAsync(Arg.Any<string>()).Returns("Mock file content");
         
-        var editorStateService = new EditorStateService(stateLogger);
+        editorStateService = new EditorStateService(stateLogger);
         var editorTabBarViewModel = new EditorTabBarViewModel(tabBarLogger, fileService, editorStateService);
         var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService);
         
-        var logTransitionService = Substitute.For<Desktop.Logging.ILogTransitionService>();
         var viewModel = new MainWindowViewModel(vmLogger, options, fileService, serviceProvider, editorStateService, editorTabBarViewModel, editorContentViewModel, logTransitionService);
         return new MainWindow(viewModel);
     }
@@ -206,28 +224,15 @@ public class MainWindowTests
         ]
     };
 
-    private static MainWindow CreateMainWindowWithNestedStructure()
+    private MainWindow CreateMainWindowWithNestedStructure()
     {
-        var vmLogger = new LoggerFactory().CreateLogger<MainWindowViewModel>();
-        var tabBarLogger = new LoggerFactory().CreateLogger<EditorTabBarViewModel>();
-        var contentLogger = new LoggerFactory().CreateLogger<EditorContentViewModel>();
-        var stateLogger = new LoggerFactory().CreateLogger<EditorStateService>();
-        var options = Options.Create(new ApplicationOptions());
-        var fileService = Substitute.For<IFileService>();
-        var serviceProvider = Substitute.For<IServiceProvider>();
-        var markdownCombinationService = Substitute.For<IMarkdownCombinationService>();
-        var markdownFileCollectorService = Substitute.For<IMarkdownFileCollectorService>();
-        
         fileService.GetFileStructureAsync().Returns(Task.FromResult<FileSystemItem?>(CreateNestedTestStructure()));
         fileService.GetFileStructureAsync(Arg.Any<string>()).Returns(Task.FromResult<FileSystemItem?>(CreateNestedTestStructure()));
-        fileService.IsValidFolder(Arg.Any<string>()).Returns(true);
-        fileService.ReadFileContentAsync(Arg.Any<string>()).Returns("Mock file content");
         
         var editorStateService = new EditorStateService(stateLogger);
         var editorTabBarViewModel = new EditorTabBarViewModel(tabBarLogger, fileService, editorStateService);
         var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService);
         
-        var logTransitionService = Substitute.For<Desktop.Logging.ILogTransitionService>();
         var viewModel = new MainWindowViewModel(vmLogger, options, fileService, serviceProvider, editorStateService, editorTabBarViewModel, editorContentViewModel, logTransitionService);
         return new MainWindow(viewModel);
     }
@@ -1504,8 +1509,6 @@ public class MainWindowTests
         };
 
         // Manually update the current validation result to simulate validation
-        // Set the validation result through the EditorStateService
-        var editorStateService = (EditorStateService)viewModel.GetType().GetField("_editorStateService", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(viewModel)!;
         editorStateService.CurrentValidationResult = mockValidationResult;
         
         // Manually call the UpdateErrorPanelWithValidationResults method
@@ -1545,9 +1548,8 @@ public class MainWindowTests
 
         // Manually update the current validation result to simulate validation
         // Set the validation result through the EditorStateService
-        var editorStateService = (EditorStateService)viewModel.GetType().GetField("_editorStateService", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(viewModel)!;
         editorStateService.CurrentValidationResult = mockValidationResult;
-        
+
         // Store initial state
         var wasBottomPanelVisible = viewModel.IsBottomPanelVisible;
         var initialActiveBottomTab = viewModel.ActiveBottomTab;
@@ -1680,8 +1682,6 @@ public class MainWindowTests
         };
 
         // Set validation results
-        // Set the validation result through the EditorStateService
-        var editorStateService = (EditorStateService)viewModel.GetType().GetField("_editorStateService", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(viewModel)!;
         editorStateService.CurrentValidationResult = mockValidationResult;
 
         // Update error panel to simulate validation
