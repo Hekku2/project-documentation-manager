@@ -41,7 +41,7 @@ public class EditorTabBarViewModel : ViewModelBase
 
         // Check if tab already exists using normalized path comparison
         var existingTab = EditorTabs.FirstOrDefault(t => 
-            string.Equals(Path.GetFullPath(t.FilePath), normalizedFilePath, StringComparison.OrdinalIgnoreCase));
+            t.FilePath != null && string.Equals(Path.GetFullPath(t.FilePath), normalizedFilePath, StringComparison.OrdinalIgnoreCase));
         if (existingTab != null)
         {
             SetActiveTab(existingTab);
