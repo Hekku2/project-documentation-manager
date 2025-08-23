@@ -1801,4 +1801,76 @@ public class MainWindowTests
         bool canExecute = viewModel.SaveAllCommand.CanExecute(null);
         Assert.That(canExecute, Is.False, "SaveAllCommand should not be executable when no files are modified");
     }
+
+    [AvaloniaTest]
+    public async Task OpenFileAsync_Should_Work_When_Settings_Tab_Is_Active()
+    {
+        // Arrange
+        var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
+        var viewModel = new MainWindowViewModel(_vmLogger, _options, _fileService, serviceProvider, _editorStateService, new EditorTabBarViewModel(_tabBarLogger, _fileService, _editorStateService), new EditorContentViewModel(_contentLogger, _editorStateService, _options, serviceProvider, _markdownCombinationService, _markdownFileCollectorService), _logTransitionService, hotkeyService);
+        
+        // Open settings tab first
+        viewModel.EditorTabBar.OpenSettingsTab();
+        
+        // Verify settings tab is active
+        Assert.That(viewModel.EditorTabBar.ActiveTab?.TabType, Is.EqualTo(TabType.Settings), "Settings tab should be active");
+        Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(1), "Should have one tab (Settings)");
+
+        // Act - try to open a file while Settings tab is active (this used to crash)
+        const string testFilePath = "/test/file.md";
+        await viewModel.EditorTabBar.OpenFileAsync(testFilePath);
+
+        // Assert - should successfully open the file without crashing
+        Assert.Multiple(() =>
+        {
+            Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(2), "Should have two tabs (Settings + File)");
+            
+            var fileTab = viewModel.EditorTabBar.EditorTabs.FirstOrDefault(t => t.TabType == TabType.File);
+            Assert.That(fileTab, Is.Not.Null, "File tab should be created");
+            Assert.That(fileTab!.FilePath, Is.EqualTo(testFilePath), "File tab should have correct file path");
+            Assert.That(fileTab.IsActive, Is.True, "File tab should become active");
+            
+            var settingsTab = viewModel.EditorTabBar.EditorTabs.FirstOrDefault(t => t.TabType == TabType.Settings);
+            Assert.That(settingsTab, Is.Not.Null, "Settings tab should still exist");
+            Assert.That(settingsTab!.IsActive, Is.False, "Settings tab should no longer be active");
+            
+            Assert.That(viewModel.EditorTabBar.ActiveTab, Is.EqualTo(fileTab), "Active tab should be the newly opened file tab");
+        });
+    }
+
+    [AvaloniaTest]
+    public async Task OpenFileAsync_Should_Not_Duplicate_Existing_File_When_Settings_Tab_Is_Active()
+    {
+        // Arrange
+        var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
+        var viewModel = new MainWindowViewModel(_vmLogger, _options, _fileService, serviceProvider, _editorStateService, new EditorTabBarViewModel(_tabBarLogger, _fileService, _editorStateService), new EditorContentViewModel(_contentLogger, _editorStateService, _options, serviceProvider, _markdownCombinationService, _markdownFileCollectorService), _logTransitionService, hotkeyService);
+        
+        const string testFilePath = "/test/file.md";
+        
+        // Open file first
+        await viewModel.EditorTabBar.OpenFileAsync(testFilePath);
+        
+        // Open settings tab
+        viewModel.EditorTabBar.OpenSettingsTab();
+        
+        // Verify initial state
+        Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(2), "Should have two tabs initially");
+        Assert.That(viewModel.EditorTabBar.ActiveTab?.TabType, Is.EqualTo(TabType.Settings), "Settings tab should be active");
+
+        // Act - try to open the same file again while Settings tab is active
+        await viewModel.EditorTabBar.OpenFileAsync(testFilePath);
+
+        // Assert - should switch to existing file tab without creating duplicate
+        Assert.Multiple(() =>
+        {
+            Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(2), "Should still have two tabs (no duplicate)");
+            
+            var fileTabs = viewModel.EditorTabBar.EditorTabs.Where(t => t.TabType == TabType.File).ToList();
+            Assert.That(fileTabs.Count, Is.EqualTo(1), "Should have exactly one file tab");
+            Assert.That(fileTabs[0].FilePath, Is.EqualTo(testFilePath), "File tab should have correct file path");
+            Assert.That(fileTabs[0].IsActive, Is.True, "File tab should become active");
+            
+            Assert.That(viewModel.EditorTabBar.ActiveTab, Is.EqualTo(fileTabs[0]), "Active tab should be the existing file tab");
+        });
+    }
 }
