@@ -100,6 +100,7 @@ class Program
                 // Register application services
                 services.AddSingleton<Desktop.Services.IFileService, Desktop.Services.FileService>();
                 services.AddSingleton<Desktop.Services.IEditorStateService, Desktop.Services.EditorStateService>();
+                services.AddSingleton<Desktop.Services.IHotkeyService, Desktop.Services.HotkeyService>();
                 
                 // Register business services
                 services.AddScoped<Business.Services.IMarkdownCombinationService, Business.Services.MarkdownCombinationService>();

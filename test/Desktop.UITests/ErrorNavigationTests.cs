@@ -43,6 +43,7 @@ public class ErrorNavigationTests
         var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService);
         
         var logTransitionService = Substitute.For<Desktop.Logging.ILogTransitionService>();
+        var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
         var viewModel = new MainWindowViewModel(
             logger, 
             options, 
@@ -51,7 +52,8 @@ public class ErrorNavigationTests
             editorStateService,
             editorTabBarViewModel,
             editorContentViewModel,
-            logTransitionService);
+            logTransitionService,
+            hotkeyService);
 
         var validationResult = new ValidationResult
         {
@@ -140,6 +142,7 @@ public class ErrorNavigationTests
         var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService);
         
         var logTransitionService = Substitute.For<Desktop.Logging.ILogTransitionService>();
+        var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
         var viewModel = new MainWindowViewModel(
             logger, 
             options, 
@@ -148,7 +151,8 @@ public class ErrorNavigationTests
             editorStateService,
             editorTabBarViewModel,
             editorContentViewModel,
-            logTransitionService);
+            logTransitionService,
+            hotkeyService);
 
         var validationResult = new ValidationResult
         {

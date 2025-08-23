@@ -65,7 +65,8 @@ public class FileSystemMonitoringTests
         var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService);
         
         var logTransitionService = Substitute.For<Desktop.Logging.ILogTransitionService>();
-        var viewModel = new MainWindowViewModel(vmLogger, options, fileService, serviceProvider, editorStateService, editorTabBarViewModel, editorContentViewModel, logTransitionService);
+        var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
+        var viewModel = new MainWindowViewModel(vmLogger, options, fileService, serviceProvider, editorStateService, editorTabBarViewModel, editorContentViewModel, logTransitionService, hotkeyService);
         var window = new MainWindow(viewModel);
         
         return (window, fileService, viewModel);

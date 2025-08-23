@@ -49,6 +49,9 @@ public partial class MainWindow : Window
         if (DataContext is MainWindowViewModel viewModel)
         {
             await viewModel.InitializeAsync();
+            
+            // Apply hotkeys to this window
+            viewModel.ApplyHotkeysToWindow(this);
         }
     }
     

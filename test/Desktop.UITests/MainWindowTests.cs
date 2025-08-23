@@ -121,7 +121,8 @@ public class MainWindowTests
         var editorTabBarViewModel = new EditorTabBarViewModel(_tabBarLogger, _fileService, _editorStateService);
         var editorContentViewModel = new EditorContentViewModel(_contentLogger, _editorStateService, _options, serviceProvider, _markdownCombinationService, _markdownFileCollectorService);
         
-        var viewModel = new MainWindowViewModel(_vmLogger, _options, _fileService, serviceProvider, _editorStateService, editorTabBarViewModel, editorContentViewModel, _logTransitionService);
+        var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
+        var viewModel = new MainWindowViewModel(_vmLogger, _options, _fileService, serviceProvider, _editorStateService, editorTabBarViewModel, editorContentViewModel, _logTransitionService, hotkeyService);
         return new MainWindow(viewModel);
     }
 
@@ -232,7 +233,8 @@ public class MainWindowTests
         var editorTabBarViewModel = new EditorTabBarViewModel(_tabBarLogger, _fileService, editorStateService);
         var editorContentViewModel = new EditorContentViewModel(_contentLogger, editorStateService, _options, serviceProvider, _markdownCombinationService, _markdownFileCollectorService);
         
-        var viewModel = new MainWindowViewModel(_vmLogger, _options, _fileService, serviceProvider, editorStateService, editorTabBarViewModel, editorContentViewModel, _logTransitionService);
+        var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
+        var viewModel = new MainWindowViewModel(_vmLogger, _options, _fileService, serviceProvider, editorStateService, editorTabBarViewModel, editorContentViewModel, _logTransitionService, hotkeyService);
         return new MainWindow(viewModel);
     }
 
@@ -963,7 +965,8 @@ public class MainWindowTests
         var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService);
         
         var logTransitionService = Substitute.For<Desktop.Logging.ILogTransitionService>();
-        var viewModel = new MainWindowViewModel(vmLogger, options, fileService, serviceProvider, editorStateService, editorTabBarViewModel, editorContentViewModel, logTransitionService);
+        var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
+        var viewModel = new MainWindowViewModel(vmLogger, options, fileService, serviceProvider, editorStateService, editorTabBarViewModel, editorContentViewModel, logTransitionService, hotkeyService);
         
         Assert.That(viewModel.EditorContent.BuildDocumentationCommand, Is.Not.Null, "BuildDocumentationCommand should exist");
         
