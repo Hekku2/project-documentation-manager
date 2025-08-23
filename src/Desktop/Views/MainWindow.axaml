@@ -16,6 +16,7 @@
     <Window.KeyBindings>
         <KeyBinding Gesture="Ctrl+S" Command="{Binding SaveCommand}" />
         <KeyBinding Gesture="Ctrl+Shift+S" Command="{Binding SaveAllCommand}" />
+        <KeyBinding Gesture="F6" Command="{Binding EditorContent.BuildDocumentationCommand}" />
     </Window.KeyBindings>
     <DockPanel>
         <!-- Menu Bar -->
@@ -31,7 +32,7 @@
                 <MenuItem Header="Errors" Command="{Binding ShowErrorsCommand}" />
             </MenuItem>
             <MenuItem Header="Compile">
-                <MenuItem Header="Compile documentation" Command="{Binding EditorContent.BuildDocumentationCommand}" />
+                <MenuItem Header="Compile documentation" Command="{Binding EditorContent.BuildDocumentationCommand}" InputGesture="F6" />
                 <MenuItem Header="Validate" Command="{Binding EditorContent.ValidateCommand}" />
                 <MenuItem Header="Validate All" Command="{Binding EditorContent.ValidateAllCommand}" />
             </MenuItem>
