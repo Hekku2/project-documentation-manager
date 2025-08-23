@@ -15,12 +15,14 @@
     
     <Window.KeyBindings>
         <KeyBinding Gesture="Ctrl+S" Command="{Binding SaveCommand}" />
+        <KeyBinding Gesture="Ctrl+Shift+S" Command="{Binding SaveAllCommand}" />
     </Window.KeyBindings>
     <DockPanel>
         <!-- Menu Bar -->
         <Menu DockPanel.Dock="Top" Name="MainMenu">
             <MenuItem Header="File">
                 <MenuItem Header="Save" Command="{Binding SaveCommand}" InputGesture="Ctrl+S" />
+                <MenuItem Header="Save All" Command="{Binding SaveAllCommand}" InputGesture="Ctrl+Shift+S" />
                 <MenuItem Header="Settings" Command="{Binding SettingsCommand}" />
                 <MenuItem Header="Exit" Command="{Binding ExitCommand}" />
             </MenuItem>

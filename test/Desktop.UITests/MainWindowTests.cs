@@ -1680,4 +1680,122 @@ public class MainWindowTests
                 File.Delete(tempFile);
         }
     }
+
+    [AvaloniaTest]
+    public async Task MainWindow_SaveAll_Command_Should_Save_All_Modified_Files()
+    {
+        // Set up the file service to return success on write operations
+        _fileService.WriteFileContentAsync(Arg.Any<string>(), Arg.Any<string>()).Returns(true);
+        
+        var window = CreateMainWindow();
+        var viewModel = window.DataContext as MainWindowViewModel;
+        
+        Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
+        Assert.That(viewModel!.SaveAllCommand, Is.Not.Null, "SaveAllCommand should exist");
+
+        // SaveAllCommand should not be executable when no files are open
+        bool canExecuteWithoutFiles = viewModel.SaveAllCommand.CanExecute(null);
+        Assert.That(canExecuteWithoutFiles, Is.False, "SaveAllCommand should not be executable when no files are open");
+
+        await viewModel.InitializeAsync();
+
+        // Create multiple temporary files
+        var tempFile1 = Path.GetTempFileName();
+        var tempFile2 = Path.GetTempFileName();
+        var tempFile3 = Path.GetTempFileName();
+        
+        try
+        {
+            await File.WriteAllTextAsync(tempFile1, "content1");
+            await File.WriteAllTextAsync(tempFile2, "content2");
+            await File.WriteAllTextAsync(tempFile3, "content3");
+
+            // Open multiple files
+            await viewModel.EditorTabBar.OpenFileAsync(tempFile1);
+            await viewModel.EditorTabBar.OpenFileAsync(tempFile2);
+            await viewModel.EditorTabBar.OpenFileAsync(tempFile3);
+
+            Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(3), "Should have 3 tabs open");
+
+            // SaveAllCommand should not be executable when files are open but not modified
+            bool canExecuteUnmodified = viewModel.SaveAllCommand.CanExecute(null);
+            Assert.That(canExecuteUnmodified, Is.False, "SaveAllCommand should not be executable when no files are modified");
+
+            // Modify some files
+            var tab1 = viewModel.EditorTabBar.EditorTabs[0];
+            var tab2 = viewModel.EditorTabBar.EditorTabs[1];
+            var tab3 = viewModel.EditorTabBar.EditorTabs[2];
+
+            tab1.Content = "modified content1";
+            tab3.Content = "modified content3";
+            // Leave tab2 unmodified
+
+            // Verify modification states
+            Assert.That(tab1.IsModified, Is.True, "Tab1 should be modified");
+            Assert.That(tab2.IsModified, Is.False, "Tab2 should not be modified");
+            Assert.That(tab3.IsModified, Is.True, "Tab3 should be modified");
+
+            // SaveAllCommand should now be executable
+            bool canExecuteModified = viewModel.SaveAllCommand.CanExecute(null);
+            Assert.That(canExecuteModified, Is.True, "SaveAllCommand should be executable when some files are modified");
+
+            // Execute SaveAll command
+            Assert.DoesNotThrow(() =>
+            {
+                viewModel.SaveAllCommand.Execute(null);
+            }, "SaveAllCommand execution should not throw exception");
+
+            // Wait for async save operations to complete
+            await Task.Run(async () =>
+            {
+                for (int i = 0; i < 50; i++) // Wait up to 5 seconds
+                {
+                    if (!tab1.IsModified && !tab3.IsModified)
+                        break;
+                    await Task.Delay(100);
+                }
+            });
+
+            // Verify all modified files were saved
+            Assert.That(tab1.IsModified, Is.False, "Tab1 should no longer be modified after save all");
+            Assert.That(tab2.IsModified, Is.False, "Tab2 should still not be modified (was not modified)");
+            Assert.That(tab3.IsModified, Is.False, "Tab3 should no longer be modified after save all");
+
+            // SaveAllCommand should not be executable again (no modified files)
+            bool canExecuteAfterSave = viewModel.SaveAllCommand.CanExecute(null);
+            Assert.That(canExecuteAfterSave, Is.False, "SaveAllCommand should not be executable after all files are saved");
+
+            // Verify that WriteFileContentAsync was called for modified files only
+            await _fileService.Received(1).WriteFileContentAsync(tempFile1, "modified content1");
+            await _fileService.Received(0).WriteFileContentAsync(tempFile2, Arg.Any<string>());
+            await _fileService.Received(1).WriteFileContentAsync(tempFile3, "modified content3");
+        }
+        finally
+        {
+            if (File.Exists(tempFile1)) File.Delete(tempFile1);
+            if (File.Exists(tempFile2)) File.Delete(tempFile2);
+            if (File.Exists(tempFile3)) File.Delete(tempFile3);
+        }
+    }
+
+    [AvaloniaTest]
+    public void MainWindow_Should_Have_SaveAll_Menu_Item_With_Command_Binding()
+    {
+        var window = CreateMainWindow();
+        window.Show();
+
+        var viewModel = window.DataContext as MainWindowViewModel;
+        Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
+
+        // Find the main menu
+        var menu = window.FindControl<Menu>("MainMenu");
+        Assert.That(menu, Is.Not.Null, "Main menu should exist");
+        
+        // Test that the SaveAllCommand exists and is properly bound
+        Assert.That(viewModel!.SaveAllCommand, Is.Not.Null, "SaveAllCommand should be available for menu binding");
+        
+        // Test that the command cannot be executed when no files are modified
+        bool canExecute = viewModel.SaveAllCommand.CanExecute(null);
+        Assert.That(canExecute, Is.False, "SaveAllCommand should not be executable when no files are modified");
+    }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.IO;
 using System.Threading.Tasks;
@@ -58,6 +59,7 @@ public class MainWindowViewModel : ViewModelBase
         ShowErrorsCommand = new RelayCommand(ShowErrorOutput);
         SettingsCommand = new RelayCommand(OpenSettingsTab);
         SaveCommand = new RelayCommand(async () => await SaveActiveFileAsync(), CanSave);
+        SaveAllCommand = new RelayCommand(async () => await SaveAllAsync(), CanSaveAll);
         
         _logger.LogInformation("MainWindowViewModel initialized");
         _logger.LogInformation("Default project folder: {Folder}", _applicationOptions.DefaultProjectFolder);
@@ -71,6 +73,9 @@ public class MainWindowViewModel : ViewModelBase
         
         // Subscribe to active tab changes to update command states
         _editorStateService.ActiveTabChanged += OnActiveTabChangedForCommands;
+        
+        // Subscribe to tab collection changes to update SaveAll command state
+        EditorTabBar.EditorTabs.CollectionChanged += OnEditorTabsCollectionChanged;
         
         // Subscribe to build confirmation dialog events
         EditorContent.ShowBuildConfirmationDialog += OnShowBuildConfirmationDialog;
@@ -128,6 +133,8 @@ public class MainWindowViewModel : ViewModelBase
     public ICommand SettingsCommand { get; }
     
     public ICommand SaveCommand { get; }
+    
+    public ICommand SaveAllCommand { get; }
     
     public event EventHandler? ExitRequested;
     public event EventHandler<BuildConfirmationDialogViewModel>? ShowBuildConfirmationDialog;
@@ -189,6 +196,11 @@ public class MainWindowViewModel : ViewModelBase
         await EditorTabBar.SaveActiveFileAsync();
     }
 
+    public async Task SaveAllAsync()
+    {
+        await EditorTabBar.SaveAllAsync();
+    }
+
     private bool CanSave()
     {
         var activeTab = _editorStateService.ActiveTab;
@@ -196,6 +208,14 @@ public class MainWindowViewModel : ViewModelBase
                activeTab.FilePath != null && 
                activeTab.TabType == TabType.File &&
                activeTab.IsModified;
+    }
+
+    private bool CanSaveAll()
+    {
+        return EditorTabBar.EditorTabs.Any(tab => 
+            tab.IsModified && 
+            tab.FilePath != null && 
+            tab.TabType == TabType.File);
     }
 
     private void OnActiveTabChangedForCommands(object? sender, EditorTabViewModel? activeTab)
@@ -215,6 +235,7 @@ public class MainWindowViewModel : ViewModelBase
 
         // Update command states when active tab changes
         ((RelayCommand)SaveCommand).RaiseCanExecuteChanged();
+        ((RelayCommand)SaveAllCommand).RaiseCanExecuteChanged();
     }
 
     private void OnActiveTabPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -223,6 +244,40 @@ public class MainWindowViewModel : ViewModelBase
         if (e.PropertyName == nameof(EditorTabViewModel.IsModified))
         {
             ((RelayCommand)SaveCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)SaveAllCommand).RaiseCanExecuteChanged();
+        }
+    }
+
+    private void OnEditorTabsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        // Update SaveAll command state when tabs are added or removed
+        ((RelayCommand)SaveAllCommand).RaiseCanExecuteChanged();
+
+        // Subscribe to property changes for new tabs
+        if (e.NewItems != null)
+        {
+            foreach (EditorTabViewModel tab in e.NewItems)
+            {
+                tab.PropertyChanged += OnAnyTabPropertyChanged;
+            }
+        }
+
+        // Unsubscribe from property changes for removed tabs
+        if (e.OldItems != null)
+        {
+            foreach (EditorTabViewModel tab in e.OldItems)
+            {
+                tab.PropertyChanged -= OnAnyTabPropertyChanged;
+            }
+        }
+    }
+
+    private void OnAnyTabPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        // Update SaveAll command state when any tab's IsModified property changes
+        if (e.PropertyName == nameof(EditorTabViewModel.IsModified))
+        {
+            ((RelayCommand)SaveAllCommand).RaiseCanExecuteChanged();
         }
     }
 
