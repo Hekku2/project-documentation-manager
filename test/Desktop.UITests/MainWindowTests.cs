@@ -121,7 +121,8 @@ public class MainWindowTests
         var editorTabBarViewModel = new EditorTabBarViewModel(_tabBarLogger, _fileService, _editorStateService);
         var editorContentViewModel = new EditorContentViewModel(_contentLogger, _editorStateService, _options, serviceProvider, _markdownCombinationService, _markdownFileCollectorService);
         
-        var viewModel = new MainWindowViewModel(_vmLogger, _options, _fileService, serviceProvider, _editorStateService, editorTabBarViewModel, editorContentViewModel, _logTransitionService);
+        var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
+        var viewModel = new MainWindowViewModel(_vmLogger, _options, _fileService, _editorStateService, editorTabBarViewModel, editorContentViewModel, _logTransitionService, hotkeyService);
         return new MainWindow(viewModel);
     }
 
@@ -232,7 +233,8 @@ public class MainWindowTests
         var editorTabBarViewModel = new EditorTabBarViewModel(_tabBarLogger, _fileService, editorStateService);
         var editorContentViewModel = new EditorContentViewModel(_contentLogger, editorStateService, _options, serviceProvider, _markdownCombinationService, _markdownFileCollectorService);
         
-        var viewModel = new MainWindowViewModel(_vmLogger, _options, _fileService, serviceProvider, editorStateService, editorTabBarViewModel, editorContentViewModel, _logTransitionService);
+        var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
+        var viewModel = new MainWindowViewModel(_vmLogger, _options, _fileService, editorStateService, editorTabBarViewModel, editorContentViewModel, _logTransitionService, hotkeyService);
         return new MainWindow(viewModel);
     }
 
@@ -963,7 +965,8 @@ public class MainWindowTests
         var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService);
         
         var logTransitionService = Substitute.For<Desktop.Logging.ILogTransitionService>();
-        var viewModel = new MainWindowViewModel(vmLogger, options, fileService, serviceProvider, editorStateService, editorTabBarViewModel, editorContentViewModel, logTransitionService);
+        var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
+        var viewModel = new MainWindowViewModel(vmLogger, options, fileService, editorStateService, editorTabBarViewModel, editorContentViewModel, logTransitionService, hotkeyService);
         
         Assert.That(viewModel.EditorContent.BuildDocumentationCommand, Is.Not.Null, "BuildDocumentationCommand should exist");
         
@@ -1587,9 +1590,9 @@ public class MainWindowTests
         Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
         Assert.That(viewModel!.SaveCommand, Is.Not.Null, "SaveCommand should exist");
         
-        // Test that the command can be executed
+        // Test that the command cannot be executed when no file is active
         bool canExecute = viewModel.SaveCommand.CanExecute(null);
-        Assert.That(canExecute, Is.True, "SaveCommand should be executable");
+        Assert.That(canExecute, Is.False, "SaveCommand should not be executable when no file is active");
     }
 
     [AvaloniaTest]
@@ -1608,30 +1611,266 @@ public class MainWindowTests
         // Test that the SaveCommand exists and works (bound to the Save menu item)
         Assert.That(viewModel!.SaveCommand, Is.Not.Null, "SaveCommand should be available for menu binding");
         
-        // Test that the command can be executed
+        // Test that the command cannot be executed when no file is active
         bool canExecute = viewModel.SaveCommand.CanExecute(null);
-        Assert.That(canExecute, Is.True, "SaveCommand should be executable");
+        Assert.That(canExecute, Is.False, "SaveCommand should not be executable when no file is active");
     }
 
     [AvaloniaTest]
-    public void MainWindow_Save_Command_Should_Execute_Without_Error()
+    public async Task MainWindow_Save_Command_Should_Be_Enabled_When_File_Is_Modified()
     {
+        // Set up the file service to return success on write operations
+        _fileService.WriteFileContentAsync(Arg.Any<string>(), Arg.Any<string>()).Returns(true);
+        
         var window = CreateMainWindow();
         var viewModel = window.DataContext as MainWindowViewModel;
         
         Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
         Assert.That(viewModel!.SaveCommand, Is.Not.Null, "SaveCommand should exist");
 
-        // The SaveCommand should be able to execute even without an active file
-        // (the underlying SaveActiveFileAsync handles the case where there's nothing to save)
-        bool canExecute = viewModel.SaveCommand.CanExecute(null);
-        Assert.That(canExecute, Is.True, "SaveCommand should be executable");
+        // SaveCommand should not be executable when no file is active
+        bool canExecuteWithoutFile = viewModel.SaveCommand.CanExecute(null);
+        Assert.That(canExecuteWithoutFile, Is.False, "SaveCommand should not be executable when no file is active");
 
-        // Execute the save command - this should not throw an exception
-        // even if there's no active file to save
-        Assert.DoesNotThrow(() =>
+        // Open a file and verify SaveCommand is still not executable (file not modified)
+        await viewModel.InitializeAsync();
+
+        // Simulate opening a file by creating a temporary file
+        var tempFile = Path.GetTempFileName();
+        try
         {
-            viewModel.SaveCommand.Execute(null);
-        }, "SaveCommand execution should not throw exception");
+            await File.WriteAllTextAsync(tempFile, "test content");
+            await viewModel.EditorTabBar.OpenFileAsync(tempFile);
+
+            // SaveCommand should not be executable when file is open but not modified
+            bool canExecuteUnmodifiedFile = viewModel.SaveCommand.CanExecute(null);
+            Assert.That(canExecuteUnmodifiedFile, Is.False, "SaveCommand should not be executable when file is unmodified");
+
+            // Modify the file content
+            var activeTab = viewModel.EditorTabBar.ActiveTab;
+            Assert.That(activeTab, Is.Not.Null, "Active tab should exist");
+            activeTab!.Content = "modified content";
+
+            // Now SaveCommand should be executable
+            bool canExecuteModifiedFile = viewModel.SaveCommand.CanExecute(null);
+            Assert.That(canExecuteModifiedFile, Is.True, "SaveCommand should be executable when file is modified");
+
+            // Execute the save command - this should not throw an exception
+            Assert.DoesNotThrow(() =>
+            {
+                viewModel.SaveCommand.Execute(null);
+            }, "SaveCommand execution should not throw exception when file is modified");
+
+            // Wait for the async save operation to complete
+            await Task.Run(async () =>
+            {
+                // Wait for the file to be saved (IsModified to become false)
+                for (int i = 0; i < 50; i++) // Wait up to 5 seconds
+                {
+                    if (!activeTab.IsModified)
+                        break;
+                    await Task.Delay(100);
+                }
+            });
+
+            // After saving, SaveCommand should not be executable again (file no longer modified)
+            bool canExecuteAfterSave = viewModel.SaveCommand.CanExecute(null);
+            Assert.That(canExecuteAfterSave, Is.False, "SaveCommand should not be executable after file is saved");
+        }
+        finally
+        {
+            if (File.Exists(tempFile))
+                File.Delete(tempFile);
+        }
+    }
+
+    [AvaloniaTest]
+    public async Task MainWindow_SaveAll_Command_Should_Save_All_Modified_Files()
+    {
+        // Set up the file service to return success on write operations
+        _fileService.WriteFileContentAsync(Arg.Any<string>(), Arg.Any<string>()).Returns(true);
+        
+        var window = CreateMainWindow();
+        var viewModel = window.DataContext as MainWindowViewModel;
+        
+        Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
+        Assert.That(viewModel!.SaveAllCommand, Is.Not.Null, "SaveAllCommand should exist");
+
+        // SaveAllCommand should not be executable when no files are open
+        bool canExecuteWithoutFiles = viewModel.SaveAllCommand.CanExecute(null);
+        Assert.That(canExecuteWithoutFiles, Is.False, "SaveAllCommand should not be executable when no files are open");
+
+        await viewModel.InitializeAsync();
+
+        // Create multiple temporary files
+        var tempFile1 = Path.GetTempFileName();
+        var tempFile2 = Path.GetTempFileName();
+        var tempFile3 = Path.GetTempFileName();
+        
+        try
+        {
+            await File.WriteAllTextAsync(tempFile1, "content1");
+            await File.WriteAllTextAsync(tempFile2, "content2");
+            await File.WriteAllTextAsync(tempFile3, "content3");
+
+            // Open multiple files
+            await viewModel.EditorTabBar.OpenFileAsync(tempFile1);
+            await viewModel.EditorTabBar.OpenFileAsync(tempFile2);
+            await viewModel.EditorTabBar.OpenFileAsync(tempFile3);
+
+            Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(3), "Should have 3 tabs open");
+
+            // SaveAllCommand should not be executable when files are open but not modified
+            bool canExecuteUnmodified = viewModel.SaveAllCommand.CanExecute(null);
+            Assert.That(canExecuteUnmodified, Is.False, "SaveAllCommand should not be executable when no files are modified");
+
+            // Modify some files
+            var tab1 = viewModel.EditorTabBar.EditorTabs[0];
+            var tab2 = viewModel.EditorTabBar.EditorTabs[1];
+            var tab3 = viewModel.EditorTabBar.EditorTabs[2];
+
+            tab1.Content = "modified content1";
+            tab3.Content = "modified content3";
+            // Leave tab2 unmodified
+
+            // Verify modification states
+            Assert.That(tab1.IsModified, Is.True, "Tab1 should be modified");
+            Assert.That(tab2.IsModified, Is.False, "Tab2 should not be modified");
+            Assert.That(tab3.IsModified, Is.True, "Tab3 should be modified");
+
+            // SaveAllCommand should now be executable
+            bool canExecuteModified = viewModel.SaveAllCommand.CanExecute(null);
+            Assert.That(canExecuteModified, Is.True, "SaveAllCommand should be executable when some files are modified");
+
+            // Execute SaveAll command
+            Assert.DoesNotThrow(() =>
+            {
+                viewModel.SaveAllCommand.Execute(null);
+            }, "SaveAllCommand execution should not throw exception");
+
+            // Wait for async save operations to complete
+            await Task.Run(async () =>
+            {
+                for (int i = 0; i < 50; i++) // Wait up to 5 seconds
+                {
+                    if (!tab1.IsModified && !tab3.IsModified)
+                        break;
+                    await Task.Delay(100);
+                }
+            });
+
+            // Verify all modified files were saved
+            Assert.That(tab1.IsModified, Is.False, "Tab1 should no longer be modified after save all");
+            Assert.That(tab2.IsModified, Is.False, "Tab2 should still not be modified (was not modified)");
+            Assert.That(tab3.IsModified, Is.False, "Tab3 should no longer be modified after save all");
+
+            // SaveAllCommand should not be executable again (no modified files)
+            bool canExecuteAfterSave = viewModel.SaveAllCommand.CanExecute(null);
+            Assert.That(canExecuteAfterSave, Is.False, "SaveAllCommand should not be executable after all files are saved");
+
+            // Verify that WriteFileContentAsync was called for modified files only
+            await _fileService.Received(1).WriteFileContentAsync(tempFile1, "modified content1");
+            await _fileService.Received(0).WriteFileContentAsync(tempFile2, Arg.Any<string>());
+            await _fileService.Received(1).WriteFileContentAsync(tempFile3, "modified content3");
+        }
+        finally
+        {
+            if (File.Exists(tempFile1)) File.Delete(tempFile1);
+            if (File.Exists(tempFile2)) File.Delete(tempFile2);
+            if (File.Exists(tempFile3)) File.Delete(tempFile3);
+        }
+    }
+
+    [AvaloniaTest]
+    public void MainWindow_Should_Have_SaveAll_Menu_Item_With_Command_Binding()
+    {
+        var window = CreateMainWindow();
+        window.Show();
+
+        var viewModel = window.DataContext as MainWindowViewModel;
+        Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
+
+        // Find the main menu
+        var menu = window.FindControl<Menu>("MainMenu");
+        Assert.That(menu, Is.Not.Null, "Main menu should exist");
+        
+        // Test that the SaveAllCommand exists and is properly bound
+        Assert.That(viewModel!.SaveAllCommand, Is.Not.Null, "SaveAllCommand should be available for menu binding");
+        
+        // Test that the command cannot be executed when no files are modified
+        bool canExecute = viewModel.SaveAllCommand.CanExecute(null);
+        Assert.That(canExecute, Is.False, "SaveAllCommand should not be executable when no files are modified");
+    }
+
+    [AvaloniaTest]
+    public async Task OpenFileAsync_Should_Work_When_Settings_Tab_Is_Active()
+    {
+        // Arrange
+        var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
+        var viewModel = new MainWindowViewModel(_vmLogger, _options, _fileService, _editorStateService, new EditorTabBarViewModel(_tabBarLogger, _fileService, _editorStateService), new EditorContentViewModel(_contentLogger, _editorStateService, _options, serviceProvider, _markdownCombinationService, _markdownFileCollectorService), _logTransitionService, hotkeyService);
+        
+        // Open settings tab first
+        viewModel.EditorTabBar.OpenSettingsTab();
+        
+        // Verify settings tab is active
+        Assert.That(viewModel.EditorTabBar.ActiveTab?.TabType, Is.EqualTo(TabType.Settings), "Settings tab should be active");
+        Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(1), "Should have one tab (Settings)");
+
+        // Act - try to open a file while Settings tab is active (this used to crash)
+        const string testFilePath = "/test/file.md";
+        await viewModel.EditorTabBar.OpenFileAsync(testFilePath);
+
+        // Assert - should successfully open the file without crashing
+        Assert.Multiple(() =>
+        {
+            Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(2), "Should have two tabs (Settings + File)");
+            
+            var fileTab = viewModel.EditorTabBar.EditorTabs.FirstOrDefault(t => t.TabType == TabType.File);
+            Assert.That(fileTab, Is.Not.Null, "File tab should be created");
+            Assert.That(fileTab!.FilePath, Is.EqualTo(testFilePath), "File tab should have correct file path");
+            Assert.That(fileTab.IsActive, Is.True, "File tab should become active");
+            
+            var settingsTab = viewModel.EditorTabBar.EditorTabs.FirstOrDefault(t => t.TabType == TabType.Settings);
+            Assert.That(settingsTab, Is.Not.Null, "Settings tab should still exist");
+            Assert.That(settingsTab!.IsActive, Is.False, "Settings tab should no longer be active");
+            
+            Assert.That(viewModel.EditorTabBar.ActiveTab, Is.EqualTo(fileTab), "Active tab should be the newly opened file tab");
+        });
+    }
+
+    [AvaloniaTest]
+    public async Task OpenFileAsync_Should_Not_Duplicate_Existing_File_When_Settings_Tab_Is_Active()
+    {
+        // Arrange
+        var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
+        var viewModel = new MainWindowViewModel(_vmLogger, _options, _fileService, _editorStateService, new EditorTabBarViewModel(_tabBarLogger, _fileService, _editorStateService), new EditorContentViewModel(_contentLogger, _editorStateService, _options, serviceProvider, _markdownCombinationService, _markdownFileCollectorService), _logTransitionService, hotkeyService);
+        
+        const string testFilePath = "/test/file.md";
+        
+        // Open file first
+        await viewModel.EditorTabBar.OpenFileAsync(testFilePath);
+        
+        // Open settings tab
+        viewModel.EditorTabBar.OpenSettingsTab();
+        
+        // Verify initial state
+        Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(2), "Should have two tabs initially");
+        Assert.That(viewModel.EditorTabBar.ActiveTab?.TabType, Is.EqualTo(TabType.Settings), "Settings tab should be active");
+
+        // Act - try to open the same file again while Settings tab is active
+        await viewModel.EditorTabBar.OpenFileAsync(testFilePath);
+
+        // Assert - should switch to existing file tab without creating duplicate
+        Assert.Multiple(() =>
+        {
+            Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(2), "Should still have two tabs (no duplicate)");
+            
+            var fileTabs = viewModel.EditorTabBar.EditorTabs.Where(t => t.TabType == TabType.File).ToList();
+            Assert.That(fileTabs.Count, Is.EqualTo(1), "Should have exactly one file tab");
+            Assert.That(fileTabs[0].FilePath, Is.EqualTo(testFilePath), "File tab should have correct file path");
+            Assert.That(fileTabs[0].IsActive, Is.True, "File tab should become active");
+            
+            Assert.That(viewModel.EditorTabBar.ActiveTab, Is.EqualTo(fileTabs[0]), "Active tab should be the existing file tab");
+        });
     }
 }

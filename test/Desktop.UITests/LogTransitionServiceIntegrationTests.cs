@@ -37,15 +37,16 @@ public class LogTransitionServiceIntegrationTests
         var testLogs = "Test historical logs from startup";
         mockLogTransitionService.GetFormattedHistoricalLogs().Returns(testLogs);
         
+        var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
         var viewModel = new MainWindowViewModel(
             logger, 
             options, 
             fileService, 
-            serviceProvider,
             editorStateService,
             editorTabBarViewModel,
             editorContentViewModel,
-            mockLogTransitionService);
+            mockLogTransitionService,
+            hotkeyService);
         
         // Act
         viewModel.ShowLogsCommand.Execute(null);

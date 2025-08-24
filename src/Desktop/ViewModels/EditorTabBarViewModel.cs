@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
@@ -40,7 +41,7 @@ public class EditorTabBarViewModel : ViewModelBase
 
         // Check if tab already exists using normalized path comparison
         var existingTab = EditorTabs.FirstOrDefault(t => 
-            string.Equals(Path.GetFullPath(t.FilePath), normalizedFilePath, StringComparison.OrdinalIgnoreCase));
+            t.FilePath != null && string.Equals(Path.GetFullPath(t.FilePath), normalizedFilePath, StringComparison.OrdinalIgnoreCase));
         if (existingTab != null)
         {
             SetActiveTab(existingTab);
@@ -121,28 +122,80 @@ public class EditorTabBarViewModel : ViewModelBase
         _logger.LogDebug("Tab closed: {TabTitle}", tab.Title);
     }
 
-    public async Task SaveActiveFileAsync()
+    private async Task<bool> SaveTabAsync(EditorTabViewModel tab)
     {
-        var activeTab = ActiveTab;
-        if (activeTab == null || !activeTab.IsModified || activeTab.FilePath == null || activeTab.Content == null)
-            return;
+        if (tab == null || !tab.IsModified || tab.FilePath == null || tab.Content == null)
+            return false;
 
         try
         {
-            var success = await _fileService.WriteFileContentAsync(activeTab.FilePath, activeTab.Content);
+            var success = await _fileService.WriteFileContentAsync(tab.FilePath, tab.Content);
             if (success)
             {
-                activeTab.IsModified = false;
-                _logger.LogInformation("File saved: {FilePath}", activeTab.FilePath);
+                tab.IsModified = false;
+                _logger.LogDebug("File saved: {FilePath}", tab.FilePath);
             }
             else
             {
-                _logger.LogWarning("Failed to save file: {FilePath}", activeTab.FilePath);
+                _logger.LogWarning("Failed to save file: {FilePath}", tab.FilePath);
             }
+            return success;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error saving file: {FilePath}", activeTab.FilePath);
+            _logger.LogError(ex, "Error saving file: {FilePath}", tab.FilePath);
+            return false;
+        }
+    }
+
+    public async Task SaveActiveFileAsync()
+    {
+        var activeTab = ActiveTab;
+        if (activeTab == null)
+            return;
+
+        var success = await SaveTabAsync(activeTab);
+        if (success)
+        {
+            _logger.LogInformation("File saved: {FilePath}", activeTab.FilePath);
+        }
+    }
+
+    public async Task SaveAllAsync()
+    {
+        var modifiedTabs = EditorTabs.Where(tab => 
+            tab.IsModified && 
+            tab.FilePath != null && 
+            tab.Content != null &&
+            tab.TabType == TabType.File).ToList();
+
+        if (!modifiedTabs.Any())
+        {
+            _logger.LogDebug("No modified files to save");
+            return;
+        }
+
+        _logger.LogInformation("Saving {Count} modified files", modifiedTabs.Count);
+
+        var saveResults = new List<(EditorTabViewModel tab, bool success)>();
+
+        foreach (var tab in modifiedTabs)
+        {
+            var success = await SaveTabAsync(tab);
+            saveResults.Add((tab, success));
+        }
+
+        var successCount = saveResults.Count(r => r.success);
+        var failureCount = saveResults.Count(r => !r.success);
+
+        if (failureCount == 0)
+        {
+            _logger.LogInformation("Successfully saved all {Count} files", successCount);
+        }
+        else
+        {
+            _logger.LogWarning("Save completed: {SuccessCount} successful, {FailureCount} failed", 
+                successCount, failureCount);
         }
     }
 

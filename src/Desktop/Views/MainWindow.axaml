@@ -12,11 +12,14 @@
     x:DataType="vm:MainWindowViewModel"
     Width="1200" Height="800"
     Title="{Binding Title}">
+    
+
     <DockPanel>
         <!-- Menu Bar -->
         <Menu DockPanel.Dock="Top" Name="MainMenu">
             <MenuItem Header="File">
-                <MenuItem Header="Save" Command="{Binding SaveCommand}" />
+                <MenuItem Header="Save" Command="{Binding SaveCommand}" InputGesture="Ctrl+S" />
+                <MenuItem Header="Save All" Command="{Binding SaveAllCommand}" InputGesture="Ctrl+Shift+S" />
                 <MenuItem Header="Settings" Command="{Binding SettingsCommand}" />
                 <MenuItem Header="Exit" Command="{Binding ExitCommand}" />
             </MenuItem>
@@ -25,7 +28,7 @@
                 <MenuItem Header="Errors" Command="{Binding ShowErrorsCommand}" />
             </MenuItem>
             <MenuItem Header="Compile">
-                <MenuItem Header="Compile documentation" Command="{Binding EditorContent.BuildDocumentationCommand}" />
+                <MenuItem Header="Compile documentation" Command="{Binding EditorContent.BuildDocumentationCommand}" InputGesture="F6" />
                 <MenuItem Header="Validate" Command="{Binding EditorContent.ValidateCommand}" />
                 <MenuItem Header="Validate All" Command="{Binding EditorContent.ValidateAllCommand}" />
             </MenuItem>
@@ -133,7 +136,7 @@
                         <!-- Editor Content -->
                         <RowDefinition Height="*" />
                         <!-- Log Output -->
-                        <RowDefinition Height="*" />
+                        <RowDefinition Height="{Binding IsBottomPanelVisible, Converter={x:Static conv:BoolToGridLengthConverter.Instance}}" />
                     </Grid.RowDefinitions>
                     
                     <!-- Tab Bar -->
@@ -227,8 +230,11 @@
                             
                             <!-- Settings Content -->
                             <ScrollViewer IsVisible="{Binding EditorContent.IsActiveTabSettings}"
-                                          Background="#1E1E1E">
-                                <StackPanel Margin="30" Spacing="20">
+                                          Background="#1E1E1E"
+                                          VerticalAlignment="Stretch"
+                                          HorizontalAlignment="Stretch">
+                                <DockPanel Margin="30" LastChildFill="True">
+                                    <StackPanel DockPanel.Dock="Top" Spacing="20">
                                     <TextBlock Text="Application Settings" 
                                                FontSize="24" 
                                                FontWeight="Bold" 
@@ -264,7 +270,80 @@
                                                  Padding="8" 
                                                  FontFamily="monospace" />
                                     </StackPanel>
-                                </StackPanel>
+                                    
+                                    <!-- Hotkey Settings -->
+                                    <TextBlock Text="Hotkey Settings" 
+                                               FontSize="20" 
+                                               FontWeight="SemiBold" 
+                                               Foreground="#CCCCCC" 
+                                               Margin="0,20,0,10" />
+                                    
+                                    <!-- Save Hotkey -->
+                                    <StackPanel Spacing="8">
+                                        <TextBlock Text="Save File:" 
+                                                   FontWeight="SemiBold" 
+                                                   Foreground="#CCCCCC" 
+                                                   FontSize="14" />
+                                        <TextBox Text="{Binding ApplicationOptions.Hotkeys.Save, Mode=TwoWay}" 
+                                                 Background="#2D2D30" 
+                                                 Foreground="#D4D4D4" 
+                                                 BorderBrush="#3E3E42" 
+                                                 Padding="8" 
+                                                 FontFamily="monospace"
+                                                 Watermark="e.g., Ctrl+S" />
+                                    </StackPanel>
+                                    
+                                    <!-- Save All Hotkey -->
+                                    <StackPanel Spacing="8">
+                                        <TextBlock Text="Save All Files:" 
+                                                   FontWeight="SemiBold" 
+                                                   Foreground="#CCCCCC" 
+                                                   FontSize="14" />
+                                        <TextBox Text="{Binding ApplicationOptions.Hotkeys.SaveAll, Mode=TwoWay}" 
+                                                 Background="#2D2D30" 
+                                                 Foreground="#D4D4D4" 
+                                                 BorderBrush="#3E3E42" 
+                                                 Padding="8" 
+                                                 FontFamily="monospace"
+                                                 Watermark="e.g., Ctrl+Shift+S" />
+                                    </StackPanel>
+                                    
+                                    <!-- Build Documentation Hotkey -->
+                                    <StackPanel Spacing="8">
+                                        <TextBlock Text="Build Documentation:" 
+                                                   FontWeight="SemiBold" 
+                                                   Foreground="#CCCCCC" 
+                                                   FontSize="14" />
+                                        <TextBox Text="{Binding ApplicationOptions.Hotkeys.BuildDocumentation, Mode=TwoWay}" 
+                                                 Background="#2D2D30" 
+                                                 Foreground="#D4D4D4" 
+                                                 BorderBrush="#3E3E42" 
+                                                 Padding="8" 
+                                                 FontFamily="monospace"
+                                                 Watermark="e.g., F6" />
+                                    </StackPanel>
+                                    
+                                    <!-- Apply Settings Button -->
+                                    <Button Content="Apply Hotkey Changes" 
+                                            Command="{Binding ApplyHotkeyChangesCommand}"
+                                            Background="#0E639C" 
+                                            Foreground="White" 
+                                            Padding="15,8" 
+                                            Margin="0,15,0,0" 
+                                            HorizontalAlignment="Left">
+                                        <Button.Styles>
+                                            <Style Selector="Button:pointerover">
+                                                <Setter Property="Background" Value="#1177BB" />
+                                            </Style>
+                                            <Style Selector="Button:pressed">
+                                                <Setter Property="Background" Value="#0C5A89" />
+                                            </Style>
+                                        </Button.Styles>
+                                    </Button>
+                                    </StackPanel>
+                                    <!-- Empty panel to fill remaining space -->
+                                    <Panel />
+                                </DockPanel>
                             </ScrollViewer>
                         </Grid>
                     </ScrollViewer>

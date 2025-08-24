@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.ComponentModel;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -9,10 +12,10 @@ using Desktop.Services;
 using System.Collections.ObjectModel;
 using System.Linq;
 using Desktop.Models;
-using Microsoft.Extensions.DependencyInjection;
 using Business.Services;
 using Business.Models;
 using Desktop.Logging;
+using Avalonia.Controls;
 
 namespace Desktop.ViewModels;
 
@@ -21,30 +24,31 @@ public class MainWindowViewModel : ViewModelBase
     private readonly ILogger<MainWindowViewModel> _logger;
     private readonly ApplicationOptions _applicationOptions;
     private readonly IFileService _fileService;
-    private readonly IServiceProvider _serviceProvider;
     private readonly IEditorStateService _editorStateService;
     private readonly ILogTransitionService _logTransitionService;
+    private readonly IHotkeyService _hotkeyService;
     private bool _isLoading;
     private FileSystemItemViewModel? _rootItem;
     private bool _isBottomPanelVisible = false;
     private BottomPanelTabViewModel? _activeBottomTab;
+    private EditorTabViewModel? _currentlySubscribedTab;
 
     public MainWindowViewModel(
         ILogger<MainWindowViewModel> logger, 
         IOptions<ApplicationOptions> applicationOptions, 
         IFileService fileService,
-        IServiceProvider serviceProvider,
         IEditorStateService editorStateService,
         EditorTabBarViewModel editorTabBarViewModel,
         EditorContentViewModel editorContentViewModel,
-        ILogTransitionService logTransitionService)
+        ILogTransitionService logTransitionService,
+        IHotkeyService hotkeyService)
     {
         _logger = logger;
         _applicationOptions = applicationOptions.Value;
         _fileService = fileService;
-        _serviceProvider = serviceProvider;
         _editorStateService = editorStateService;
         _logTransitionService = logTransitionService;
+        _hotkeyService = hotkeyService;
         EditorTabBar = editorTabBarViewModel;
         EditorContent = editorContentViewModel;
         
@@ -55,7 +59,9 @@ public class MainWindowViewModel : ViewModelBase
         ShowLogsCommand = new RelayCommand(ShowLogOutput);
         ShowErrorsCommand = new RelayCommand(ShowErrorOutput);
         SettingsCommand = new RelayCommand(OpenSettingsTab);
-        SaveCommand = new RelayCommand(async () => await SaveActiveFileAsync());
+        SaveCommand = new RelayCommand(async () => await SaveActiveFileAsync(), CanSave);
+        SaveAllCommand = new RelayCommand(async () => await SaveAllAsync(), CanSaveAll);
+        ApplyHotkeyChangesCommand = new RelayCommand(ApplyHotkeyChanges);
         
         _logger.LogInformation("MainWindowViewModel initialized");
         _logger.LogInformation("Default project folder: {Folder}", _applicationOptions.DefaultProjectFolder);
@@ -67,11 +73,20 @@ public class MainWindowViewModel : ViewModelBase
         // Subscribe to validation result changes for error panel updates
         _editorStateService.ValidationResultChanged += OnValidationResultChanged;
         
+        // Subscribe to active tab changes to update command states
+        _editorStateService.ActiveTabChanged += OnActiveTabChangedForCommands;
+        
+        // Subscribe to tab collection changes to update SaveAll command state
+        EditorTabBar.EditorTabs.CollectionChanged += OnEditorTabsCollectionChanged;
+        
         // Subscribe to build confirmation dialog events
         EditorContent.ShowBuildConfirmationDialog += OnShowBuildConfirmationDialog;
         
         // Initialize bottom panel tabs
         InitializeBottomPanelTabs();
+        
+        // Initialize hotkeys
+        InitializeHotkeys();
     }
 
     public ObservableCollection<FileSystemItemViewModel> FileSystemItems { get; }
@@ -124,8 +139,13 @@ public class MainWindowViewModel : ViewModelBase
     
     public ICommand SaveCommand { get; }
     
+    public ICommand SaveAllCommand { get; }
+    
+    public ICommand ApplyHotkeyChangesCommand { get; }
+    
     public event EventHandler? ExitRequested;
     public event EventHandler<BuildConfirmationDialogViewModel>? ShowBuildConfirmationDialog;
+    public event EventHandler? HotkeysChanged;
 
     private async Task LoadFileStructureAsync()
     {
@@ -182,6 +202,91 @@ public class MainWindowViewModel : ViewModelBase
     public async Task SaveActiveFileAsync()
     {
         await EditorTabBar.SaveActiveFileAsync();
+    }
+
+    public async Task SaveAllAsync()
+    {
+        await EditorTabBar.SaveAllAsync();
+    }
+
+    private bool CanSave()
+    {
+        var activeTab = _editorStateService.ActiveTab;
+        return activeTab != null && 
+               activeTab.FilePath != null && 
+               activeTab.TabType == TabType.File &&
+               activeTab.IsModified;
+    }
+
+    private bool CanSaveAll()
+    {
+        return EditorTabBar.EditorTabs.Any(tab => 
+            tab.IsModified && 
+            tab.FilePath != null && 
+            tab.TabType == TabType.File);
+    }
+
+    private void OnActiveTabChangedForCommands(object? sender, EditorTabViewModel? activeTab)
+    {
+        // Unsubscribe from previous tab's property changes
+        if (_currentlySubscribedTab != null)
+        {
+            _currentlySubscribedTab.PropertyChanged -= OnActiveTabPropertyChanged;
+        }
+
+        // Subscribe to new active tab's property changes
+        _currentlySubscribedTab = activeTab;
+        if (_currentlySubscribedTab != null)
+        {
+            _currentlySubscribedTab.PropertyChanged += OnActiveTabPropertyChanged;
+        }
+
+        // Update command states when active tab changes
+        ((RelayCommand)SaveCommand).RaiseCanExecuteChanged();
+        ((RelayCommand)SaveAllCommand).RaiseCanExecuteChanged();
+    }
+
+    private void OnActiveTabPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        // Update command states when IsModified property changes
+        if (e.PropertyName == nameof(EditorTabViewModel.IsModified))
+        {
+            ((RelayCommand)SaveCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)SaveAllCommand).RaiseCanExecuteChanged();
+        }
+    }
+
+    private void OnEditorTabsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        // Update SaveAll command state when tabs are added or removed
+        ((RelayCommand)SaveAllCommand).RaiseCanExecuteChanged();
+
+        // Subscribe to property changes for new tabs
+        if (e.NewItems != null)
+        {
+            foreach (EditorTabViewModel tab in e.NewItems)
+            {
+                tab.PropertyChanged += OnAnyTabPropertyChanged;
+            }
+        }
+
+        // Unsubscribe from property changes for removed tabs
+        if (e.OldItems != null)
+        {
+            foreach (EditorTabViewModel tab in e.OldItems)
+            {
+                tab.PropertyChanged -= OnAnyTabPropertyChanged;
+            }
+        }
+    }
+
+    private void OnAnyTabPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        // Update SaveAll command state when any tab's IsModified property changes
+        if (e.PropertyName == nameof(EditorTabViewModel.IsModified))
+        {
+            ((RelayCommand)SaveAllCommand).RaiseCanExecuteChanged();
+        }
     }
 
     private void RequestApplicationExit()
@@ -437,5 +542,42 @@ public class MainWindowViewModel : ViewModelBase
     {
         _logger.LogInformation("Opening Settings tab");
         EditorTabBar.OpenSettingsTab();
+    }
+
+    private void InitializeHotkeys()
+    {
+        var commands = new Dictionary<string, ICommand>
+        {
+            ["Save"] = SaveCommand,
+            ["SaveAll"] = SaveAllCommand,
+            ["BuildDocumentation"] = EditorContent.BuildDocumentationCommand
+        };
+
+        _hotkeyService.RegisterHotkeys(_applicationOptions.Hotkeys, commands);
+        _logger.LogInformation("Hotkeys initialized from settings");
+    }
+
+    public void ApplyHotkeysToWindow(Window window)
+    {
+        _hotkeyService.ApplyToWindow(window);
+        _logger.LogDebug("Hotkeys applied to window");
+    }
+
+    private void ApplyHotkeyChanges()
+    {
+        try
+        {
+            // Re-register all hotkeys with the current settings
+            InitializeHotkeys();
+            
+            // Notify that hotkeys have changed so the window can reapply them
+            HotkeysChanged?.Invoke(this, EventArgs.Empty);
+            
+            _logger.LogInformation("Hotkey changes applied successfully");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error applying hotkey changes");
+        }
     }
 }
