@@ -136,7 +136,7 @@
                         <!-- Editor Content -->
                         <RowDefinition Height="*" />
                         <!-- Log Output -->
-                        <RowDefinition Height="*" />
+                        <RowDefinition Height="{Binding IsBottomPanelVisible, Converter={x:Static conv:BoolToGridLengthConverter.Instance}}" />
                     </Grid.RowDefinitions>
                     
                     <!-- Tab Bar -->
@@ -230,8 +230,11 @@
                             
                             <!-- Settings Content -->
                             <ScrollViewer IsVisible="{Binding EditorContent.IsActiveTabSettings}"
-                                          Background="#1E1E1E">
-                                <StackPanel Margin="30" Spacing="20">
+                                          Background="#1E1E1E"
+                                          VerticalAlignment="Stretch"
+                                          HorizontalAlignment="Stretch">
+                                <DockPanel Margin="30" LastChildFill="True">
+                                    <StackPanel DockPanel.Dock="Top" Spacing="20">
                                     <TextBlock Text="Application Settings" 
                                                FontSize="24" 
                                                FontWeight="Bold" 
@@ -337,7 +340,10 @@
                                             </Style>
                                         </Button.Styles>
                                     </Button>
-                                </StackPanel>
+                                    </StackPanel>
+                                    <!-- Empty panel to fill remaining space -->
+                                    <Panel />
+                                </DockPanel>
                             </ScrollViewer>
                         </Grid>
                     </ScrollViewer>
