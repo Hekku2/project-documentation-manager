@@ -25,6 +25,7 @@ public partial class MainWindow : Window
         // Subscribe to exit request
         viewModel.ExitRequested += OnExitRequested;
         viewModel.ShowBuildConfirmationDialog += OnShowBuildConfirmationDialog;
+        viewModel.HotkeysChanged += OnHotkeysChanged;
         
         // Initialize UI logging after component is loaded
         Loaded += OnWindowLoaded;
@@ -84,4 +85,11 @@ public partial class MainWindow : Window
         }
     }
 
+    private void OnHotkeysChanged(object? sender, EventArgs e)
+    {
+        if (DataContext is MainWindowViewModel viewModel)
+        {
+            viewModel.ApplyHotkeysToWindow(this);
+        }
+    }
 }

@@ -42,7 +42,6 @@ public class LogTransitionServiceIntegrationTests
             logger, 
             options, 
             fileService, 
-            serviceProvider,
             editorStateService,
             editorTabBarViewModel,
             editorContentViewModel,

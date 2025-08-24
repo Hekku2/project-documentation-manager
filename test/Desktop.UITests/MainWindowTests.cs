@@ -122,7 +122,7 @@ public class MainWindowTests
         var editorContentViewModel = new EditorContentViewModel(_contentLogger, _editorStateService, _options, serviceProvider, _markdownCombinationService, _markdownFileCollectorService);
         
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
-        var viewModel = new MainWindowViewModel(_vmLogger, _options, _fileService, serviceProvider, _editorStateService, editorTabBarViewModel, editorContentViewModel, _logTransitionService, hotkeyService);
+        var viewModel = new MainWindowViewModel(_vmLogger, _options, _fileService, _editorStateService, editorTabBarViewModel, editorContentViewModel, _logTransitionService, hotkeyService);
         return new MainWindow(viewModel);
     }
 
@@ -234,7 +234,7 @@ public class MainWindowTests
         var editorContentViewModel = new EditorContentViewModel(_contentLogger, editorStateService, _options, serviceProvider, _markdownCombinationService, _markdownFileCollectorService);
         
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
-        var viewModel = new MainWindowViewModel(_vmLogger, _options, _fileService, serviceProvider, editorStateService, editorTabBarViewModel, editorContentViewModel, _logTransitionService, hotkeyService);
+        var viewModel = new MainWindowViewModel(_vmLogger, _options, _fileService, editorStateService, editorTabBarViewModel, editorContentViewModel, _logTransitionService, hotkeyService);
         return new MainWindow(viewModel);
     }
 
@@ -966,7 +966,7 @@ public class MainWindowTests
         
         var logTransitionService = Substitute.For<Desktop.Logging.ILogTransitionService>();
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
-        var viewModel = new MainWindowViewModel(vmLogger, options, fileService, serviceProvider, editorStateService, editorTabBarViewModel, editorContentViewModel, logTransitionService, hotkeyService);
+        var viewModel = new MainWindowViewModel(vmLogger, options, fileService, editorStateService, editorTabBarViewModel, editorContentViewModel, logTransitionService, hotkeyService);
         
         Assert.That(viewModel.EditorContent.BuildDocumentationCommand, Is.Not.Null, "BuildDocumentationCommand should exist");
         
@@ -1807,7 +1807,7 @@ public class MainWindowTests
     {
         // Arrange
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
-        var viewModel = new MainWindowViewModel(_vmLogger, _options, _fileService, serviceProvider, _editorStateService, new EditorTabBarViewModel(_tabBarLogger, _fileService, _editorStateService), new EditorContentViewModel(_contentLogger, _editorStateService, _options, serviceProvider, _markdownCombinationService, _markdownFileCollectorService), _logTransitionService, hotkeyService);
+        var viewModel = new MainWindowViewModel(_vmLogger, _options, _fileService, _editorStateService, new EditorTabBarViewModel(_tabBarLogger, _fileService, _editorStateService), new EditorContentViewModel(_contentLogger, _editorStateService, _options, serviceProvider, _markdownCombinationService, _markdownFileCollectorService), _logTransitionService, hotkeyService);
         
         // Open settings tab first
         viewModel.EditorTabBar.OpenSettingsTab();
@@ -1843,7 +1843,7 @@ public class MainWindowTests
     {
         // Arrange
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
-        var viewModel = new MainWindowViewModel(_vmLogger, _options, _fileService, serviceProvider, _editorStateService, new EditorTabBarViewModel(_tabBarLogger, _fileService, _editorStateService), new EditorContentViewModel(_contentLogger, _editorStateService, _options, serviceProvider, _markdownCombinationService, _markdownFileCollectorService), _logTransitionService, hotkeyService);
+        var viewModel = new MainWindowViewModel(_vmLogger, _options, _fileService, _editorStateService, new EditorTabBarViewModel(_tabBarLogger, _fileService, _editorStateService), new EditorContentViewModel(_contentLogger, _editorStateService, _options, serviceProvider, _markdownCombinationService, _markdownFileCollectorService), _logTransitionService, hotkeyService);
         
         const string testFilePath = "/test/file.md";
         

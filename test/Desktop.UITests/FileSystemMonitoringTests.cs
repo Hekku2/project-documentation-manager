@@ -66,7 +66,7 @@ public class FileSystemMonitoringTests
         
         var logTransitionService = Substitute.For<Desktop.Logging.ILogTransitionService>();
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
-        var viewModel = new MainWindowViewModel(vmLogger, options, fileService, serviceProvider, editorStateService, editorTabBarViewModel, editorContentViewModel, logTransitionService, hotkeyService);
+        var viewModel = new MainWindowViewModel(vmLogger, options, fileService, editorStateService, editorTabBarViewModel, editorContentViewModel, logTransitionService, hotkeyService);
         var window = new MainWindow(viewModel);
         
         return (window, fileService, viewModel);
