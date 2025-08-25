@@ -19,8 +19,7 @@ public class FileExplorerViewModel : ViewModelBase, IDisposable
         _fileService = fileService;
         FileSystemItems = new ObservableCollection<FileSystemItemViewModel>();
         
-        // Subscribe to file selection events
-        FileSystemItemViewModel.FileSelected += OnFileSelected;
+    // No static event subscription; will use instance callback
         
         _logger.LogInformation("FileExplorerViewModel initialized");
     }
@@ -62,7 +61,12 @@ public class FileExplorerViewModel : ViewModelBase, IDisposable
             
             if (fileStructure != null)
             {
-                var rootViewModel = new FileSystemItemViewModel(fileStructure, isRoot: true, fileService: _fileService);
+                var rootViewModel = new FileSystemItemViewModel(
+                    fileStructure,
+                    isRoot: true,
+                    fileService: _fileService,
+                    onFileSelected: OnFileSelected // pass instance callback
+                );
                 RootItem = rootViewModel;
                 
                 FileSystemItems.Clear();
@@ -100,25 +104,17 @@ public class FileExplorerViewModel : ViewModelBase, IDisposable
         GC.SuppressFinalize(this);
     }
 
-    protected virtual void Dispose(bool disposing)
-    {
-        if (disposing)
-        {
-            FileSystemItemViewModel.FileSelected -= OnFileSelected;
-        }
+    private bool _disposed = false;
+
     protected virtual void Dispose(bool disposing)
     {
         if (!_disposed)
         {
-            if (disposing)
-            {
-                FileSystemItemViewModel.FileSelected -= OnFileSelected;
-                // Dispose managed resources here if needed
-            }
-            // Free unmanaged resources here if any
+            // No static event to unsubscribe
             _disposed = true;
         }
     }
+
     ~FileExplorerViewModel()
     {
         Dispose(false);

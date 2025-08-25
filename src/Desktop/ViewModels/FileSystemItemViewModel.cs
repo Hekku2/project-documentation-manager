@@ -15,20 +15,23 @@ public class FileSystemItemViewModel : ViewModelBase
     private bool _isLoading;
     private bool _childrenLoaded;
 
-    public static event Action<string>? FileSelected;
+
+        // Instance-level file selected callback
+        private readonly Action<string>? _onFileSelected;
 
     private readonly IFileService? _fileService;
 
-    public FileSystemItemViewModel(FileSystemItem item, bool isRoot = false, IFileService? fileService = null)
+    public FileSystemItemViewModel(FileSystemItem item, bool isRoot = false, IFileService? fileService = null, Action<string>? onFileSelected = null)
     {
         Item = item;
         Children = new ObservableCollection<FileSystemItemViewModel>();
         _fileService = fileService;
+        _onFileSelected = onFileSelected;
         
         // For directories, add a placeholder to show the expand icon
         if (item.IsDirectory && item.HasChildren)
         {
-            Children.Add(new FileSystemItemViewModel(new FileSystemItem { Name = "Loading...", FullPath = "" }));
+            Children.Add(new FileSystemItemViewModel(new FileSystemItem { Name = "Loading...", FullPath = "" }, false, null, _onFileSelected));
         }
         else if (!item.IsDirectory)
         {
@@ -84,8 +87,8 @@ public class FileSystemItemViewModel : ViewModelBase
         {
             if (SetProperty(ref _isSelected, value) && value && !IsDirectory)
             {
-                // File was selected, notify listeners
-                FileSelected?.Invoke(FullPath);
+                // File was selected, notify via callback
+                _onFileSelected?.Invoke(FullPath);
             }
         }
     }
@@ -104,7 +107,7 @@ public class FileSystemItemViewModel : ViewModelBase
                 var childViewModels = Item.Children
                     .OrderBy(c => !c.IsDirectory)
                     .ThenBy(c => c.Name)
-                    .Select(child => new FileSystemItemViewModel(child, false, _fileService))
+                    .Select(child => new FileSystemItemViewModel(child, false, _fileService, _onFileSelected))
                     .ToList();
 
                 // Update the UI on the main thread
@@ -243,7 +246,7 @@ public class FileSystemItemViewModel : ViewModelBase
             }
         }
 
-        var newViewModel = new FileSystemItemViewModel(newItem, false, _fileService);
+    var newViewModel = new FileSystemItemViewModel(newItem, false, _fileService, _onFileSelected);
 
         // Find the correct position to insert (directories first, then alphabetical)
         var insertIndex = 0;
