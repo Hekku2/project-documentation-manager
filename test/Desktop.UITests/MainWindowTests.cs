@@ -11,10 +11,14 @@ using Avalonia.VisualTree;
 using NSubstitute;
 using Business.Services;
 using Business.Models;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Desktop.DependencyInjection;
+using System.Linq;
 
 namespace Desktop.UITests;
 
-[Parallelizable(ParallelScope.Children)]
+[NonParallelizable]
 public class MainWindowTests
 {
     private ILogger<MainWindowViewModel> _vmLogger = null!;
@@ -1872,5 +1876,77 @@ public class MainWindowTests
             
             Assert.That(viewModel.EditorTabBar.ActiveTab, Is.EqualTo(fileTabs[0]), "Active tab should be the existing file tab");
         });
+    }
+
+    [AvaloniaTest]
+    public void DependencyInjection_Should_ResolveAllServices()
+    {
+        // Arrange - Build the host using the same configuration as the main program
+        var hostBuilder = Host.CreateDefaultBuilder()
+            .UseContentRoot(AppContext.BaseDirectory)
+            .ConfigureServices((context, services) =>
+            {
+                // Use the exact same service configuration as the main program
+                ServiceConfiguration.ConfigureServices(context, services);
+                
+                // MainWindow can now be registered since we have Avalonia platform initialized
+            });
+
+        using var host = hostBuilder.Build();
+        var serviceProvider = host.Services;
+
+        // Act & Assert - Verify all key services can be resolved
+        Assert.Multiple(() =>
+        {
+            // ViewModels
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.ViewModels.MainWindowViewModel>(), 
+                "MainWindowViewModel should be resolvable");
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.ViewModels.EditorTabBarViewModel>(), 
+                "EditorTabBarViewModel should be resolvable");
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.ViewModels.EditorContentViewModel>(), 
+                "EditorContentViewModel should be resolvable");
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.ViewModels.BuildConfirmationDialogViewModel>(), 
+                "BuildConfirmationDialogViewModel should be resolvable");
+
+            // Views
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.Views.MainWindow>(), 
+                "MainWindow should be resolvable");
+
+            // Application Services
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.Services.IFileService>(), 
+                "IFileService should be resolvable");
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.Services.IEditorStateService>(), 
+                "IEditorStateService should be resolvable");
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.Services.IHotkeyService>(), 
+                "IHotkeyService should be resolvable");
+
+            // Business Services
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Business.Services.IMarkdownCombinationService>(), 
+                "IMarkdownCombinationService should be resolvable");
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Business.Services.IMarkdownDocumentFileWriterService>(), 
+                "IMarkdownDocumentFileWriterService should be resolvable");
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Business.Services.IMarkdownFileCollectorService>(), 
+                "IMarkdownFileCollectorService should be resolvable");
+
+            // Logging Services
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.Logging.IDynamicLoggerProvider>(), 
+                "IDynamicLoggerProvider should be resolvable");
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.Logging.ILogTransitionService>(), 
+                "ILogTransitionService should be resolvable");
+
+            // Configuration
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<IOptions<Desktop.Configuration.ApplicationOptions>>(), 
+                "ApplicationOptions should be resolvable");
+        });
+
+        // Verify multiple instances of transient services are different
+        var service1 = serviceProvider.GetRequiredService<Desktop.ViewModels.BuildConfirmationDialogViewModel>();
+        var service2 = serviceProvider.GetRequiredService<Desktop.ViewModels.BuildConfirmationDialogViewModel>();
+        Assert.That(service1, Is.Not.SameAs(service2), "Transient services should return different instances");
+
+        // Verify singleton services return the same instance
+        var singleton1 = serviceProvider.GetRequiredService<Desktop.ViewModels.MainWindowViewModel>();
+        var singleton2 = serviceProvider.GetRequiredService<Desktop.ViewModels.MainWindowViewModel>();
+        Assert.That(singleton1, Is.SameAs(singleton2), "Singleton services should return the same instance");
     }
 }

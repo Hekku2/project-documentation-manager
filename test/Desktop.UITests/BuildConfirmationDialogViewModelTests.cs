@@ -14,7 +14,7 @@ using NSubstitute;
 
 namespace Desktop.UITests;
 
-[Parallelizable(ParallelScope.Children)]
+[NonParallelizable]
 public class BuildConfirmationDialogViewModelTests
 {
     private IOptions<ApplicationOptions> _options = null!;
