@@ -131,6 +131,20 @@ The application implements a sophisticated logging architecture:
 - Mock data structures use modern C# collection expressions
 - Tests verify both UI state and underlying data model state
 
+### Logger Testing Guidelines
+- **ALWAYS use NSubstitute for ILogger mocking**: Use `Substitute.For<ILogger<T>>()` instead of `LoggerFactory`
+- **Avoid LoggerFactory in tests**: LoggerFactory creates real logger instances which add unnecessary overhead and complexity
+- **Mock all logger dependencies**: Treat loggers like any other dependency - mock them consistently
+- **Example pattern**:
+  ```csharp
+  // Preferred: NSubstitute mock
+  var logger = Substitute.For<ILogger<MyClass>>();
+  var myClass = new MyClass(logger);
+  
+  // Avoid: LoggerFactory (adds overhead and complexity)
+  var logger = new LoggerFactory().CreateLogger<MyClass>();
+  ```
+
 ## Key Implementation Details
 
 ### Lazy Loading Implementation
