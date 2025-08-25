@@ -17,9 +17,7 @@ public class FileExplorerViewModel : ViewModelBase, IDisposable
     {
         _logger = logger;
         _fileService = fileService;
-        FileSystemItems = new ObservableCollection<FileSystemItemViewModel>();
-        
-    // No static event subscription; will use instance callback
+        FileSystemItems = [];
         
         _logger.LogInformation("FileExplorerViewModel initialized");
     }

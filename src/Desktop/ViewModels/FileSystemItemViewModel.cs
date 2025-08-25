@@ -24,7 +24,7 @@ public class FileSystemItemViewModel : ViewModelBase
     public FileSystemItemViewModel(FileSystemItem item, bool isRoot = false, IFileService? fileService = null, Action<string>? onFileSelected = null)
     {
         Item = item;
-        Children = new ObservableCollection<FileSystemItemViewModel>();
+        Children = [];
         _fileService = fileService;
         _onFileSelected = onFileSelected;
         
