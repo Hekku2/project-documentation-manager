@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
 using Desktop.ViewModels;
 using Avalonia.VisualTree;
+using Desktop.Views;
 
 namespace Desktop.UITests;
 
@@ -47,7 +48,11 @@ public class MainWindowBasicTests : MainWindowTestBase
         var window = CreateMainWindow();
         window.Show();
 
-        var documentEditor = window.FindControl<TextBox>("DocumentEditor");
+        // Find the DocumentEditor within the EditorUserControl
+        var editorUserControl = window.GetVisualDescendants().OfType<EditorUserControl>().FirstOrDefault();
+        Assert.That(editorUserControl, Is.Not.Null, "EditorUserControl not found");
+        
+        var documentEditor = editorUserControl!.FindControl<TextBox>("DocumentEditor");
         Assert.Multiple(() =>
         {
             Assert.That(documentEditor, Is.Not.Null, "Document editor not found");

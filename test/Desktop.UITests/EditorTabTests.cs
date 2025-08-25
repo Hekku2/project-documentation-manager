@@ -3,6 +3,8 @@ using Avalonia.Headless.NUnit;
 using Desktop.ViewModels;
 using Desktop.Models;
 using NSubstitute;
+using Avalonia.VisualTree;
+using Desktop.Views;
 
 namespace Desktop.UITests;
 
@@ -340,7 +342,8 @@ public class EditorTabTests : MainWindowTestBase
             Assert.That(viewModel.EditorContent.ActiveFileContent, Is.EqualTo("Mock file content"), "Active content should be from README");
             
             // Editor should display README content
-            var editorTextBox = window.FindControl<TextBox>("DocumentEditor");
+            var editorUserControl = window.GetVisualDescendants().OfType<EditorUserControl>().FirstOrDefault();
+            var editorTextBox = editorUserControl?.FindControl<TextBox>("DocumentEditor");
             Assert.That(editorTextBox?.Text, Is.EqualTo("Mock file content"), "Editor should display README content");
         });
 

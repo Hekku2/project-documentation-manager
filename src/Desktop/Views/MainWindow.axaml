@@ -4,6 +4,7 @@
     xmlns:conv="clr-namespace:Desktop.Converters"
     xmlns:behaviors="clr-namespace:Desktop.Behaviors"
     xmlns:controls="clr-namespace:Desktop.Controls"
+    xmlns:views="clr-namespace:Desktop.Views"
     xmlns:models="clr-namespace:Desktop.Models"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -57,225 +58,17 @@
             <Border Grid.Column="2" Background="#1E1E1E">
                 <Grid>
                     <Grid.RowDefinitions>
-                        <!-- Tab Bar -->
-                        <RowDefinition Height="40" />
                         <!-- Editor Content -->
                         <RowDefinition Height="*" />
                         <!-- Log Output -->
                         <RowDefinition Height="{Binding IsBottomPanelVisible, Converter={x:Static conv:BoolToGridLengthConverter.Instance}}" />
                     </Grid.RowDefinitions>
                     
-                    <!-- Tab Bar -->
-                    <Border Grid.Row="0" Background="#2D2D30" BorderBrush="#3E3E42" BorderThickness="0,0,0,1">
-                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                            <ItemsControl ItemsSource="{Binding EditorTabBar.EditorTabs}" Margin="5,0">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <StackPanel Orientation="Horizontal" />
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:EditorTabViewModel">
-                                        <Border Name="TabBorder"
-                                                Background="{Binding IsActive, Converter={x:Static conv:BoolToColorConverter.Instance}}"
-                                                BorderBrush="#3E3E42"
-                                                BorderThickness="0,0,1,0" 
-                                                Margin="0,0,0,0">
-                                            <Button Name="TabButton"
-                                                    Command="{Binding SelectCommand}"
-                                                    Background="Transparent"
-                                                    BorderThickness="0"
-                                                    Padding="0"
-                                                    HorizontalContentAlignment="Stretch"
-                                                    VerticalContentAlignment="Stretch">
-                                                <StackPanel Orientation="Horizontal" Margin="15,6">
-                                                    <TextBlock Name="TabTitle"
-                                                               Text="{Binding DisplayTitle}" 
-                                                               Foreground="#CCCCCC" 
-                                                               VerticalAlignment="Center" />
-                                                    <Button Content="×" 
-                                                            Command="{Binding CloseCommand}"
-                                                            Background="Transparent" 
-                                                            Foreground="#CCCCCC" 
-                                                            BorderThickness="0" 
-                                                            Margin="8,0,0,0" 
-                                                            Padding="2" 
-                                                            FontSize="14"
-                                                            VerticalAlignment="Center" />
-                                                </StackPanel>
-                                            </Button>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </ScrollViewer>
-                    </Border>
-                    
                     <!-- Editor Content -->
-                    <ScrollViewer Grid.Row="1" Name="EditorScrollViewer">
-                        <Grid>
-                            <TextBox Name="DocumentEditor" 
-                                    Text="{Binding EditorContent.ActiveTab.Content, Mode=TwoWay}"
-                                    Background="#1E1E1E" 
-                                    Foreground="#D4D4D4"
-                                    CaretBrush="#FFFFFF"
-                                    SelectionBrush="#264F78"
-                                    SelectionForegroundBrush="#FFFFFF"
-                                    FontFamily="monospace"
-                                    FontSize="14"
-                                    AcceptsReturn="True"
-                                    AcceptsTab="True"
-                                    TextWrapping="Wrap"
-                                    BorderThickness="0"
-                                    Margin="20"
-                                    Watermark="Start typing or open a file..."
-                                    IsVisible="{Binding !EditorContent.IsActiveTabSettings}">
-                                <TextBox.Styles>
-                                    <!-- Remove hover highlighting -->
-                                    <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
-                                        <Setter Property="Background" Value="#1E1E1E" />
-                                        <Setter Property="BorderBrush" Value="Transparent" />
-                                        <Setter Property="BorderThickness" Value="0" />
-                                    </Style>
-                                    <!-- Keep focus highlighting -->
-                                    <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
-                                        <Setter Property="Background" Value="#1E1E1E" />
-                                        <Setter Property="BorderBrush" Value="#007ACC" />
-                                        <Setter Property="BorderThickness" Value="1" />
-                                    </Style>
-                                </TextBox.Styles>
-                            </TextBox>
-                            
-                            <!-- Validation Error Overlay -->
-                            <controls:ValidationErrorOverlay 
-                                ValidationResult="{Binding EditorContent.CurrentValidationResult}"
-                                TargetTextBox="{Binding #DocumentEditor}"
-                                CurrentFileName="{Binding EditorContent.ActiveFilePath}"
-                                IsHitTestVisible="False"
-                                IsVisible="{Binding !EditorContent.IsActiveTabSettings}" />
-                            
-                            <!-- Settings Content -->
-                            <ScrollViewer IsVisible="{Binding EditorContent.IsActiveTabSettings}"
-                                          Background="#1E1E1E"
-                                          VerticalAlignment="Stretch"
-                                          HorizontalAlignment="Stretch">
-                                <DockPanel Margin="30" LastChildFill="True">
-                                    <StackPanel DockPanel.Dock="Top" Spacing="20">
-                                    <TextBlock Text="Application Settings" 
-                                               FontSize="24" 
-                                               FontWeight="Bold" 
-                                               Foreground="#CCCCCC" 
-                                               Margin="0,0,0,20" />
-                                    
-                                    <!-- Default Project Folder -->
-                                    <StackPanel Spacing="8">
-                                        <TextBlock Text="Default Project Folder:" 
-                                                   FontWeight="SemiBold" 
-                                                   Foreground="#CCCCCC" 
-                                                   FontSize="14" />
-                                        <TextBox Text="{Binding ApplicationOptions.DefaultProjectFolder}" 
-                                                 IsReadOnly="True"
-                                                 Background="#2D2D30" 
-                                                 Foreground="#D4D4D4" 
-                                                 BorderBrush="#3E3E42" 
-                                                 Padding="8" 
-                                                 FontFamily="monospace" />
-                                    </StackPanel>
-                                    
-                                    <!-- Default Output Folder -->
-                                    <StackPanel Spacing="8">
-                                        <TextBlock Text="Default Output Folder:" 
-                                                   FontWeight="SemiBold" 
-                                                   Foreground="#CCCCCC" 
-                                                   FontSize="14" />
-                                        <TextBox Text="{Binding ApplicationOptions.DefaultOutputFolder}" 
-                                                 IsReadOnly="True"
-                                                 Background="#2D2D30" 
-                                                 Foreground="#D4D4D4" 
-                                                 BorderBrush="#3E3E42" 
-                                                 Padding="8" 
-                                                 FontFamily="monospace" />
-                                    </StackPanel>
-                                    
-                                    <!-- Hotkey Settings -->
-                                    <TextBlock Text="Hotkey Settings" 
-                                               FontSize="20" 
-                                               FontWeight="SemiBold" 
-                                               Foreground="#CCCCCC" 
-                                               Margin="0,20,0,10" />
-                                    
-                                    <!-- Save Hotkey -->
-                                    <StackPanel Spacing="8">
-                                        <TextBlock Text="Save File:" 
-                                                   FontWeight="SemiBold" 
-                                                   Foreground="#CCCCCC" 
-                                                   FontSize="14" />
-                                        <TextBox Text="{Binding ApplicationOptions.Hotkeys.Save, Mode=TwoWay}" 
-                                                 Background="#2D2D30" 
-                                                 Foreground="#D4D4D4" 
-                                                 BorderBrush="#3E3E42" 
-                                                 Padding="8" 
-                                                 FontFamily="monospace"
-                                                 Watermark="e.g., Ctrl+S" />
-                                    </StackPanel>
-                                    
-                                    <!-- Save All Hotkey -->
-                                    <StackPanel Spacing="8">
-                                        <TextBlock Text="Save All Files:" 
-                                                   FontWeight="SemiBold" 
-                                                   Foreground="#CCCCCC" 
-                                                   FontSize="14" />
-                                        <TextBox Text="{Binding ApplicationOptions.Hotkeys.SaveAll, Mode=TwoWay}" 
-                                                 Background="#2D2D30" 
-                                                 Foreground="#D4D4D4" 
-                                                 BorderBrush="#3E3E42" 
-                                                 Padding="8" 
-                                                 FontFamily="monospace"
-                                                 Watermark="e.g., Ctrl+Shift+S" />
-                                    </StackPanel>
-                                    
-                                    <!-- Build Documentation Hotkey -->
-                                    <StackPanel Spacing="8">
-                                        <TextBlock Text="Build Documentation:" 
-                                                   FontWeight="SemiBold" 
-                                                   Foreground="#CCCCCC" 
-                                                   FontSize="14" />
-                                        <TextBox Text="{Binding ApplicationOptions.Hotkeys.BuildDocumentation, Mode=TwoWay}" 
-                                                 Background="#2D2D30" 
-                                                 Foreground="#D4D4D4" 
-                                                 BorderBrush="#3E3E42" 
-                                                 Padding="8" 
-                                                 FontFamily="monospace"
-                                                 Watermark="e.g., F6" />
-                                    </StackPanel>
-                                    
-                                    <!-- Apply Settings Button -->
-                                    <Button Content="Apply Hotkey Changes" 
-                                            Command="{Binding ApplyHotkeyChangesCommand}"
-                                            Background="#0E639C" 
-                                            Foreground="White" 
-                                            Padding="15,8" 
-                                            Margin="0,15,0,0" 
-                                            HorizontalAlignment="Left">
-                                        <Button.Styles>
-                                            <Style Selector="Button:pointerover">
-                                                <Setter Property="Background" Value="#1177BB" />
-                                            </Style>
-                                            <Style Selector="Button:pressed">
-                                                <Setter Property="Background" Value="#0C5A89" />
-                                            </Style>
-                                        </Button.Styles>
-                                    </Button>
-                                    </StackPanel>
-                                    <!-- Empty panel to fill remaining space -->
-                                    <Panel />
-                                </DockPanel>
-                            </ScrollViewer>
-                        </Grid>
-                    </ScrollViewer>
+                    <views:EditorUserControl Grid.Row="0" />
                     
                     <!-- Bottom Panel -->
-                    <Border Grid.Row="2" Background="#0E0E0E" BorderBrush="#3E3E42" BorderThickness="0,1,0,0" IsVisible="{Binding IsBottomPanelVisible}">
+                    <Border Grid.Row="1" Background="#0E0E0E" BorderBrush="#3E3E42" BorderThickness="0,1,0,0" IsVisible="{Binding IsBottomPanelVisible}">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <!-- Bottom Tab Bar -->
