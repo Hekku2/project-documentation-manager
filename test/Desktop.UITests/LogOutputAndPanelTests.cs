@@ -1,5 +1,7 @@
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless.NUnit;
+using Avalonia.Media;
 using Avalonia.VisualTree;
 using Desktop.ViewModels;
 using Desktop.Views;
@@ -204,5 +206,69 @@ public class LogOutputAndPanelTests : MainWindowTestBase
         Assert.That(newLogTab.Title, Is.EqualTo("Log Output"), "Recreated tab should have correct title");
         Assert.That(viewModel.IsBottomPanelVisible, Is.True, "Bottom panel should be visible again");
         Assert.That(viewModel.ActiveBottomTab, Is.EqualTo(newLogTab), "Recreated tab should be active");
+    }
+
+    [AvaloniaTest]
+    public void MainWindow_Should_Support_Horizontal_Scrolling_In_Log_Display()
+    {
+        var window = CreateMainWindow();
+        window.Show();
+
+        var viewModel = window.DataContext as MainWindowViewModel;
+        Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
+
+        // Show logs to activate the colored log display
+        viewModel!.ShowLogsCommand.Execute(null);
+        Assert.That(viewModel.IsBottomPanelVisible, Is.True, "Bottom panel should be visible after showing logs");
+
+        // Find the ColoredLogDisplay control within the BottomPanelUserControl
+        var bottomPanelUserControl = window.GetVisualDescendants().OfType<BottomPanelUserControl>().FirstOrDefault();
+        Assert.That(bottomPanelUserControl, Is.Not.Null, "BottomPanelUserControl should exist");
+
+        var coloredLogDisplay = bottomPanelUserControl!.FindControl<Desktop.Controls.ColoredLogDisplay>("ColoredLogOutput");
+        Assert.That(coloredLogDisplay, Is.Not.Null, "ColoredLogDisplay should exist");
+
+        // Find the ScrollViewer within the ColoredLogDisplay
+        var logScrollViewer = coloredLogDisplay!.FindControl<ScrollViewer>("LogScrollViewer");
+        Assert.That(logScrollViewer, Is.Not.Null, "LogScrollViewer should exist");
+
+        // Verify horizontal scrolling is enabled
+        Assert.Multiple(() =>
+        {
+            Assert.That(logScrollViewer!.HorizontalScrollBarVisibility, Is.EqualTo(Avalonia.Controls.Primitives.ScrollBarVisibility.Auto), 
+                "Log display should have horizontal scrolling set to Auto");
+            Assert.That(logScrollViewer.VerticalScrollBarVisibility, Is.EqualTo(Avalonia.Controls.Primitives.ScrollBarVisibility.Auto), 
+                "Log display should have vertical scrolling set to Auto");
+        });
+    }
+
+    [AvaloniaTest]
+    public void MainWindow_Should_Support_Horizontal_Scrolling_In_BottomOutput_TextBox()
+    {
+        var window = CreateMainWindow();
+        window.Show();
+
+        var viewModel = window.DataContext as MainWindowViewModel;
+        Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
+
+        // Find the BottomOutput TextBox within the BottomPanelUserControl
+        var bottomPanelUserControl = window.GetVisualDescendants().OfType<BottomPanelUserControl>().FirstOrDefault();
+        Assert.That(bottomPanelUserControl, Is.Not.Null, "BottomPanelUserControl should exist");
+
+        var bottomOutputTextBox = bottomPanelUserControl!.FindControl<TextBox>("BottomOutput");
+        Assert.That(bottomOutputTextBox, Is.Not.Null, "BottomOutput TextBox should exist");
+
+        // Verify the TextBox has horizontal scrolling configured and text wrapping disabled
+        Assert.Multiple(() =>
+        {
+            Assert.That(bottomOutputTextBox!.TextWrapping, Is.EqualTo(Avalonia.Media.TextWrapping.NoWrap), 
+                "BottomOutput should have text wrapping disabled to enable horizontal scrolling");
+            Assert.That(ScrollViewer.GetHorizontalScrollBarVisibility(bottomOutputTextBox), 
+                Is.EqualTo(Avalonia.Controls.Primitives.ScrollBarVisibility.Auto), 
+                "BottomOutput should have horizontal scrolling set to Auto");
+            Assert.That(ScrollViewer.GetVerticalScrollBarVisibility(bottomOutputTextBox), 
+                Is.EqualTo(Avalonia.Controls.Primitives.ScrollBarVisibility.Auto), 
+                "BottomOutput should have vertical scrolling set to Auto");
+        });
     }
 }

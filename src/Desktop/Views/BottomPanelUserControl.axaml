@@ -67,48 +67,52 @@
             </Border>
             
             <!-- Bottom Content -->
-            <ScrollViewer Grid.Row="1" Name="BottomScrollViewer">
-                <Grid>
-                    <!-- Text content for non-log tabs (fallback) -->
-                    <TextBox Name="BottomOutput" 
-                            Text="{Binding ActiveBottomTab.Content}"
-                            Background="#0E0E0E" 
-                            Foreground="#CCCCCC"
-                            FontFamily="monospace"
-                            FontSize="12"
-                            IsReadOnly="True"
-                            AcceptsReturn="True"
-                            TextWrapping="Wrap"
-                            BorderThickness="0"
-                            Margin="20"
-                            IsVisible="False">
-                    
-                        <TextBox.Styles>
-                            <!-- Remove all highlighting for read-only -->
-                            <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
-                                <Setter Property="Background" Value="#0E0E0E" />
-                                <Setter Property="BorderBrush" Value="Transparent" />
-                                <Setter Property="BorderThickness" Value="0" />
-                            </Style>
-                            <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
-                                <Setter Property="Background" Value="#0E0E0E" />
-                                <Setter Property="BorderBrush" Value="Transparent" />
-                                <Setter Property="BorderThickness" Value="0" />
-                            </Style>
-                        </TextBox.Styles>
-                    </TextBox>
-                    
-                    <!-- Colored log display for log entries -->
-                    <controls:ColoredLogDisplay Name="ColoredLogOutput"
-                            LogEntries="{Binding ActiveBottomTab.LogEntries}"
-                            Margin="20"
-                            IsVisible="{Binding ActiveBottomTab.ErrorEntries.Count, Converter={x:Static conv:CountToBooleanConverter.ZeroIsTrue}}" />
-                    
-                    <!-- Error entries with navigation -->
+            <Grid Grid.Row="1" Name="BottomContentGrid">
+                <!-- Text content for non-log tabs (fallback) -->
+                <TextBox Name="BottomOutput" 
+                        Text="{Binding ActiveBottomTab.Content}"
+                        Background="#0E0E0E" 
+                        Foreground="#CCCCCC"
+                        FontFamily="monospace"
+                        FontSize="12"
+                        IsReadOnly="True"
+                        AcceptsReturn="True"
+                        TextWrapping="NoWrap"
+                        ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                        ScrollViewer.VerticalScrollBarVisibility="Auto"
+                        BorderThickness="0"
+                        Margin="20"
+                        IsVisible="False">
+                
+                    <TextBox.Styles>
+                        <!-- Remove all highlighting for read-only -->
+                        <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
+                            <Setter Property="Background" Value="#0E0E0E" />
+                            <Setter Property="BorderBrush" Value="Transparent" />
+                            <Setter Property="BorderThickness" Value="0" />
+                        </Style>
+                        <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+                            <Setter Property="Background" Value="#0E0E0E" />
+                            <Setter Property="BorderBrush" Value="Transparent" />
+                            <Setter Property="BorderThickness" Value="0" />
+                        </Style>
+                    </TextBox.Styles>
+                </TextBox>
+                
+                <!-- Colored log display for log entries -->
+                <controls:ColoredLogDisplay Name="ColoredLogOutput"
+                        LogEntries="{Binding ActiveBottomTab.LogEntries}"
+                        Margin="20"
+                        IsVisible="{Binding ActiveBottomTab.ErrorEntries.Count, Converter={x:Static conv:CountToBooleanConverter.ZeroIsTrue}}" />
+                
+                <!-- Error entries with navigation -->
+                <ScrollViewer Name="ErrorScrollViewer"
+                              HorizontalScrollBarVisibility="Auto" 
+                              VerticalScrollBarVisibility="Auto"
+                              IsVisible="{Binding ActiveBottomTab.ErrorEntries.Count, Converter={x:Static conv:CountToBooleanConverter.ZeroIsFalse}}">
                     <ItemsControl ItemsSource="{Binding ActiveBottomTab.ErrorEntries}"
                                   Background="#0E0E0E"
-                                  Margin="20"
-                                  IsVisible="{Binding ActiveBottomTab.ErrorEntries.Count, Converter={x:Static conv:CountToBooleanConverter.ZeroIsFalse}}">
+                                  Margin="20">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="models:ErrorEntry">
                                 <StackPanel Margin="0,0,0,15">
@@ -117,7 +121,7 @@
                                                Foreground="{Binding Type, Converter={x:Static conv:ErrorTypeToColorConverter.Instance}}" 
                                                FontFamily="monospace" 
                                                FontSize="12" 
-                                               TextWrapping="Wrap" />
+                                               TextWrapping="NoWrap" />
                                     
                                     <!-- File link (if available) -->
                                     <Button Content="{Binding FileDisplayText}"
@@ -145,13 +149,14 @@
                                                FontFamily="monospace"
                                                FontSize="12"
                                                Margin="10,2,0,0"
+                                               TextWrapping="NoWrap"
                                                IsVisible="{Binding SourceContext, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
-                </Grid>
-            </ScrollViewer>
+                </ScrollViewer>
+            </Grid>
         </Grid>
     </Border>
 </UserControl>
