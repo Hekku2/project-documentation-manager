@@ -1,0 +1,157 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Desktop.ViewModels"
+             xmlns:conv="clr-namespace:Desktop.Converters"
+             xmlns:controls="clr-namespace:Desktop.Controls"
+             xmlns:models="clr-namespace:Desktop.Models"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="300"
+             x:Class="Desktop.Views.BottomPanelUserControl"
+             x:DataType="vm:MainWindowViewModel">
+
+    <Border Background="#0E0E0E" BorderBrush="#3E3E42" BorderThickness="0,1,0,0" IsVisible="{Binding IsBottomPanelVisible}">
+        <Grid>
+            <Grid.RowDefinitions>
+                <!-- Bottom Tab Bar -->
+                <RowDefinition Height="35" />
+                <!-- Bottom Content -->
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            
+            <!-- Bottom Tab Bar -->
+            <Border Grid.Row="0" Background="#2D2D30" BorderBrush="#3E3E42" BorderThickness="0,0,0,1">
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding BottomPanelTabs}" Margin="5,0">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:BottomPanelTabViewModel">
+                                <Border Name="BottomTabBorder"
+                                        Background="{Binding IsActive, Converter={x:Static conv:BoolToColorConverter.Instance}}"
+                                        BorderBrush="#3E3E42"
+                                        BorderThickness="0,0,1,0" 
+                                        Margin="0,0,0,0">
+                                    <Button Name="BottomTabButton"
+                                            Command="{Binding SelectCommand}"
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            Padding="0"
+                                            HorizontalContentAlignment="Stretch"
+                                            VerticalContentAlignment="Stretch">
+                                        <StackPanel Orientation="Horizontal" Margin="15,6">
+                                            <TextBlock Name="BottomTabTitle"
+                                                       Text="{Binding Title}" 
+                                                       Foreground="#CCCCCC" 
+                                                       VerticalAlignment="Center" />
+                                            <Button Content="×" 
+                                                    Command="{Binding CloseCommand}"
+                                                    Background="Transparent" 
+                                                    Foreground="#CCCCCC" 
+                                                    BorderThickness="0" 
+                                                    Margin="8,0,0,0" 
+                                                    Padding="2" 
+                                                    FontSize="14"
+                                                    VerticalAlignment="Center"
+                                                    IsVisible="{Binding IsClosable}" />
+                                        </StackPanel>
+                                    </Button>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Border>
+            
+            <!-- Bottom Content -->
+            <ScrollViewer Grid.Row="1" Name="BottomScrollViewer">
+                <Grid>
+                    <!-- Text content for non-log tabs (fallback) -->
+                    <TextBox Name="BottomOutput" 
+                            Text="{Binding ActiveBottomTab.Content}"
+                            Background="#0E0E0E" 
+                            Foreground="#CCCCCC"
+                            FontFamily="monospace"
+                            FontSize="12"
+                            IsReadOnly="True"
+                            AcceptsReturn="True"
+                            TextWrapping="Wrap"
+                            BorderThickness="0"
+                            Margin="20"
+                            IsVisible="False">
+                    
+                        <TextBox.Styles>
+                            <!-- Remove all highlighting for read-only -->
+                            <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
+                                <Setter Property="Background" Value="#0E0E0E" />
+                                <Setter Property="BorderBrush" Value="Transparent" />
+                                <Setter Property="BorderThickness" Value="0" />
+                            </Style>
+                            <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+                                <Setter Property="Background" Value="#0E0E0E" />
+                                <Setter Property="BorderBrush" Value="Transparent" />
+                                <Setter Property="BorderThickness" Value="0" />
+                            </Style>
+                        </TextBox.Styles>
+                    </TextBox>
+                    
+                    <!-- Colored log display for log entries -->
+                    <controls:ColoredLogDisplay Name="ColoredLogOutput"
+                            LogEntries="{Binding ActiveBottomTab.LogEntries}"
+                            Margin="20"
+                            IsVisible="{Binding ActiveBottomTab.ErrorEntries.Count, Converter={x:Static conv:CountToBooleanConverter.ZeroIsTrue}}" />
+                    
+                    <!-- Error entries with navigation -->
+                    <ItemsControl ItemsSource="{Binding ActiveBottomTab.ErrorEntries}"
+                                  Background="#0E0E0E"
+                                  Margin="20"
+                                  IsVisible="{Binding ActiveBottomTab.ErrorEntries.Count, Converter={x:Static conv:CountToBooleanConverter.ZeroIsFalse}}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="models:ErrorEntry">
+                                <StackPanel Margin="0,0,0,15">
+                                    <!-- Error/Warning message -->
+                                    <TextBlock Text="{Binding DisplayText}" 
+                                               Foreground="{Binding Type, Converter={x:Static conv:ErrorTypeToColorConverter.Instance}}" 
+                                               FontFamily="monospace" 
+                                               FontSize="12" 
+                                               TextWrapping="Wrap" />
+                                    
+                                    <!-- File link (if available) -->
+                                    <Button Content="{Binding FileDisplayText}"
+                                            Command="{Binding NavigateCommand}"
+                                            HorizontalAlignment="Left"
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            Foreground="#569CD6"
+                                            FontFamily="monospace"
+                                            FontSize="12"
+                                            Padding="0"
+                                            Margin="10,2,0,0"
+                                            IsVisible="{Binding HasFileNavigation}"
+                                            Cursor="Hand">
+                                        <Button.Styles>
+                                            <Style Selector="Button:pointerover">
+                                                <Setter Property="Foreground" Value="#77A3E0" />
+                                            </Style>
+                                        </Button.Styles>
+                                    </Button>
+                                    
+                                    <!-- Source context (if available) -->
+                                    <TextBlock Text="{Binding SourceContext, StringFormat='  Context: {0}'}"
+                                               Foreground="#888888"
+                                               FontFamily="monospace"
+                                               FontSize="12"
+                                               Margin="10,2,0,0"
+                                               IsVisible="{Binding SourceContext, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+            </ScrollViewer>
+        </Grid>
+    </Border>
+</UserControl>

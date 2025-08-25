@@ -1,6 +1,8 @@
 using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
+using Avalonia.VisualTree;
 using Desktop.ViewModels;
+using Desktop.Views;
 
 namespace Desktop.UITests;
 
@@ -25,8 +27,9 @@ public class LogOutputAndPanelTests : MainWindowTestBase
         var logTab = viewModel.BottomPanelTabs.FirstOrDefault(t => t.Id == "logs");
         Assert.That(logTab, Is.Not.Null, "Log tab should exist after showing logs");
 
-        // Find the bottom output TextBox in the UI  
-        var bottomOutputTextBox = window.FindControl<TextBox>("BottomOutput");
+        // Find the bottom output TextBox within the BottomPanelUserControl in the UI  
+        var bottomPanelUserControl = window.GetVisualDescendants().OfType<BottomPanelUserControl>().FirstOrDefault();
+        var bottomOutputTextBox = bottomPanelUserControl?.FindControl<TextBox>("BottomOutput");
         
         // The bottom output section should exist in the UI
         Assert.That(bottomOutputTextBox, Is.Not.Null, "Bottom output TextBox should exist in UI");
