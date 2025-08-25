@@ -1,5 +1,3 @@
-using System.Linq;
-using System.Threading.Tasks;
 using Avalonia.Headless.NUnit;
 using Desktop.Models;
 using Desktop.ViewModels;
@@ -9,7 +7,6 @@ using Desktop.Services;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
-using NUnit.Framework;
 using Desktop.Configuration;
 
 namespace Desktop.UITests;

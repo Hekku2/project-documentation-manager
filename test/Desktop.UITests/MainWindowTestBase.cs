@@ -1,5 +1,4 @@
 using Avalonia.Controls;
-using Avalonia.Headless.NUnit;
 using Desktop.Views;
 using Desktop.ViewModels;
 using Microsoft.Extensions.Logging;
@@ -7,14 +6,8 @@ using Microsoft.Extensions.Options;
 using Desktop.Configuration;
 using Desktop.Services;
 using Desktop.Models;
-using Avalonia.VisualTree;
 using NSubstitute;
 using Business.Services;
-using Business.Models;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Desktop.DependencyInjection;
-using System.Linq;
 
 namespace Desktop.UITests;
 

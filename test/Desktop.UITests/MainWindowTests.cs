@@ -1,5 +1,3 @@
-using Avalonia.Headless.NUnit;
-
 namespace Desktop.UITests;
 
 [NonParallelizable]

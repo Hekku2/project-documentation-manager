@@ -3,7 +3,6 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Desktop.Services;
-using Desktop.Models;
 
 namespace Desktop.ViewModels;
 

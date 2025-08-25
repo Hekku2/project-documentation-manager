@@ -1,10 +1,8 @@
 using Avalonia.Headless.NUnit;
-using Desktop.Configuration;
 using Desktop.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using NUnit.Framework;
 
 namespace Desktop.UITests;
 

@@ -1,9 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
-using Desktop.Views;
 using Desktop.ViewModels;
 using Avalonia.VisualTree;
-using System.Linq;
 
 namespace Desktop.UITests;
 
