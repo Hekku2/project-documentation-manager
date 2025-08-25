@@ -21,12 +21,7 @@ public static class ServiceConfiguration
         services.AddTransient<Desktop.ViewModels.BuildConfirmationDialogViewModel>();
         
         // Register Views
-        services.AddSingleton<Desktop.Views.MainWindow>(provider =>
-        {
-            var mainWindowViewModel = provider.GetRequiredService<Desktop.ViewModels.MainWindowViewModel>();
-            var fileExplorerViewModel = provider.GetRequiredService<Desktop.ViewModels.FileExplorerViewModel>();
-            return new Desktop.Views.MainWindow(mainWindowViewModel, fileExplorerViewModel);
-        });
+        services.AddSingleton<Desktop.Views.MainWindow>();
         
         // Register logging components
         services.AddSingleton<InMemoryLoggerProvider>();
