@@ -3,17 +3,9 @@ using System.Linq;
 
 namespace Desktop.Logging;
 
-public class LogTransitionService : ILogTransitionService
+public class LogTransitionService(IDynamicLoggerProvider dynamicLoggerProvider, InMemoryLoggerProvider inMemoryLoggerProvider) : ILogTransitionService
 {
-    private readonly IDynamicLoggerProvider _dynamicLoggerProvider;
-    private readonly InMemoryLoggerProvider _inMemoryLoggerProvider;
     private bool _hasTransitioned = false;
-
-    public LogTransitionService(IDynamicLoggerProvider dynamicLoggerProvider, InMemoryLoggerProvider inMemoryLoggerProvider)
-    {
-        _dynamicLoggerProvider = dynamicLoggerProvider;
-        _inMemoryLoggerProvider = inMemoryLoggerProvider;
-    }
 
     public void TransitionToUILogging(Avalonia.Controls.TextBox textBox)
     {
@@ -26,14 +18,14 @@ public class LogTransitionService : ILogTransitionService
         
         // Keep the in-memory provider active and add the UI provider
         // This ensures logs continue to be collected even when UI logger is active
-        _dynamicLoggerProvider.AddLoggerProvider(uiLoggerProvider);
+        dynamicLoggerProvider.AddLoggerProvider(uiLoggerProvider);
         
         _hasTransitioned = true;
     }
 
     public IEnumerable<LogEntry> GetHistoricalLogs()
     {
-        return _inMemoryLoggerProvider.GetLogEntries();
+        return inMemoryLoggerProvider.GetLogEntries();
     }
     
     public string GetFormattedHistoricalLogs()

@@ -7,18 +7,8 @@ using System.Text;
 
 namespace Desktop.Logging;
 
-internal class UILogger : ILogger
+internal class UILogger(string categoryName, TextBox textBox, object lockObject) : ILogger
 {
-    private readonly string _categoryName;
-    private readonly TextBox _textBox;
-    private readonly object _lock;
-
-    public UILogger(string categoryName, TextBox textBox, object lockObject)
-    {
-        _categoryName = categoryName;
-        _textBox = textBox;
-        _lock = lockObject;
-    }
 
     public IDisposable? BeginScope<TState>(TState state) where TState : notnull
     {
@@ -36,12 +26,12 @@ internal class UILogger : ILogger
             return;
 
         var message = formatter(state, exception);
-        var logEntry = FormatLogEntry(logLevel, _categoryName, message, exception);
+        var logEntry = FormatLogEntry(logLevel, categoryName, message, exception);
 
         // Marshal to UI thread
         Dispatcher.UIThread.Post(() =>
         {
-            lock (_lock)
+            lock (lockObject)
             {
                 try
                 {
@@ -64,7 +54,7 @@ internal class UILogger : ILogger
                             {
                                 Timestamp = DateTime.Now,
                                 LogLevel = logLevel,
-                                CategoryName = _categoryName,
+                                CategoryName = categoryName,
                                 Message = message,
                                 Exception = exception
                             };
@@ -74,11 +64,11 @@ internal class UILogger : ILogger
                     else
                     {
                         // Fallback to direct TextBox update
-                        _textBox.Text += logEntry + Environment.NewLine;
+                        textBox.Text += logEntry + Environment.NewLine;
                     }
                     
                     // Auto-scroll to bottom if TextBox is visible
-                    if (_textBox.Parent is ScrollViewer scrollViewer)
+                    if (textBox.Parent is ScrollViewer scrollViewer)
                     {
                         scrollViewer.ScrollToEnd();
                     }

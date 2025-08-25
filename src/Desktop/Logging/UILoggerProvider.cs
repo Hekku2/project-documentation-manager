@@ -4,16 +4,11 @@ using System;
 
 namespace Desktop.Logging;
 
-public class UILoggerProvider : ILoggerProvider
+public class UILoggerProvider(TextBox textBox) : ILoggerProvider
 {
-    private readonly TextBox _textBox;
+    private readonly TextBox _textBox = textBox ?? throw new ArgumentNullException(nameof(textBox));
     private readonly object _lock = new();
     private bool _disposed = false;
-
-    public UILoggerProvider(TextBox textBox)
-    {
-        _textBox = textBox ?? throw new ArgumentNullException(nameof(textBox));
-    }
 
     public ILogger CreateLogger(string categoryName)
     {

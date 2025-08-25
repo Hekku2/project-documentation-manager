@@ -39,6 +39,9 @@ public class BuildConfirmationDialogViewModel : ViewModelBase
         SaveCommand = new RelayCommand(OnSave, CanSave);
     }
 
+    public ICommand CancelCommand { get; }
+    public ICommand SaveCommand { get; }
+
     public string OutputLocation => Path.Combine(_applicationOptions.DefaultProjectFolder, _applicationOptions.DefaultOutputFolder);
 
     public bool IsBuildInProgress
@@ -61,9 +64,6 @@ public class BuildConfirmationDialogViewModel : ViewModelBase
     }
 
     public bool CanBuild => !IsBuildInProgress;
-
-    public ICommand CancelCommand { get; }
-    public ICommand SaveCommand { get; }
 
     public event EventHandler? DialogClosed;
     public event EventHandler<ValidationResult>? ValidationResultsAvailable;

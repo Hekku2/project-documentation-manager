@@ -183,6 +183,42 @@ The application implements a sophisticated logging architecture:
   }
   ```
 
+### Primary Constructor Guidelines
+- **Prefer primary constructors**: Use primary constructors when feasible for cleaner, more concise code
+- **Dependency injection scenarios**: Primary constructors work well with DI containers and reduce boilerplate
+- **Use parameters directly**: Reference constructor parameters directly instead of creating private fields when possible
+- **Avoid when complex initialization needed**: Use traditional constructors when complex setup logic is required
+- **Example patterns**:
+  ```csharp
+  // Preferred: Primary constructor using parameters directly
+  public class FileService(ILogger<FileService> logger, IOptions<AppOptions> options) : IFileService
+  {
+      public void DoSomething()
+      {
+          logger.LogInformation("Using logger parameter directly");
+          var setting = options.Value.SomeSetting;
+      }
+  }
+  
+  // Only create private fields if you need to transform the parameter
+  public class ServiceWithTransformation(IOptions<AppOptions> options) : IService
+  {
+      private readonly AppOptions _options = options.Value; // Transformation needed
+  }
+  
+  // Use traditional constructor when complex initialization is needed
+  public class ComplexService
+  {
+      public ComplexService(ILogger<ComplexService> logger, IConfiguration config)
+      {
+          _logger = logger;
+          // Complex initialization logic
+          _settings = ProcessConfiguration(config);
+          InitializeComponents();
+      }
+  }
+  ```
+
 ### Test-Driven Development Requirements
 - **CRITICAL**: After ANY code change, feature addition, or modification, ALWAYS run `dotnet test` to ensure all tests pass
 - If tests fail after code changes, fix the failing tests immediately before considering the task complete
