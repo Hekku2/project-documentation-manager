@@ -2,7 +2,6 @@
 using System;
 using Avalonia.Controls;
 using Desktop.ViewModels;
-using Desktop.Views;
 using Desktop.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

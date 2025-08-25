@@ -1,6 +1,5 @@
 ﻿using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -63,14 +62,7 @@ class Program
 
     public static IHostBuilder CreateHostBuilder(string[] args) =>
         Host.CreateDefaultBuilder(args)
-            .ConfigureAppConfiguration((context, config) =>
-            {
-                // Ensure appsettings.json is loaded from the application directory
-                var appDir = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-                config.SetBasePath(appDir!)
-                      .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                      .AddJsonFile($"appsettings.{context.HostingEnvironment.EnvironmentName}.json", optional: true, reloadOnChange: true);
-            })
+            .UseContentRoot(AppContext.BaseDirectory)
             .ConfigureServices((context, services) =>
             {
                 // Register configuration options
@@ -78,10 +70,10 @@ class Program
                     context.Configuration.GetSection(nameof(Desktop.Configuration.ApplicationOptions)));
                 
                 // Register ViewModels
-                services.AddScoped<Desktop.ViewModels.MainWindowViewModel>();
-                services.AddScoped<Desktop.ViewModels.EditorTabBarViewModel>();
-                services.AddScoped<Desktop.ViewModels.EditorContentViewModel>();
-                services.AddScoped<Desktop.ViewModels.BuildConfirmationDialogViewModel>();
+                services.AddSingleton<Desktop.ViewModels.MainWindowViewModel>();
+                services.AddSingleton<Desktop.ViewModels.EditorTabBarViewModel>();
+                services.AddSingleton<Desktop.ViewModels.EditorContentViewModel>();
+                services.AddSingleton<Desktop.ViewModels.BuildConfirmationDialogViewModel>();
                 
                 // Register services here
                 services.AddSingleton<Desktop.Views.MainWindow>();
@@ -103,9 +95,9 @@ class Program
                 services.AddSingleton<Desktop.Services.IHotkeyService, Desktop.Services.HotkeyService>();
                 
                 // Register business services
-                services.AddScoped<Business.Services.IMarkdownCombinationService, Business.Services.MarkdownCombinationService>();
-                services.AddScoped<Business.Services.IMarkdownDocumentFileWriterService, Business.Services.MarkdownDocumentFileWriterService>();
-                services.AddScoped<Business.Services.IMarkdownFileCollectorService, Business.Services.MarkdownFileCollectorService>();
+                services.AddSingleton<Business.Services.IMarkdownCombinationService, Business.Services.MarkdownCombinationService>();
+                services.AddSingleton<Business.Services.IMarkdownDocumentFileWriterService, Business.Services.MarkdownDocumentFileWriterService>();
+                services.AddSingleton<Business.Services.IMarkdownFileCollectorService, Business.Services.MarkdownFileCollectorService>();
             });
 
     // Avalonia configuration, don't remove; also used by visual designer.
