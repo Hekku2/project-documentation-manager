@@ -125,7 +125,7 @@ public class MenuAndCommandTests : MainWindowTestBase
     [AvaloniaTest]
     public void MainWindow_Should_Trigger_BuildConfirmationDialog_Event_When_Build_Command_Executed()
     {
-        var vmLogger = new LoggerFactory().CreateLogger<MainWindowViewModel>();
+        var vmLogger = Substitute.For<ILogger<MainWindowViewModel>>();
         var options = Options.Create(new ApplicationOptions());
         var fileService = Substitute.For<IFileService>();
         var serviceProvider = Substitute.For<IServiceProvider>();

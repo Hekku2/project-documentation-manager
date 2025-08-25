@@ -1,6 +1,8 @@
 
 using System;
+using System.Linq;
 using Avalonia.Controls;
+using Avalonia.VisualTree;
 using Desktop.ViewModels;
 using Desktop.Logging;
 using Microsoft.Extensions.DependencyInjection;
@@ -46,8 +48,9 @@ public partial class MainWindow : Window
     
     private async void OnWindowLoaded(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
-        // Find the BottomOutput TextBox and transition from in-memory to UI logging
-        var bottomOutput = this.FindControl<TextBox>("BottomOutput");
+        // Find the BottomOutput TextBox within the BottomPanelUserControl and transition from in-memory to UI logging
+        var bottomPanelUserControl = this.GetVisualDescendants().OfType<BottomPanelUserControl>().FirstOrDefault();
+        var bottomOutput = bottomPanelUserControl?.FindControl<TextBox>("BottomOutput");
         if (bottomOutput != null && App.ServiceProvider != null)
         {
             var logTransitionService = App.ServiceProvider.GetRequiredService<ILogTransitionService>();

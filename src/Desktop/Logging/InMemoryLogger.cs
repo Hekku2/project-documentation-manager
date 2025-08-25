@@ -4,16 +4,8 @@ using System.Text;
 
 namespace Desktop.Logging;
 
-public class InMemoryLogger : ILogger
+public class InMemoryLogger(string categoryName, InMemoryLoggerProvider provider) : ILogger
 {
-    private readonly string _categoryName;
-    private readonly InMemoryLoggerProvider _provider;
-
-    public InMemoryLogger(string categoryName, InMemoryLoggerProvider provider)
-    {
-        _categoryName = categoryName;
-        _provider = provider;
-    }
 
     public IDisposable? BeginScope<TState>(TState state) where TState : notnull
     {
@@ -35,12 +27,12 @@ public class InMemoryLogger : ILogger
         {
             Timestamp = DateTime.Now,
             LogLevel = logLevel,
-            CategoryName = _categoryName,
+            CategoryName = categoryName,
             Message = message,
             Exception = exception
         };
 
-        _provider.AddLogEntry(logEntry);
+        provider.AddLogEntry(logEntry);
     }
 }
 

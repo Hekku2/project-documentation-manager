@@ -131,6 +131,20 @@ The application implements a sophisticated logging architecture:
 - Mock data structures use modern C# collection expressions
 - Tests verify both UI state and underlying data model state
 
+### Logger Testing Guidelines
+- **ALWAYS use NSubstitute for ILogger mocking**: Use `Substitute.For<ILogger<T>>()` instead of `LoggerFactory`
+- **Avoid LoggerFactory in tests**: LoggerFactory creates real logger instances which add unnecessary overhead and complexity
+- **Mock all logger dependencies**: Treat loggers like any other dependency - mock them consistently
+- **Example pattern**:
+  ```csharp
+  // Preferred: NSubstitute mock
+  var logger = Substitute.For<ILogger<MyClass>>();
+  var myClass = new MyClass(logger);
+  
+  // Avoid: LoggerFactory (adds overhead and complexity)
+  var logger = new LoggerFactory().CreateLogger<MyClass>();
+  ```
+
 ## Key Implementation Details
 
 ### Lazy Loading Implementation
@@ -180,6 +194,42 @@ The application implements a sophisticated logging architecture:
       public string Description { get; set; } = "";     // Optional, empty is meaningful
       public bool IsActive { get; set; } = false;       // Optional, false is meaningful
       public DateTime? LastModified { get; set; }       // Optional, null is meaningful
+  }
+  ```
+
+### Primary Constructor Guidelines
+- **Prefer primary constructors**: Use primary constructors when feasible for cleaner, more concise code
+- **Dependency injection scenarios**: Primary constructors work well with DI containers and reduce boilerplate
+- **Use parameters directly**: Reference constructor parameters directly instead of creating private fields when possible
+- **Avoid when complex initialization needed**: Use traditional constructors when complex setup logic is required
+- **Example patterns**:
+  ```csharp
+  // Preferred: Primary constructor using parameters directly
+  public class FileService(ILogger<FileService> logger, IOptions<AppOptions> options) : IFileService
+  {
+      public void DoSomething()
+      {
+          logger.LogInformation("Using logger parameter directly");
+          var setting = options.Value.SomeSetting;
+      }
+  }
+  
+  // Only create private fields if you need to transform the parameter
+  public class ServiceWithTransformation(IOptions<AppOptions> options) : IService
+  {
+      private readonly AppOptions _options = options.Value; // Transformation needed
+  }
+  
+  // Use traditional constructor when complex initialization is needed
+  public class ComplexService
+  {
+      public ComplexService(ILogger<ComplexService> logger, IConfiguration config)
+      {
+          _logger = logger;
+          // Complex initialization logic
+          _settings = ProcessConfiguration(config);
+          InitializeComponents();
+      }
   }
   ```
 

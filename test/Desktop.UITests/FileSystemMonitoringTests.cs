@@ -36,10 +36,10 @@ public class FileSystemMonitoringTests
 
     private static (MainWindow window, IFileService fileService, MainWindowViewModel viewModel, FileExplorerViewModel fileExplorerViewModel) CreateMainWindowWithMonitoring()
     {
-        var vmLogger = new LoggerFactory().CreateLogger<MainWindowViewModel>();
-        var tabBarLogger = new LoggerFactory().CreateLogger<EditorTabBarViewModel>();
-        var contentLogger = new LoggerFactory().CreateLogger<EditorContentViewModel>();
-        var stateLogger = new LoggerFactory().CreateLogger<EditorStateService>();
+        var vmLogger = Substitute.For<ILogger<MainWindowViewModel>>();
+        var tabBarLogger = Substitute.For<ILogger<EditorTabBarViewModel>>();
+        var contentLogger = Substitute.For<ILogger<EditorContentViewModel>>();
+        var stateLogger = Substitute.For<ILogger<EditorStateService>>();
         var options = Options.Create(new ApplicationOptions());
         var fileService = Substitute.For<IFileService>();
         var serviceProvider = Substitute.For<IServiceProvider>();
@@ -59,7 +59,7 @@ public class FileSystemMonitoringTests
         
         var logTransitionService = Substitute.For<Desktop.Logging.ILogTransitionService>();
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
-        var fileExplorerViewModel = new FileExplorerViewModel(new LoggerFactory().CreateLogger<FileExplorerViewModel>(), fileService);
+        var fileExplorerViewModel = new FileExplorerViewModel(Substitute.For<ILogger<FileExplorerViewModel>>(), fileService);
         var viewModel = new MainWindowViewModel(vmLogger, options, editorStateService, editorTabBarViewModel, editorContentViewModel, logTransitionService, hotkeyService);
         var window = new MainWindow(viewModel, fileExplorerViewModel);
         

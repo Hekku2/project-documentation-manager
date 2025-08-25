@@ -5,16 +5,10 @@ using Business.Models;
 
 namespace Desktop.Services;
 
-public class EditorStateService : IEditorStateService
+public class EditorStateService(ILogger<EditorStateService> logger) : IEditorStateService
 {
-    private readonly ILogger<EditorStateService> _logger;
     private EditorTabViewModel? _activeTab;
     private ValidationResult? _currentValidationResult;
-
-    public EditorStateService(ILogger<EditorStateService> logger)
-    {
-        _logger = logger;
-    }
 
     public EditorTabViewModel? ActiveTab
     {
@@ -63,6 +57,6 @@ public class EditorStateService : IEditorStateService
 
         ActiveTab = tab;
         
-        _logger.LogDebug("Active tab changed to: {TabTitle}", tab?.Title ?? "none");
+        logger.LogDebug("Active tab changed to: {TabTitle}", tab?.Title ?? "none");
     }
 }

@@ -6,23 +6,12 @@ using Desktop.Services;
 
 namespace Desktop.ViewModels;
 
-public class FileExplorerViewModel : ViewModelBase, IDisposable
+public class FileExplorerViewModel(ILogger<FileExplorerViewModel> logger, IFileService fileService) : ViewModelBase, IDisposable
 {
-    private readonly ILogger<FileExplorerViewModel> _logger;
-    private readonly IFileService _fileService;
     private bool _isLoading;
     private FileSystemItemViewModel? _rootItem;
 
-    public FileExplorerViewModel(ILogger<FileExplorerViewModel> logger, IFileService fileService)
-    {
-        _logger = logger;
-        _fileService = fileService;
-        FileSystemItems = [];
-        
-        _logger.LogInformation("FileExplorerViewModel initialized");
-    }
-
-    public ObservableCollection<FileSystemItemViewModel> FileSystemItems { get; }
+    public ObservableCollection<FileSystemItemViewModel> FileSystemItems { get; } = [];
 
     public bool IsLoading
     {
@@ -40,6 +29,7 @@ public class FileExplorerViewModel : ViewModelBase, IDisposable
 
     public async Task InitializeAsync()
     {
+        logger.LogInformation("FileExplorerViewModel initialized");
         await LoadFileStructureAsync();
     }
 
@@ -53,16 +43,16 @@ public class FileExplorerViewModel : ViewModelBase, IDisposable
         try
         {
             IsLoading = true;
-            _logger.LogInformation("Loading file structure...");
+            logger.LogInformation("Loading file structure...");
             
-            var fileStructure = await _fileService.GetFileStructureAsync();
+            var fileStructure = await fileService.GetFileStructureAsync();
             
             if (fileStructure != null)
             {
                 var rootViewModel = new FileSystemItemViewModel(
                     fileStructure,
                     isRoot: true,
-                    fileService: _fileService,
+                    fileService: fileService,
                     onFileSelected: OnFileSelected // pass instance callback
                 );
                 RootItem = rootViewModel;
@@ -71,18 +61,18 @@ public class FileExplorerViewModel : ViewModelBase, IDisposable
                 FileSystemItems.Add(rootViewModel);
                 
                 // Start file system monitoring
-                _fileService.StartFileSystemMonitoring();
+                fileService.StartFileSystemMonitoring();
                 
-                _logger.LogInformation("File structure loaded successfully");
+                logger.LogInformation("File structure loaded successfully");
             }
             else
             {
-                _logger.LogWarning("Failed to load file structure");
+                logger.LogWarning("Failed to load file structure");
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error loading file structure");
+            logger.LogError(ex, "Error loading file structure");
         }
         finally
         {
@@ -92,7 +82,7 @@ public class FileExplorerViewModel : ViewModelBase, IDisposable
 
     private void OnFileSelected(string filePath)
     {
-        _logger.LogInformation("File selected: {FilePath}", filePath);
+        logger.LogInformation("File selected: {FilePath}", filePath);
         FileSelected?.Invoke(this, filePath);
     }
 
