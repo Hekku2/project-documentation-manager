@@ -21,12 +21,9 @@ public class MainWindowViewModel : ViewModelBase
 {
     private readonly ILogger<MainWindowViewModel> _logger;
     private readonly ApplicationOptions _applicationOptions;
-    private readonly IFileService _fileService;
     private readonly IEditorStateService _editorStateService;
     private readonly ILogTransitionService _logTransitionService;
     private readonly IHotkeyService _hotkeyService;
-    private bool _isLoading;
-    private FileSystemItemViewModel? _rootItem;
     private bool _isBottomPanelVisible = false;
     private BottomPanelTabViewModel? _activeBottomTab;
     private EditorTabViewModel? _currentlySubscribedTab;
@@ -34,7 +31,6 @@ public class MainWindowViewModel : ViewModelBase
     public MainWindowViewModel(
         ILogger<MainWindowViewModel> logger, 
         IOptions<ApplicationOptions> applicationOptions, 
-        IFileService fileService,
         IEditorStateService editorStateService,
         EditorTabBarViewModel editorTabBarViewModel,
         EditorContentViewModel editorContentViewModel,
@@ -43,14 +39,12 @@ public class MainWindowViewModel : ViewModelBase
     {
         _logger = logger;
         _applicationOptions = applicationOptions.Value;
-        _fileService = fileService;
         _editorStateService = editorStateService;
         _logTransitionService = logTransitionService;
         _hotkeyService = hotkeyService;
         EditorTabBar = editorTabBarViewModel;
         EditorContent = editorContentViewModel;
         
-        FileSystemItems = new ObservableCollection<FileSystemItemViewModel>();
         BottomPanelTabs = new ObservableCollection<BottomPanelTabViewModel>();
         ExitCommand = new RelayCommand(RequestApplicationExit);
         CloseBottomPanelCommand = new RelayCommand(CloseBottomPanel);
@@ -65,8 +59,6 @@ public class MainWindowViewModel : ViewModelBase
         _logger.LogInformation("Default project folder: {Folder}", _applicationOptions.DefaultProjectFolder);
         _logger.LogInformation("Default output folder: {OutputFolder}", _applicationOptions.DefaultOutputFolder);
         
-        // Subscribe to file selection events
-        FileSystemItemViewModel.FileSelected += OnFileSelected;
         
         // Subscribe to validation result changes for error panel updates
         _editorStateService.ValidationResultChanged += OnValidationResultChanged;
@@ -87,7 +79,6 @@ public class MainWindowViewModel : ViewModelBase
         InitializeHotkeys();
     }
 
-    public ObservableCollection<FileSystemItemViewModel> FileSystemItems { get; }
     
     public ObservableCollection<BottomPanelTabViewModel> BottomPanelTabs { get; }
     
@@ -99,18 +90,8 @@ public class MainWindowViewModel : ViewModelBase
     
     public ApplicationOptions ApplicationOptions => _applicationOptions;
 
-    public bool IsLoading
-    {
-        get => _isLoading;
-        private set => SetProperty(ref _isLoading, value);
-    }
 
 
-    public FileSystemItemViewModel? RootItem
-    {
-        get => _rootItem;
-        private set => SetProperty(ref _rootItem, value);
-    }
 
     public bool IsBottomPanelVisible
     {
@@ -145,57 +126,9 @@ public class MainWindowViewModel : ViewModelBase
     public event EventHandler<BuildConfirmationDialogViewModel>? ShowBuildConfirmationDialog;
     public event EventHandler? HotkeysChanged;
 
-    private async Task LoadFileStructureAsync()
-    {
-        try
-        {
-            IsLoading = true;
-            _logger.LogInformation("Loading file structure...");
-            
-            var fileStructure = await _fileService.GetFileStructureAsync();
-            
-            if (fileStructure != null)
-            {
-                var rootViewModel = new FileSystemItemViewModel(fileStructure, isRoot: true, fileService: _fileService);
-                RootItem = rootViewModel;
-                
-                FileSystemItems.Clear();
-                FileSystemItems.Add(rootViewModel);
-                
-                // Start file system monitoring
-                _fileService.StartFileSystemMonitoring();
-                
-                _logger.LogInformation("File structure loaded successfully");
-            }
-            else
-            {
-                _logger.LogWarning("Failed to load file structure");
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error loading file structure");
-        }
-        finally
-        {
-            IsLoading = false;
-        }
-    }
 
-    public async Task InitializeAsync()
-    {
-        await LoadFileStructureAsync();
-    }
     
-    public async Task RefreshFileStructureAsync()
-    {
-        await LoadFileStructureAsync();
-    }
 
-    private async void OnFileSelected(string filePath)
-    {
-        await EditorTabBar.OpenFileAsync(filePath);
-    }
 
     public async Task SaveActiveFileAsync()
     {

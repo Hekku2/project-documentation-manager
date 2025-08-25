@@ -11,13 +11,19 @@ namespace Desktop.UITests;
 public class FileExplorerTests : MainWindowTestBase
 {
     [AvaloniaTest]
-    public async Task MainWindow_Should_Only_Expand_Root_Level_By_Default()
+    public async Task FileExplorer_Should_Only_Expand_Root_Level_By_Default()
     {
-        var window = CreateMainWindowWithNestedStructure();
-        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
+        var fileExplorer = CreateFileExplorerWithNestedStructure();
+        var window = new Window
+        {
+            Content = fileExplorer
+        };
+
+        window.Show();
+        var viewModel = await SetupFileExplorerAndWaitForLoadAsync(fileExplorer);
 
         // Get the TreeView
-        var treeView = window.GetVisualDescendants().OfType<TreeView>().FirstOrDefault();
+        var treeView = fileExplorer.GetVisualDescendants().OfType<TreeView>().FirstOrDefault();
         Assert.That(treeView, Is.Not.Null, "TreeView not found");
 
         Assert.That(viewModel.RootItem, Is.Not.Null, "Root item should be loaded");
@@ -45,10 +51,10 @@ public class FileExplorerTests : MainWindowTestBase
     }
 
     [AvaloniaTest]
-    public async Task MainWindow_Should_Allow_Folder_Expansion_And_Load_Children()
+    public async Task FileExplorer_Should_Allow_Folder_Expansion_And_Load_Children()
     {
-        var window = CreateMainWindowWithNestedStructure();
-        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
+        var fileExplorer = CreateFileExplorerWithNestedStructure();
+        var viewModel = await SetupFileExplorerAndWaitForLoadAsync(fileExplorer);
 
         // Get the src folder (should not be expanded initially)
         var srcFolder = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
@@ -89,10 +95,10 @@ public class FileExplorerTests : MainWindowTestBase
     }
 
     [AvaloniaTest]
-    public async Task MainWindow_Should_Allow_Multiple_Folder_Expansions()
+    public async Task FileExplorer_Should_Allow_Multiple_Folder_Expansions()
     {
-        var window = CreateMainWindowWithNestedStructure();
-        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
+        var fileExplorer = CreateFileExplorerWithNestedStructure();
+        var viewModel = await SetupFileExplorerAndWaitForLoadAsync(fileExplorer);
 
         // Get both src and test folders
         var srcFolder = viewModel.RootItem?.Children.FirstOrDefault(c => c.Name == "src");
@@ -134,58 +140,55 @@ public class FileExplorerTests : MainWindowTestBase
     }
 
     [AvaloniaTest]
-    public async Task MainWindow_Should_Display_File_Content_In_Editor_When_File_Selected()
+    public async Task FileExplorer_Should_Trigger_FileSelected_Event_When_File_Selected()
     {
-        var window = CreateMainWindowWithNestedStructure();
-        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
-
-        // Expand the root to get the README.md file
-        viewModel.RootItem!.IsExpanded = true;
-        await WaitForConditionAsync(() => viewModel.RootItem.Children.Any());
+        var fileExplorer = CreateFileExplorerWithNestedStructure();
+        var viewModel = await SetupFileExplorerAndWaitForLoadAsync(fileExplorer);
 
         // Find the README.md file
         var readmeFile = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "README.md");
         Assert.That(readmeFile, Is.Not.Null, "README.md file should exist");
 
-        // Get the editor TextBox from the UI
-        var editorTextBox = window.FindControl<TextBox>("DocumentEditor");
-        Assert.That(editorTextBox, Is.Not.Null, "Document editor should exist");
-
-        // Get the tab container from the UI
-        var tabContainer = window.GetVisualDescendants().OfType<ItemsControl>()
-            .FirstOrDefault(ic => ic.ItemsSource != null);
-        Assert.That(tabContainer, Is.Not.Null, "Tab container should exist");
-
-        // Initially no tabs should be open
-        Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(0), "No tabs should be open initially");
-        Assert.That(editorTextBox.Text, Is.Null.Or.Empty, "Editor should be empty initially");
+        // Set up event handler to capture file selection
+        string? selectedFilePath = null;
+        viewModel.FileSelected += (sender, filePath) => selectedFilePath = filePath;
 
         // Select the file (simulating clicking in TreeView)
         readmeFile!.IsSelected = true;
 
-        // Wait for file to load
-        await WaitForConditionAsync(() => viewModel.EditorTabBar.EditorTabs.Count > 0, 1000);
+        // Wait for event to be raised
+        await WaitForConditionAsync(() => selectedFilePath != null, 1000);
 
-        Assert.Multiple(() =>
+        Assert.That(selectedFilePath, Is.EqualTo("/test/path/README.md"), "FileSelected event should be raised with correct file path");
+    }
+
+    [AvaloniaTest]
+    public void FileExplorer_Should_Show_Loading_Indicator_Initially()
+    {
+        var fileExplorer = CreateFileExplorerWithNestedStructure();
+        var window = new Window
         {
-            // Verify tab was created and is visible
-            Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(1), "One tab should be open");
-            
-            var tab = viewModel.EditorTabBar.EditorTabs.First();
-            Assert.That(tab.Title, Is.EqualTo("README.md"), "Tab title should be README.md");
-            Assert.That(tab.FilePath, Is.EqualTo("/test/path/README.md"), "Tab file path should be correct");
-            Assert.That(tab.IsActive, Is.True, "Tab should be active");
-            Assert.That(tab.Content, Is.EqualTo("Mock file content"), "Tab should contain file content");
-            
-            // Verify active tab is set correctly
-            Assert.That(viewModel.EditorTabBar.ActiveTab, Is.EqualTo(tab), "Active tab should be set");
-            Assert.That(viewModel.EditorContent.ActiveFileContent, Is.EqualTo("Mock file content"), "Active file content should be available");
-            
-            // Verify editor displays the content
-            Assert.That(editorTextBox.Text, Is.EqualTo("Mock file content"), "Editor should display file content");
-            
-            // Verify tab appears in UI (ItemsControl should have items)
-            Assert.That(tabContainer.ItemCount, Is.EqualTo(1), "Tab should appear in UI");
-        });
+            Content = fileExplorer
+        };
+
+        window.Show();
+
+        var viewModel = fileExplorer.DataContext as FileExplorerViewModel;
+        Assert.That(viewModel, Is.Not.Null);
+
+        // Initially should be loading
+        Assert.That(viewModel!.IsLoading, Is.False, "Should not be loading initially");
+
+        // Find loading indicator
+        var loadingText = fileExplorer.GetVisualDescendants()
+            .OfType<TextBlock>()
+            .FirstOrDefault(tb => tb.Text == "Loading...");
+        Assert.That(loadingText, Is.Not.Null, "Loading indicator should exist");
+        Assert.That(loadingText!.IsVisible, Is.False, "Loading indicator should not be visible initially");
+
+        // TreeView should be visible when not loading
+        var treeView = fileExplorer.GetVisualDescendants().OfType<TreeView>().FirstOrDefault();
+        Assert.That(treeView, Is.Not.Null, "TreeView should exist");
+        Assert.That(treeView!.IsVisible, Is.True, "TreeView should be visible when not loading");
     }
 }

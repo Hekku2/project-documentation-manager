@@ -163,7 +163,7 @@ public class MenuAndCommandTests : MainWindowTestBase
         
         var logTransitionService = Substitute.For<Desktop.Logging.ILogTransitionService>();
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
-        var viewModel = new MainWindowViewModel(vmLogger, options, fileService, editorStateService, editorTabBarViewModel, editorContentViewModel, logTransitionService, hotkeyService);
+        var viewModel = new MainWindowViewModel(vmLogger, options, editorStateService, editorTabBarViewModel, editorContentViewModel, logTransitionService, hotkeyService);
         
         Assert.That(viewModel.EditorContent.BuildDocumentationCommand, Is.Not.Null, "BuildDocumentationCommand should exist");
         
@@ -186,7 +186,7 @@ public class MenuAndCommandTests : MainWindowTestBase
     public async Task MainWindow_Should_Have_ValidateAllCommand()
     {
         var window = CreateMainWindow();
-        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
+        var (viewModel, fileExplorerViewModel) = await SetupWindowAndWaitForLoadAsync(window);
 
         Assert.Multiple(() =>
         {
@@ -199,7 +199,7 @@ public class MenuAndCommandTests : MainWindowTestBase
     public async Task MainWindow_ValidateAllCommand_Should_Process_All_Templates()
     {
         var window = CreateMainWindow();
-        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
+        var (viewModel, fileExplorerViewModel) = await SetupWindowAndWaitForLoadAsync(window);
 
         // Mock template and source files
         var templateFiles = new[]
@@ -310,8 +310,6 @@ public class MenuAndCommandTests : MainWindowTestBase
         Assert.That(canExecuteWithoutFile, Is.False, "SaveCommand should not be executable when no file is active");
 
         // Open a file and verify SaveCommand is still not executable (file not modified)
-        await viewModel.InitializeAsync();
-
         // Simulate opening a file by creating a temporary file
         var tempFile = Path.GetTempFileName();
         try
@@ -376,8 +374,6 @@ public class MenuAndCommandTests : MainWindowTestBase
         // SaveAllCommand should not be executable when no files are open
         bool canExecuteWithoutFiles = viewModel.SaveAllCommand.CanExecute(null);
         Assert.That(canExecuteWithoutFiles, Is.False, "SaveAllCommand should not be executable when no files are open");
-
-        await viewModel.InitializeAsync();
 
         // Create multiple temporary files
         var tempFile1 = Path.GetTempFileName();

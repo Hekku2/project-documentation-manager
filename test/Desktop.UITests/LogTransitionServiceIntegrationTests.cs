@@ -41,7 +41,6 @@ public class LogTransitionServiceIntegrationTests
         var viewModel = new MainWindowViewModel(
             logger, 
             options, 
-            fileService, 
             editorStateService,
             editorTabBarViewModel,
             editorContentViewModel,

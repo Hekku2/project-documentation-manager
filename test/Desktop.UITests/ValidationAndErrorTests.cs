@@ -25,7 +25,7 @@ public class ValidationAndErrorTests : MainWindowTestBase
     public async Task MainWindow_Should_Display_Validation_Errors_In_Error_Panel()
     {
         var window = CreateMainWindow();
-        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
+        var (viewModel, fileExplorerViewModel) = await SetupWindowAndWaitForLoadAsync(window);
 
 
         // Open a file
@@ -88,7 +88,7 @@ public class ValidationAndErrorTests : MainWindowTestBase
     public async Task MainWindow_Should_Not_Show_Error_Panel_When_Validation_Passes()
     {
         var window = CreateMainWindow();
-        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
+        var (viewModel, fileExplorerViewModel) = await SetupWindowAndWaitForLoadAsync(window);
 
         // Open a file
         await viewModel.EditorTabBar.OpenFileAsync("/test/path/README.md");
@@ -129,7 +129,7 @@ public class ValidationAndErrorTests : MainWindowTestBase
     public async Task ValidationErrorOverlay_Should_Filter_Errors_By_Current_File()
     {
         var window = CreateMainWindow();
-        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
+        var (viewModel, fileExplorerViewModel) = await SetupWindowAndWaitForLoadAsync(window);
 
         // Open a file
         await viewModel.EditorTabBar.OpenFileAsync("/test/path/file1.mdext");

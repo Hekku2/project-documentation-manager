@@ -17,10 +17,16 @@ public static class ServiceConfiguration
         services.AddSingleton<Desktop.ViewModels.MainWindowViewModel>();
         services.AddSingleton<Desktop.ViewModels.EditorTabBarViewModel>();
         services.AddSingleton<Desktop.ViewModels.EditorContentViewModel>();
+        services.AddSingleton<Desktop.ViewModels.FileExplorerViewModel>();
         services.AddTransient<Desktop.ViewModels.BuildConfirmationDialogViewModel>();
         
-        // Register services here
-        services.AddSingleton<Desktop.Views.MainWindow>();
+        // Register Views
+        services.AddSingleton<Desktop.Views.MainWindow>(provider =>
+        {
+            var mainWindowViewModel = provider.GetRequiredService<Desktop.ViewModels.MainWindowViewModel>();
+            var fileExplorerViewModel = provider.GetRequiredService<Desktop.ViewModels.FileExplorerViewModel>();
+            return new Desktop.Views.MainWindow(mainWindowViewModel, fileExplorerViewModel);
+        });
         
         // Register logging components
         services.AddSingleton<InMemoryLoggerProvider>();

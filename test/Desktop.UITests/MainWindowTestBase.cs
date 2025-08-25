@@ -64,23 +64,33 @@ public abstract class MainWindowTestBase
         }
     }
 
-    protected static async Task<MainWindowViewModel> SetupWindowAndWaitForLoadAsync(MainWindow window)
+    protected static async Task<(MainWindowViewModel, FileExplorerViewModel)> SetupWindowAndWaitForLoadAsync(MainWindow window)
     {
         window.Show();
         
         var viewModel = window.DataContext as MainWindowViewModel;
         Assert.That(viewModel, Is.Not.Null);
+        
+        // Get the FileExplorerViewModel from the window's FileExplorer control
+        var fileExplorerBorder = window.FindControl<Border>("FileExplorerBorder");
+        Assert.That(fileExplorerBorder, Is.Not.Null);
+        
+        var fileExplorerControl = fileExplorerBorder.Child as FileExplorerUserControl;
+        Assert.That(fileExplorerControl, Is.Not.Null);
+        
+        var fileExplorerViewModel = fileExplorerControl.DataContext as FileExplorerViewModel;
+        Assert.That(fileExplorerViewModel, Is.Not.Null);
 
         // Wait for file structure to load and root to be expanded
-        await WaitForConditionAsync(() => viewModel!.RootItem != null, 2000);
-        Assert.That(viewModel.RootItem, Is.Not.Null, "Root item should be loaded");
+        await WaitForConditionAsync(() => fileExplorerViewModel!.RootItem != null, 2000);
+        Assert.That(fileExplorerViewModel.RootItem, Is.Not.Null, "Root item should be loaded");
         
         // Wait for root to be auto-expanded with children
         await WaitForConditionAsync(() => 
-            viewModel.RootItem!.IsExpanded && 
-            viewModel.RootItem.Children.Any(c => c.Name != "Loading..."), 3000);
+            fileExplorerViewModel.RootItem!.IsExpanded && 
+            fileExplorerViewModel.RootItem.Children.Any(c => c.Name != "Loading..."), 3000);
         
-        return viewModel;
+        return (viewModel!, fileExplorerViewModel);
     }
 
     protected static async Task ExpandFolderAndWaitAsync(FileSystemItemViewModel? folder)
@@ -160,8 +170,9 @@ public abstract class MainWindowTestBase
         var editorContentViewModel = new EditorContentViewModel(_contentLogger, _editorStateService, _options, serviceProvider, _markdownCombinationService, _markdownFileCollectorService);
         
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
-        var viewModel = new MainWindowViewModel(_vmLogger, _options, _fileService, _editorStateService, editorTabBarViewModel, editorContentViewModel, _logTransitionService, hotkeyService);
-        return new MainWindow(viewModel);
+        var fileExplorerViewModel = new FileExplorerViewModel(new LoggerFactory().CreateLogger<FileExplorerViewModel>(), _fileService);
+        var viewModel = new MainWindowViewModel(_vmLogger, _options, _editorStateService, editorTabBarViewModel, editorContentViewModel, _logTransitionService, hotkeyService);
+        return new MainWindow(viewModel, fileExplorerViewModel);
     }
 
     protected MainWindow CreateMainWindowWithNestedStructure()
@@ -174,7 +185,46 @@ public abstract class MainWindowTestBase
         var editorContentViewModel = new EditorContentViewModel(_contentLogger, editorStateService, _options, serviceProvider, _markdownCombinationService, _markdownFileCollectorService);
         
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
-        var viewModel = new MainWindowViewModel(_vmLogger, _options, _fileService, editorStateService, editorTabBarViewModel, editorContentViewModel, _logTransitionService, hotkeyService);
-        return new MainWindow(viewModel);
+        var fileExplorerViewModel = new FileExplorerViewModel(new LoggerFactory().CreateLogger<FileExplorerViewModel>(), _fileService);
+        var viewModel = new MainWindowViewModel(_vmLogger, _options, editorStateService, editorTabBarViewModel, editorContentViewModel, _logTransitionService, hotkeyService);
+        return new MainWindow(viewModel, fileExplorerViewModel);
+    }
+    
+    protected FileExplorerUserControl CreateFileExplorerWithNestedStructure()
+    {
+        _fileService.GetFileStructureAsync().Returns(Task.FromResult<FileSystemItem?>(CreateNestedTestStructure()));
+        _fileService.GetFileStructureAsync(Arg.Any<string>()).Returns(Task.FromResult<FileSystemItem?>(CreateNestedTestStructure()));
+        
+        var fileExplorerViewModel = new FileExplorerViewModel(new LoggerFactory().CreateLogger<FileExplorerViewModel>(), _fileService);
+        return new FileExplorerUserControl(fileExplorerViewModel);
+    }
+    
+    protected FileExplorerUserControl CreateFileExplorerWithSimpleStructure()
+    {
+        _fileService.GetFileStructureAsync().Returns(Task.FromResult<FileSystemItem?>(CreateSimpleTestStructure()));
+        _fileService.GetFileStructureAsync(Arg.Any<string>()).Returns(Task.FromResult<FileSystemItem?>(CreateSimpleTestStructure()));
+        
+        var fileExplorerViewModel = new FileExplorerViewModel(new LoggerFactory().CreateLogger<FileExplorerViewModel>(), _fileService);
+        return new FileExplorerUserControl(fileExplorerViewModel);
+    }
+    
+    protected static async Task<FileExplorerViewModel> SetupFileExplorerAndWaitForLoadAsync(FileExplorerUserControl fileExplorer)
+    {
+        var viewModel = fileExplorer.DataContext as FileExplorerViewModel;
+        Assert.That(viewModel, Is.Not.Null);
+
+        await viewModel!.InitializeAsync();
+        
+        // Wait for file structure to load and root to be expanded
+        await WaitForConditionAsync(() => viewModel.RootItem != null, 2000);
+        Assert.That(viewModel.RootItem, Is.Not.Null, "Root item should be loaded");
+        
+        // Wait for root to be auto-expanded with children
+        await WaitForConditionAsync(() =>
+            viewModel.RootItem!.IsExpanded &&
+            viewModel.RootItem.Children.Any(c => c.Name != "Loading...") &&
+            viewModel.RootItem.Children.Any(), 3000);
+        
+        return viewModel;
     }
 }

@@ -25,18 +25,18 @@ public class EditorTabTests : MainWindowTestBase
     public async Task MainWindow_Should_Handle_Multiple_File_Selections()
     {
         var window = CreateMainWindowWithNestedStructure();
-        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
+        var (viewModel, fileExplorerViewModel) = await SetupWindowAndWaitForLoadAsync(window);
 
         // Expand the root and src folder to get multiple files
-        await ExpandFolderAndWaitAsync(viewModel.RootItem!);
+        await ExpandFolderAndWaitAsync(fileExplorerViewModel.RootItem!);
 
-        var srcFolder = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
+        var srcFolder = fileExplorerViewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
         Assert.That(srcFolder, Is.Not.Null, "src folder should exist");
         
         await ExpandFolderAndWaitAsync(srcFolder);
 
         // Get files
-        var readmeFile = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "README.md");
+        var readmeFile = fileExplorerViewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "README.md");
         var mainFile = srcFolder!.Children.FirstOrDefault(c => c.Name == "main.cs");
         
         Assert.Multiple(() =>
@@ -78,18 +78,18 @@ public class EditorTabTests : MainWindowTestBase
     public async Task MainWindow_Should_Allow_Tab_Closing_Via_Close_Button()
     {
         var window = CreateMainWindowWithNestedStructure();
-        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
+        var (viewModel, fileExplorerViewModel) = await SetupWindowAndWaitForLoadAsync(window);
 
         // Expand the root to get files
-        await ExpandFolderAndWaitAsync(viewModel.RootItem!);
+        await ExpandFolderAndWaitAsync(fileExplorerViewModel.RootItem!);
 
-        var srcFolder = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
+        var srcFolder = fileExplorerViewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
         Assert.That(srcFolder, Is.Not.Null, "src folder should exist");
         
         await ExpandFolderAndWaitAsync(srcFolder);
 
         // Get files
-        var readmeFile = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "README.md");
+        var readmeFile = fileExplorerViewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "README.md");
         var mainFile = srcFolder!.Children.FirstOrDefault(c => c.Name == "main.cs");
         
         Assert.Multiple(() =>
@@ -152,15 +152,15 @@ public class EditorTabTests : MainWindowTestBase
     public async Task MainWindow_Should_Handle_Closing_Active_Tab_And_Switch_To_Another()
     {
         var window = CreateMainWindowWithNestedStructure();
-        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
+        var (viewModel, fileExplorerViewModel) = await SetupWindowAndWaitForLoadAsync(window);
 
         // Expand and get files
-        await ExpandFolderAndWaitAsync(viewModel.RootItem);
+        await ExpandFolderAndWaitAsync(fileExplorerViewModel.RootItem);
 
-        var srcFolder = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
+        var srcFolder = fileExplorerViewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
         await ExpandFolderAndWaitAsync(srcFolder);
 
-        var readmeFile = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "README.md");
+        var readmeFile = fileExplorerViewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "README.md");
         var mainFile = srcFolder!.Children.FirstOrDefault(c => c.Name == "main.cs");
 
         // Open both files
@@ -196,15 +196,15 @@ public class EditorTabTests : MainWindowTestBase
     public async Task MainWindow_Should_Highlight_Active_Tab_Correctly()
     {
         var window = CreateMainWindowWithNestedStructure();
-        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
+        var (viewModel, fileExplorerViewModel) = await SetupWindowAndWaitForLoadAsync(window);
 
         // Expand and get files
-        await ExpandFolderAndWaitAsync(viewModel.RootItem!);
+        await ExpandFolderAndWaitAsync(fileExplorerViewModel.RootItem!);
 
-        var srcFolder = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
+        var srcFolder = fileExplorerViewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
         await ExpandFolderAndWaitAsync(srcFolder!);
 
-        var readmeFile = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "README.md");
+        var readmeFile = fileExplorerViewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "README.md");
         var mainFile = srcFolder!.Children.FirstOrDefault(c => c.Name == "main.cs");
 
         // Initially no tabs
@@ -252,15 +252,15 @@ public class EditorTabTests : MainWindowTestBase
     public async Task MainWindow_Should_Update_Active_Tab_Highlighting_When_Tab_Is_Closed()
     {
         var window = CreateMainWindowWithNestedStructure();
-        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
+        var (viewModel, fileExplorerViewModel) = await SetupWindowAndWaitForLoadAsync(window);
 
         // Expand and get files
-        await ExpandFolderAndWaitAsync(viewModel.RootItem!);
+        await ExpandFolderAndWaitAsync(fileExplorerViewModel.RootItem!);
 
-        var srcFolder = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
+        var srcFolder = fileExplorerViewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
         await ExpandFolderAndWaitAsync(srcFolder!);
 
-        var readmeFile = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "README.md");
+        var readmeFile = fileExplorerViewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "README.md");
         var mainFile = srcFolder!.Children.FirstOrDefault(c => c.Name == "main.cs");
 
         // Open both files
@@ -309,15 +309,15 @@ public class EditorTabTests : MainWindowTestBase
     public async Task MainWindow_Should_Allow_File_Selection_By_Clicking_Tab()
     {
         var window = CreateMainWindowWithNestedStructure();
-        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
+        var (viewModel, fileExplorerViewModel) = await SetupWindowAndWaitForLoadAsync(window);
 
         // Expand and get files
-        await ExpandFolderAndWaitAsync(viewModel.RootItem!);
+        await ExpandFolderAndWaitAsync(fileExplorerViewModel.RootItem!);
 
-        var srcFolder = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
+        var srcFolder = fileExplorerViewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
         await ExpandFolderAndWaitAsync(srcFolder!);
 
-        var readmeFile = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "README.md");
+        var readmeFile = fileExplorerViewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "README.md");
         var mainFile = srcFolder!.Children.FirstOrDefault(c => c.Name == "main.cs");
 
         // Open both files to create tabs
@@ -373,15 +373,15 @@ public class EditorTabTests : MainWindowTestBase
     public async Task MainWindow_Should_Show_Visual_Highlighting_When_Tab_Is_Selected_Via_Click()
     {
         var window = CreateMainWindowWithNestedStructure();
-        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
+        var (viewModel, fileExplorerViewModel) = await SetupWindowAndWaitForLoadAsync(window);
 
         // Expand and get files
-        await ExpandFolderAndWaitAsync(viewModel.RootItem!);
+        await ExpandFolderAndWaitAsync(fileExplorerViewModel.RootItem!);
 
-        var readmeFile = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "README.md");
+        var readmeFile = fileExplorerViewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "README.md");
         
         // Get the src folder and expand it
-        var srcFolder = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
+        var srcFolder = fileExplorerViewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
         await ExpandFolderAndWaitAsync(srcFolder!);
         
         var mainFile = srcFolder!.Children.FirstOrDefault(c => c.Name == "main.cs");
@@ -497,12 +497,12 @@ public class EditorTabTests : MainWindowTestBase
     public async Task MainWindow_Should_Reuse_Existing_Tab_When_Same_File_Opened_Multiple_Times()
     {
         var window = CreateMainWindowWithNestedStructure();
-        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
+        var (viewModel, fileExplorerViewModel) = await SetupWindowAndWaitForLoadAsync(window);
 
         // Expand the root to get the README.md file
-        await ExpandFolderAndWaitAsync(viewModel.RootItem!);
+        await ExpandFolderAndWaitAsync(fileExplorerViewModel.RootItem!);
 
-        var readmeFile = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "README.md");
+        var readmeFile = fileExplorerViewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "README.md");
         Assert.That(readmeFile, Is.Not.Null, "README.md file should exist");
 
         // Initially no tabs should be open
@@ -581,7 +581,7 @@ public class EditorTabTests : MainWindowTestBase
     public async Task MainWindow_Should_Create_Separate_Tabs_For_Different_Files()
     {
         var window = CreateMainWindowWithNestedStructure();
-        var viewModel = await SetupWindowAndWaitForLoadAsync(window);
+        var (viewModel, fileExplorerViewModel) = await SetupWindowAndWaitForLoadAsync(window);
 
         // Open first file
         await viewModel.EditorTabBar.OpenFileAsync("/test/path/README.md");
@@ -595,8 +595,8 @@ public class EditorTabTests : MainWindowTestBase
             // Should have two tabs for different files
             Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(2), "Should have two tabs for different files");
             
-            var readmeTab = viewModel.EditorTabBar.EditorTabs.FirstOrDefault(t => t.FilePath.Contains("README.md"));
-            var differentTab = viewModel.EditorTabBar.EditorTabs.FirstOrDefault(t => t.FilePath.Contains("different-file.md"));
+            var readmeTab = viewModel.EditorTabBar.EditorTabs.FirstOrDefault(t => t.FilePath!.Contains("README.md"));
+            var differentTab = viewModel.EditorTabBar.EditorTabs.FirstOrDefault(t => t.FilePath!.Contains("different-file.md"));
             
             Assert.That(readmeTab, Is.Not.Null, "README tab should exist");
             Assert.That(differentTab, Is.Not.Null, "Different file tab should exist");
@@ -612,7 +612,7 @@ public class EditorTabTests : MainWindowTestBase
     {
         // Arrange
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
-        var viewModel = new MainWindowViewModel(_vmLogger, _options, _fileService, _editorStateService, new EditorTabBarViewModel(_tabBarLogger, _fileService, _editorStateService), new EditorContentViewModel(_contentLogger, _editorStateService, _options, serviceProvider, _markdownCombinationService, _markdownFileCollectorService), _logTransitionService, hotkeyService);
+        var viewModel = new MainWindowViewModel(_vmLogger, _options, _editorStateService, new EditorTabBarViewModel(_tabBarLogger, _fileService, _editorStateService), new EditorContentViewModel(_contentLogger, _editorStateService, _options, serviceProvider, _markdownCombinationService, _markdownFileCollectorService), _logTransitionService, hotkeyService);
         
         // Open settings tab first
         viewModel.EditorTabBar.OpenSettingsTab();
@@ -648,7 +648,7 @@ public class EditorTabTests : MainWindowTestBase
     {
         // Arrange
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
-        var viewModel = new MainWindowViewModel(_vmLogger, _options, _fileService, _editorStateService, new EditorTabBarViewModel(_tabBarLogger, _fileService, _editorStateService), new EditorContentViewModel(_contentLogger, _editorStateService, _options, serviceProvider, _markdownCombinationService, _markdownFileCollectorService), _logTransitionService, hotkeyService);
+        var viewModel = new MainWindowViewModel(_vmLogger, _options, _editorStateService, new EditorTabBarViewModel(_tabBarLogger, _fileService, _editorStateService), new EditorContentViewModel(_contentLogger, _editorStateService, _options, serviceProvider, _markdownCombinationService, _markdownFileCollectorService), _logTransitionService, hotkeyService);
         
         const string testFilePath = "/test/file.md";
         
