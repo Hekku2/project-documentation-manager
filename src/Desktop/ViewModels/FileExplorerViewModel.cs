@@ -106,5 +106,21 @@ public class FileExplorerViewModel : ViewModelBase, IDisposable
         {
             FileSystemItemViewModel.FileSelected -= OnFileSelected;
         }
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                FileSystemItemViewModel.FileSelected -= OnFileSelected;
+                // Dispose managed resources here if needed
+            }
+            // Free unmanaged resources here if any
+            _disposed = true;
+        }
+    }
+    ~FileExplorerViewModel()
+    {
+        Dispose(false);
     }
 }

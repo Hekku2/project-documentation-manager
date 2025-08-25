@@ -51,7 +51,7 @@
             </Border>
             
             <!-- Splitter -->
-            <GridSplitter Name="MainVerticalSplitter" Grid.Column="1" Background="#3E3E42" HorizontalAlignment="Stretch" ResizeDirection="Columns" />
+            <GridSplitter Name="MainVerticalSplitter" Grid.Column="1" Background="#3E3E42" HorizontalAlignment="Stretch" ResizeBehavior="PreviousAndNext" />
             
             <!-- Editor Area -->
             <Border Grid.Column="2" Background="#1E1E1E">
