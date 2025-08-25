@@ -73,7 +73,7 @@ class Program
                 services.AddSingleton<Desktop.ViewModels.MainWindowViewModel>();
                 services.AddSingleton<Desktop.ViewModels.EditorTabBarViewModel>();
                 services.AddSingleton<Desktop.ViewModels.EditorContentViewModel>();
-                services.AddSingleton<Desktop.ViewModels.BuildConfirmationDialogViewModel>();
+                services.AddTransient<Desktop.ViewModels.BuildConfirmationDialogViewModel>();
                 
                 // Register services here
                 services.AddSingleton<Desktop.Views.MainWindow>();
@@ -95,9 +95,9 @@ class Program
                 services.AddSingleton<Desktop.Services.IHotkeyService, Desktop.Services.HotkeyService>();
                 
                 // Register business services
-                services.AddSingleton<Business.Services.IMarkdownCombinationService, Business.Services.MarkdownCombinationService>();
-                services.AddSingleton<Business.Services.IMarkdownDocumentFileWriterService, Business.Services.MarkdownDocumentFileWriterService>();
-                services.AddSingleton<Business.Services.IMarkdownFileCollectorService, Business.Services.MarkdownFileCollectorService>();
+                services.AddTransient<Business.Services.IMarkdownCombinationService, Business.Services.MarkdownCombinationService>();
+                services.AddTransient<Business.Services.IMarkdownDocumentFileWriterService, Business.Services.MarkdownDocumentFileWriterService>();
+                services.AddTransient<Business.Services.IMarkdownFileCollectorService, Business.Services.MarkdownFileCollectorService>();
             });
 
     // Avalonia configuration, don't remove; also used by visual designer.
