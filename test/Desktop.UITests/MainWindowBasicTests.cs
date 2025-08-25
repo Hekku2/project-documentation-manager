@@ -1,0 +1,76 @@
+using Avalonia.Controls;
+using Avalonia.Headless.NUnit;
+using Desktop.Views;
+using Desktop.ViewModels;
+using Avalonia.VisualTree;
+using System.Linq;
+
+namespace Desktop.UITests;
+
+[TestFixture]
+public class MainWindowBasicTests : MainWindowTestBase
+{
+    [AvaloniaTest]
+    public void MainWindow_Should_Open()
+    {
+        var window = CreateMainWindow();
+        window.Show();
+        Assert.That(window, Is.Not.Null);
+        Assert.That(window.Title, Is.EqualTo("Project Documentation Manager"));
+    }
+
+    [AvaloniaTest]
+    public void MainWindow_Should_Have_Menu_Bar_With_File_And_Build_Menus()
+    {
+        var window = CreateMainWindow();
+        window.Show();
+
+        var menu = window.FindControl<Menu>("MainMenu");
+        Assert.That(menu, Is.Not.Null, "Main menu not found");
+        
+        // Verify the menu structure contains File and Build menus
+        Assert.That(menu.Items.Count, Is.EqualTo(3), "Menu should have three top-level items (File, View, and Build)");
+    }
+
+    [AvaloniaTest]
+    public void MainWindow_Should_Have_File_Explorer()
+    {
+        var window = CreateMainWindow();
+        window.Show();
+
+        // Find TreeView by traversing the visual tree
+        var treeViews = window.GetVisualDescendants().OfType<TreeView>().ToList();
+        Assert.That(treeViews.Count, Is.GreaterThan(0), "File explorer TreeView not found");
+    }
+
+    [AvaloniaTest]
+    public void MainWindow_Should_Have_Document_Editor()
+    {
+        var window = CreateMainWindow();
+        window.Show();
+
+        var documentEditor = window.FindControl<TextBox>("DocumentEditor");
+        Assert.Multiple(() =>
+        {
+            Assert.That(documentEditor, Is.Not.Null, "Document editor not found");
+            Assert.That(documentEditor!.AcceptsReturn, Is.True, "Editor should accept return");
+            Assert.That(documentEditor.AcceptsTab, Is.True, "Editor should accept tab");
+        });
+    }
+
+    [AvaloniaTest]
+    public void MainWindow_Should_Have_Tab_System()
+    {
+        var window = CreateMainWindow();
+        window.Show();
+
+        // Check that the tab system exists (ItemsControl for tabs)
+        var tabContainer = window.GetVisualDescendants().OfType<ItemsControl>()
+            .FirstOrDefault(ic => ic.ItemsSource != null);
+        Assert.That(tabContainer, Is.Not.Null, "Tab container not found");
+
+        // Check that the main window has EditorTabs collection
+        var viewModel = window.DataContext as MainWindowViewModel;
+        Assert.That(viewModel?.EditorTabBar.EditorTabs, Is.Not.Null, "EditorTabs collection not found");
+    }
+}
