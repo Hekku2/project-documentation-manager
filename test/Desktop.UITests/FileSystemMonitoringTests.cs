@@ -1,6 +1,4 @@
-using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
-using NUnit.Framework;
 using Desktop.Views;
 using Desktop.ViewModels;
 using Microsoft.Extensions.Logging;
@@ -8,12 +6,7 @@ using Microsoft.Extensions.Options;
 using Desktop.Configuration;
 using Desktop.Services;
 using Desktop.Models;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Linq;
 using NSubstitute;
-using System;
-using Microsoft.Extensions.DependencyInjection;
 using Business.Services;
 
 namespace Desktop.UITests;
@@ -41,7 +34,7 @@ public class FileSystemMonitoringTests
         ]
     };
 
-    private static (MainWindow window, IFileService fileService, MainWindowViewModel viewModel) CreateMainWindowWithMonitoring()
+    private static (MainWindow window, IFileService fileService, MainWindowViewModel viewModel, FileExplorerViewModel fileExplorerViewModel) CreateMainWindowWithMonitoring()
     {
         var vmLogger = new LoggerFactory().CreateLogger<MainWindowViewModel>();
         var tabBarLogger = new LoggerFactory().CreateLogger<EditorTabBarViewModel>();
@@ -66,16 +59,17 @@ public class FileSystemMonitoringTests
         
         var logTransitionService = Substitute.For<Desktop.Logging.ILogTransitionService>();
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
-        var viewModel = new MainWindowViewModel(vmLogger, options, fileService, editorStateService, editorTabBarViewModel, editorContentViewModel, logTransitionService, hotkeyService);
-        var window = new MainWindow(viewModel);
+        var fileExplorerViewModel = new FileExplorerViewModel(new LoggerFactory().CreateLogger<FileExplorerViewModel>(), fileService);
+        var viewModel = new MainWindowViewModel(vmLogger, options, editorStateService, editorTabBarViewModel, editorContentViewModel, logTransitionService, hotkeyService);
+        var window = new MainWindow(viewModel, fileExplorerViewModel);
         
-        return (window, fileService, viewModel);
+        return (window, fileService, viewModel, fileExplorerViewModel);
     }
 
     [AvaloniaTest]
     public async Task FileService_Should_Start_Monitoring_When_File_Structure_Loads()
     {
-        var (window, fileService, viewModel) = CreateMainWindowWithMonitoring();
+        var (window, fileService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
 
         // Wait for file structure to load
@@ -83,7 +77,7 @@ public class FileSystemMonitoringTests
         
         var maxWait = 50;
         var waitCount = 0;
-        while (viewModel.RootItem == null && waitCount < maxWait)
+        while (fileExplorerViewModel.RootItem == null && waitCount < maxWait)
         {
             await Task.Delay(100);
             waitCount++;
@@ -96,7 +90,7 @@ public class FileSystemMonitoringTests
     [AvaloniaTest]
     public async Task FileSystemItemViewModel_Should_Handle_File_Created_Event()
     {
-        var (window, fileService, viewModel) = CreateMainWindowWithMonitoring();
+        var (window, fileService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
 
         // Wait for file structure to load
@@ -104,16 +98,16 @@ public class FileSystemMonitoringTests
         
         var maxWait = 50;
         var waitCount = 0;
-        while (viewModel.RootItem == null && waitCount < maxWait)
+        while (fileExplorerViewModel.RootItem == null && waitCount < maxWait)
         {
             await Task.Delay(100);
             waitCount++;
         }
 
-        Assert.That(viewModel.RootItem, Is.Not.Null, "Root item should be loaded");
+        Assert.That(fileExplorerViewModel.RootItem, Is.Not.Null, "Root item should be loaded");
 
         // Get the src folder and expand it
-        var srcFolder = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
+        var srcFolder = fileExplorerViewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
         Assert.That(srcFolder, Is.Not.Null, "src folder should exist");
         
         srcFolder!.IsExpanded = true;
@@ -150,7 +144,7 @@ public class FileSystemMonitoringTests
     [AvaloniaTest]
     public async Task FileSystemItemViewModel_Should_Handle_Directory_Created_Event()
     {
-        var (window, fileService, viewModel) = CreateMainWindowWithMonitoring();
+        var (window, fileService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
 
         // Wait for file structure to load
@@ -158,16 +152,16 @@ public class FileSystemMonitoringTests
         
         var maxWait = 50;
         var waitCount = 0;
-        while (viewModel.RootItem == null && waitCount < maxWait)
+        while (fileExplorerViewModel.RootItem == null && waitCount < maxWait)
         {
             await Task.Delay(100);
             waitCount++;
         }
 
-        Assert.That(viewModel.RootItem, Is.Not.Null, "Root item should be loaded");
+        Assert.That(fileExplorerViewModel.RootItem, Is.Not.Null, "Root item should be loaded");
 
         // Initial state: root should have 2 children (src, README.md)
-        Assert.That(viewModel.RootItem!.Children.Count, Is.EqualTo(2), "root should initially have 2 children");
+        Assert.That(fileExplorerViewModel.RootItem!.Children.Count, Is.EqualTo(2), "root should initially have 2 children");
 
         // Simulate directory created event
         var eventArgs = new FileSystemChangedEventArgs
@@ -185,14 +179,14 @@ public class FileSystemMonitoringTests
         // Verify new directory was added
         Assert.Multiple(() =>
         {
-            Assert.That(viewModel.RootItem.Children.Count, Is.EqualTo(3), "root should now have 3 children");
-            var newDir = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "docs");
+            Assert.That(fileExplorerViewModel.RootItem.Children.Count, Is.EqualTo(3), "root should now have 3 children");
+            var newDir = fileExplorerViewModel.RootItem.Children.FirstOrDefault(c => c.Name == "docs");
             Assert.That(newDir, Is.Not.Null, "docs directory should be added");
             Assert.That(newDir!.IsDirectory, Is.True, "docs should be a directory");
             Assert.That(newDir.FullPath, Is.EqualTo("/test/path/docs"), "docs should have correct path");
             
             // Verify sorting: directories should come first
-            var firstChild = viewModel.RootItem.Children.First();
+            var firstChild = fileExplorerViewModel.RootItem.Children.First();
             Assert.That(firstChild.Name, Is.EqualTo("docs"), "docs should be sorted first (directories first)");
         });
     }
@@ -200,7 +194,7 @@ public class FileSystemMonitoringTests
     [AvaloniaTest]
     public async Task FileSystemItemViewModel_Should_Handle_File_Deleted_Event()
     {
-        var (window, fileService, viewModel) = CreateMainWindowWithMonitoring();
+        var (window, fileService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
 
         // Wait for file structure to load
@@ -208,18 +202,18 @@ public class FileSystemMonitoringTests
         
         var maxWait = 50;
         var waitCount = 0;
-        while (viewModel.RootItem == null && waitCount < maxWait)
+        while (fileExplorerViewModel.RootItem == null && waitCount < maxWait)
         {
             await Task.Delay(100);
             waitCount++;
         }
 
-        Assert.That(viewModel.RootItem, Is.Not.Null, "Root item should be loaded");
+        Assert.That(fileExplorerViewModel.RootItem, Is.Not.Null, "Root item should be loaded");
 
         // Initial state: root should have README.md
-        var readmeFile = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "README.md");
+        var readmeFile = fileExplorerViewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "README.md");
         Assert.That(readmeFile, Is.Not.Null, "README.md should exist initially");
-        Assert.That(viewModel.RootItem.Children.Count, Is.EqualTo(2), "root should initially have 2 children");
+        Assert.That(fileExplorerViewModel.RootItem.Children.Count, Is.EqualTo(2), "root should initially have 2 children");
 
         // Simulate file deleted event
         var eventArgs = new FileSystemChangedEventArgs
@@ -237,12 +231,12 @@ public class FileSystemMonitoringTests
         // Verify file was removed
         Assert.Multiple(() =>
         {
-            Assert.That(viewModel.RootItem.Children.Count, Is.EqualTo(1), "root should now have 1 child");
-            var remainingReadme = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "README.md");
+            Assert.That(fileExplorerViewModel.RootItem.Children.Count, Is.EqualTo(1), "root should now have 1 child");
+            var remainingReadme = fileExplorerViewModel.RootItem.Children.FirstOrDefault(c => c.Name == "README.md");
             Assert.That(remainingReadme, Is.Null, "README.md should be removed");
             
             // Verify src folder still exists
-            var srcFolder = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "src");
+            var srcFolder = fileExplorerViewModel.RootItem.Children.FirstOrDefault(c => c.Name == "src");
             Assert.That(srcFolder, Is.Not.Null, "src folder should still exist");
         });
     }
@@ -250,7 +244,7 @@ public class FileSystemMonitoringTests
     [AvaloniaTest]
     public async Task FileSystemItemViewModel_Should_Handle_File_Renamed_Event()
     {
-        var (window, fileService, viewModel) = CreateMainWindowWithMonitoring();
+        var (window, fileService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
 
         // Wait for file structure to load
@@ -258,18 +252,18 @@ public class FileSystemMonitoringTests
         
         var maxWait = 50;
         var waitCount = 0;
-        while (viewModel.RootItem == null && waitCount < maxWait)
+        while (fileExplorerViewModel.RootItem == null && waitCount < maxWait)
         {
             await Task.Delay(100);
             waitCount++;
         }
 
-        Assert.That(viewModel.RootItem, Is.Not.Null, "Root item should be loaded");
+        Assert.That(fileExplorerViewModel.RootItem, Is.Not.Null, "Root item should be loaded");
 
         // Initial state: root should have README.md
-        var readmeFile = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "README.md");
+        var readmeFile = fileExplorerViewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "README.md");
         Assert.That(readmeFile, Is.Not.Null, "README.md should exist initially");
-        Assert.That(viewModel.RootItem.Children.Count, Is.EqualTo(2), "root should initially have 2 children");
+        Assert.That(fileExplorerViewModel.RootItem.Children.Count, Is.EqualTo(2), "root should initially have 2 children");
 
         // Simulate file renamed event
         var eventArgs = new FileSystemChangedEventArgs
@@ -288,12 +282,12 @@ public class FileSystemMonitoringTests
         // Verify file was renamed (old removed, new added)
         Assert.Multiple(() =>
         {
-            Assert.That(viewModel.RootItem.Children.Count, Is.EqualTo(2), "root should still have 2 children");
+            Assert.That(fileExplorerViewModel.RootItem.Children.Count, Is.EqualTo(2), "root should still have 2 children");
             
-            var oldFile = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "README.md");
+            var oldFile = fileExplorerViewModel.RootItem.Children.FirstOrDefault(c => c.Name == "README.md");
             Assert.That(oldFile, Is.Null, "README.md should be removed");
             
-            var newFile = viewModel.RootItem.Children.FirstOrDefault(c => c.Name == "CHANGELOG.md");
+            var newFile = fileExplorerViewModel.RootItem.Children.FirstOrDefault(c => c.Name == "CHANGELOG.md");
             Assert.That(newFile, Is.Not.Null, "CHANGELOG.md should be added");
             Assert.That(newFile!.IsDirectory, Is.False, "CHANGELOG.md should be a file");
             Assert.That(newFile.FullPath, Is.EqualTo("/test/path/CHANGELOG.md"), "CHANGELOG.md should have correct path");
@@ -303,7 +297,7 @@ public class FileSystemMonitoringTests
     [AvaloniaTest]
     public async Task FileSystemItemViewModel_Should_Only_Update_Expanded_Folders()
     {
-        var (window, fileService, viewModel) = CreateMainWindowWithMonitoring();
+        var (window, fileService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
 
         // Wait for file structure to load
@@ -311,16 +305,16 @@ public class FileSystemMonitoringTests
         
         var maxWait = 50;
         var waitCount = 0;
-        while (viewModel.RootItem == null && waitCount < maxWait)
+        while (fileExplorerViewModel.RootItem == null && waitCount < maxWait)
         {
             await Task.Delay(100);
             waitCount++;
         }
 
-        Assert.That(viewModel.RootItem, Is.Not.Null, "Root item should be loaded");
+        Assert.That(fileExplorerViewModel.RootItem, Is.Not.Null, "Root item should be loaded");
 
         // Get src folder but DON'T expand it
-        var srcFolder = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
+        var srcFolder = fileExplorerViewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
         Assert.That(srcFolder, Is.Not.Null, "src folder should exist");
         Assert.That(srcFolder!.IsExpanded, Is.False, "src folder should not be expanded initially");
 
@@ -363,7 +357,7 @@ public class FileSystemMonitoringTests
     [AvaloniaTest]
     public async Task FileSystemItemViewModel_Should_Sort_New_Items_Correctly()
     {
-        var (window, fileService, viewModel) = CreateMainWindowWithMonitoring();
+        var (window, fileService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
 
         // Wait for file structure to load
@@ -371,18 +365,18 @@ public class FileSystemMonitoringTests
         
         var maxWait = 50;
         var waitCount = 0;
-        while (viewModel.RootItem == null && waitCount < maxWait)
+        while (fileExplorerViewModel.RootItem == null && waitCount < maxWait)
         {
             await Task.Delay(100);
             waitCount++;
         }
 
-        Assert.That(viewModel.RootItem, Is.Not.Null, "Root item should be loaded");
+        Assert.That(fileExplorerViewModel.RootItem, Is.Not.Null, "Root item should be loaded");
 
         // Initial state: root has [src (dir), README.md (file)]
-        Assert.That(viewModel.RootItem!.Children.Count, Is.EqualTo(2), "root should initially have 2 children");
-        Assert.That(viewModel.RootItem.Children[0].Name, Is.EqualTo("src"), "src should be first (directory)");
-        Assert.That(viewModel.RootItem.Children[1].Name, Is.EqualTo("README.md"), "README.md should be second (file)");
+        Assert.That(fileExplorerViewModel.RootItem!.Children.Count, Is.EqualTo(2), "root should initially have 2 children");
+        Assert.That(fileExplorerViewModel.RootItem.Children[0].Name, Is.EqualTo("src"), "src should be first (directory)");
+        Assert.That(fileExplorerViewModel.RootItem.Children[1].Name, Is.EqualTo("README.md"), "README.md should be second (file)");
 
         // Add a new directory that should be sorted first alphabetically among directories
         var newDirEvent = new FileSystemChangedEventArgs
@@ -409,28 +403,28 @@ public class FileSystemMonitoringTests
         // Verify sorting: directories first (alphabetical), then files (alphabetical)
         Assert.Multiple(() =>
         {
-            Assert.That(viewModel.RootItem.Children.Count, Is.EqualTo(4), "root should have 4 children");
+            Assert.That(fileExplorerViewModel.RootItem.Children.Count, Is.EqualTo(4), "root should have 4 children");
             
             // Directories first, alphabetically
-            Assert.That(viewModel.RootItem.Children[0].Name, Is.EqualTo("docs"), "docs should be first (dir, alphabetical)");
-            Assert.That(viewModel.RootItem.Children[0].IsDirectory, Is.True, "first item should be directory");
+            Assert.That(fileExplorerViewModel.RootItem.Children[0].Name, Is.EqualTo("docs"), "docs should be first (dir, alphabetical)");
+            Assert.That(fileExplorerViewModel.RootItem.Children[0].IsDirectory, Is.True, "first item should be directory");
             
-            Assert.That(viewModel.RootItem.Children[1].Name, Is.EqualTo("src"), "src should be second (dir, alphabetical)");
-            Assert.That(viewModel.RootItem.Children[1].IsDirectory, Is.True, "second item should be directory");
+            Assert.That(fileExplorerViewModel.RootItem.Children[1].Name, Is.EqualTo("src"), "src should be second (dir, alphabetical)");
+            Assert.That(fileExplorerViewModel.RootItem.Children[1].IsDirectory, Is.True, "second item should be directory");
             
             // Files second, alphabetically
-            Assert.That(viewModel.RootItem.Children[2].Name, Is.EqualTo("CHANGELOG.md"), "CHANGELOG.md should be third (file, alphabetical)");
-            Assert.That(viewModel.RootItem.Children[2].IsDirectory, Is.False, "third item should be file");
+            Assert.That(fileExplorerViewModel.RootItem.Children[2].Name, Is.EqualTo("CHANGELOG.md"), "CHANGELOG.md should be third (file, alphabetical)");
+            Assert.That(fileExplorerViewModel.RootItem.Children[2].IsDirectory, Is.False, "third item should be file");
             
-            Assert.That(viewModel.RootItem.Children[3].Name, Is.EqualTo("README.md"), "README.md should be fourth (file, alphabetical)");
-            Assert.That(viewModel.RootItem.Children[3].IsDirectory, Is.False, "fourth item should be file");
+            Assert.That(fileExplorerViewModel.RootItem.Children[3].Name, Is.EqualTo("README.md"), "README.md should be fourth (file, alphabetical)");
+            Assert.That(fileExplorerViewModel.RootItem.Children[3].IsDirectory, Is.False, "fourth item should be file");
         });
     }
 
     [AvaloniaTest]
     public async Task FileSystemItemViewModel_Should_Ignore_Changes_Outside_Monitored_Path()
     {
-        var (window, fileService, viewModel) = CreateMainWindowWithMonitoring();
+        var (window, fileService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
 
         // Wait for file structure to load
@@ -438,16 +432,16 @@ public class FileSystemMonitoringTests
         
         var maxWait = 50;
         var waitCount = 0;
-        while (viewModel.RootItem == null && waitCount < maxWait)
+        while (fileExplorerViewModel.RootItem == null && waitCount < maxWait)
         {
             await Task.Delay(100);
             waitCount++;
         }
 
-        Assert.That(viewModel.RootItem, Is.Not.Null, "Root item should be loaded");
+        Assert.That(fileExplorerViewModel.RootItem, Is.Not.Null, "Root item should be loaded");
 
         // Initial state: root should have 2 children
-        var initialCount = viewModel.RootItem!.Children.Count;
+        var initialCount = fileExplorerViewModel.RootItem!.Children.Count;
         Assert.That(initialCount, Is.EqualTo(2), "root should initially have 2 children");
 
         // Simulate file created outside of the monitored path
@@ -464,7 +458,7 @@ public class FileSystemMonitoringTests
         await Task.Delay(500);
 
         // Verify no changes occurred
-        Assert.That(viewModel.RootItem.Children.Count, Is.EqualTo(initialCount), 
+        Assert.That(fileExplorerViewModel.RootItem.Children.Count, Is.EqualTo(initialCount), 
             "root should still have same number of children (change was outside monitored path)");
     }
 }

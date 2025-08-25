@@ -2,7 +2,6 @@
 using System;
 using Avalonia.Controls;
 using Desktop.ViewModels;
-using Desktop.Views;
 using Desktop.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -12,15 +11,29 @@ namespace Desktop.Views;
 
 public partial class MainWindow : Window
 {
+    private readonly FileExplorerViewModel? _fileExplorerViewModel;
+
     // Parameterless constructor for XAML designer support
-    public MainWindow() : this(null!)
+    public MainWindow() : this(null!, null!)
     {
     }
 
-    public MainWindow(MainWindowViewModel viewModel)
+    public MainWindow(MainWindowViewModel viewModel, FileExplorerViewModel fileExplorerViewModel)
     {
+        _fileExplorerViewModel = fileExplorerViewModel;
         DataContext = viewModel;
         InitializeComponent();
+        
+        // Create and add the FileExplorer UserControl
+        var fileExplorerControl = new FileExplorerUserControl(fileExplorerViewModel);
+        var fileExplorerBorder = this.FindControl<Border>("FileExplorerBorder");
+        if (fileExplorerBorder != null)
+        {
+            fileExplorerBorder.Child = fileExplorerControl;
+        }
+        
+        // Wire up file selection from file explorer to main view model
+        fileExplorerViewModel.FileSelected += async (sender, filePath) => await viewModel.EditorTabBar.OpenFileAsync(filePath);
         
         // Subscribe to exit request
         viewModel.ExitRequested += OnExitRequested;
@@ -46,12 +59,15 @@ public partial class MainWindow : Window
             logger.LogInformation("Historical logs from application startup have been loaded.");
         }
         
-        // Initialize the view model after UI is fully loaded
+        // Initialize the file explorer view model
+        if (_fileExplorerViewModel != null)
+        {
+            await _fileExplorerViewModel.InitializeAsync();
+        }
+        
+        // Apply hotkeys to this window
         if (DataContext is MainWindowViewModel viewModel)
         {
-            await viewModel.InitializeAsync();
-            
-            // Apply hotkeys to this window
             viewModel.ApplyHotkeysToWindow(this);
         }
     }

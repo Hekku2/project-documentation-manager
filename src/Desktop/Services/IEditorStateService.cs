@@ -11,8 +11,8 @@ public interface IEditorStateService
     string? ActiveFileName { get; }
     ValidationResult? CurrentValidationResult { get; set; }
     
-    event EventHandler<EditorTabViewModel>? ActiveTabChanged;
-    event EventHandler<ValidationResult>? ValidationResultChanged;
+    event EventHandler<EditorTabViewModel?>? ActiveTabChanged;
+    event EventHandler<ValidationResult?>? ValidationResultChanged;
     
     void SetActiveTab(EditorTabViewModel? tab);
 }

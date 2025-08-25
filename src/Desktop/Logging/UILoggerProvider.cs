@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Logging;
-using Avalonia.Threading;
 using Avalonia.Controls;
 using System;
 

@@ -8,7 +8,6 @@ using Desktop.Models;
 using Desktop.Services;
 using Business.Services;
 using Business.Models;
-using System.Threading.Tasks;
 using System.Linq;
 
 namespace Desktop.ViewModels;

@@ -46,8 +46,8 @@ public class EditorStateService : IEditorStateService
         }
     }
 
-    public event EventHandler<EditorTabViewModel>? ActiveTabChanged;
-    public event EventHandler<ValidationResult>? ValidationResultChanged;
+    public event EventHandler<EditorTabViewModel?>? ActiveTabChanged;
+    public event EventHandler<ValidationResult?>? ValidationResultChanged;
 
     public void SetActiveTab(EditorTabViewModel? tab)
     {

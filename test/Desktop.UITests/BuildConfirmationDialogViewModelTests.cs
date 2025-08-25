@@ -1,20 +1,15 @@
 using Avalonia.Headless.NUnit;
-using NUnit.Framework;
 using Desktop.ViewModels;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Desktop.Configuration;
 using Business.Services;
 using Business.Models;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Linq;
-using System.IO;
 using NSubstitute;
 
 namespace Desktop.UITests;
 
-[Parallelizable(ParallelScope.Children)]
+[NonParallelizable]
 public class BuildConfirmationDialogViewModelTests
 {
     private IOptions<ApplicationOptions> _options = null!;

@@ -3,8 +3,6 @@ using Avalonia.Input;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows.Input;
 using Desktop.Models;
 using Microsoft.Extensions.Logging;

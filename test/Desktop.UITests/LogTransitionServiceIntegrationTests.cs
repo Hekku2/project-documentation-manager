@@ -1,8 +1,4 @@
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using NUnit.Framework;
 using NSubstitute;
 using Desktop.Logging;
 using Desktop.ViewModels;
@@ -41,7 +37,6 @@ public class LogTransitionServiceIntegrationTests
         var viewModel = new MainWindowViewModel(
             logger, 
             options, 
-            fileService, 
             editorStateService,
             editorTabBarViewModel,
             editorContentViewModel,

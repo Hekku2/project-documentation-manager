@@ -1,5 +1,3 @@
-using System.Linq;
-using System.Threading.Tasks;
 using Avalonia.Headless.NUnit;
 using Desktop.Models;
 using Desktop.ViewModels;
@@ -9,7 +7,6 @@ using Desktop.Services;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
-using NUnit.Framework;
 using Desktop.Configuration;
 
 namespace Desktop.UITests;
@@ -18,7 +15,7 @@ namespace Desktop.UITests;
 public class ErrorNavigationTests
 {
     [AvaloniaTest]
-    public async Task UpdateErrorPanelWithValidationResults_CreatesErrorEntriesWithNavigation()
+    public void UpdateErrorPanelWithValidationResults_CreatesErrorEntriesWithNavigation()
     {
         // Arrange
         var logger = Substitute.For<ILogger<MainWindowViewModel>>();
@@ -47,7 +44,6 @@ public class ErrorNavigationTests
         var viewModel = new MainWindowViewModel(
             logger, 
             options, 
-            fileService, 
             editorStateService,
             editorTabBarViewModel,
             editorContentViewModel,
@@ -116,7 +112,7 @@ public class ErrorNavigationTests
     }
 
     [AvaloniaTest]
-    public async Task UpdateErrorPanelWithValidationResults_FallsBackToDirectivePath_WhenSourceFileIsNull()
+    public void UpdateErrorPanelWithValidationResults_FallsBackToDirectivePath_WhenSourceFileIsNull()
     {
         // Arrange
         var logger = Substitute.For<ILogger<MainWindowViewModel>>();
@@ -145,7 +141,6 @@ public class ErrorNavigationTests
         var viewModel = new MainWindowViewModel(
             logger, 
             options, 
-            fileService, 
             editorStateService,
             editorTabBarViewModel,
             editorContentViewModel,

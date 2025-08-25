@@ -46,86 +46,12 @@
             </Grid.ColumnDefinitions>
             
             <!-- Sidebar/Explorer -->
-            <Border Grid.Column="0" Background="#252526" BorderBrush="#3E3E42" BorderThickness="0,0,1,0">
-                <DockPanel Margin="10">
-                    <TextBlock DockPanel.Dock="Top" 
-                               Text="EXPLORER" 
-                               Foreground="#CCCCCC" 
-                               FontSize="11" 
-                               FontWeight="Bold" 
-                               Margin="0,0,0,10" />
-                    
-                    <!-- Loading indicator -->
-                    <TextBlock DockPanel.Dock="Top"
-                               Text="Loading..." 
-                               Foreground="#CCCCCC" 
-                               IsVisible="{Binding IsLoading}" 
-                               HorizontalAlignment="Center" 
-                               Margin="0,20" />
-                    
-                    <!-- File Explorer TreeView - fills remaining space -->
-                    <TreeView ItemsSource="{Binding FileSystemItems}" 
-                              Background="Transparent" 
-                              Foreground="#CCCCCC"
-                              IsVisible="{Binding !IsLoading}"
-                              VerticalAlignment="Stretch"
-                              HorizontalAlignment="Stretch">
-                        <TreeView.ItemTemplate>
-                            <TreeDataTemplate ItemsSource="{Binding Children}" x:DataType="vm:FileSystemItemViewModel">
-                                <StackPanel Orientation="Horizontal">
-                                    <!-- Icon area - only one icon visible at a time -->
-                                    <!-- Loading indicator takes priority -->
-                                    <Ellipse Width="12" Height="12" 
-                                             Fill="#CCCCCC" 
-                                             Margin="0,0,5,0"
-                                             VerticalAlignment="Top"
-                                             IsVisible="{Binding IsLoading}" />
-                                    
-                                    <!-- Directory Icon - visible when not loading and is directory -->
-                                    <Path Width="20" Height="14" 
-                                          Fill="#CCCCCC" 
-                                          Margin="0,0,5,0"
-                                          VerticalAlignment="Top"
-                                          Data="{StaticResource FolderIcon}">
-                                        <Path.IsVisible>
-                                            <MultiBinding Converter="{x:Static BoolConverters.And}">
-                                                <Binding Path="!IsLoading"/>
-                                                <Binding Path="IsDirectory"/>
-                                            </MultiBinding>
-                                        </Path.IsVisible>
-                                    </Path>
-                                    
-                                    <!-- File Icon - visible when not loading and not directory -->
-                                    <Path Width="20" Height="14" 
-                                          Fill="#CCCCCC" 
-                                          Margin="0,0,5,0"
-                                          VerticalAlignment="Top"
-                                          Data="{StaticResource FileIcon}">
-                                        <Path.IsVisible>
-                                            <MultiBinding Converter="{x:Static BoolConverters.And}">
-                                                <Binding Path="!IsLoading"/>
-                                                <Binding Path="!IsDirectory"/>
-                                            </MultiBinding>
-                                        </Path.IsVisible>
-                                    </Path>
-                                    
-                                    <!-- Item name -->
-                                    <TextBlock Text="{Binding Name}" Foreground="#CCCCCC" VerticalAlignment="Center" Height="14" Margin="0,5,0,0" />
-                                </StackPanel>
-                            </TreeDataTemplate>
-                        </TreeView.ItemTemplate>
-                        <TreeView.Styles>
-                            <Style Selector="TreeViewItem" x:DataType="vm:FileSystemItemViewModel">
-                                <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
-                                <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
-                            </Style>
-                        </TreeView.Styles>
-                    </TreeView>
-                </DockPanel>
+            <Border Name="FileExplorerBorder" Grid.Column="0" Background="#252526" BorderBrush="#3E3E42" BorderThickness="0,0,1,0">
+                <!-- FileExplorerUserControl will be injected here programmatically -->
             </Border>
             
             <!-- Splitter -->
-            <GridSplitter Grid.Column="1" Background="#3E3E42" HorizontalAlignment="Stretch" />
+            <GridSplitter Name="MainVerticalSplitter" Grid.Column="1" Background="#3E3E42" HorizontalAlignment="Stretch" ResizeBehavior="PreviousAndNext" />
             
             <!-- Editor Area -->
             <Border Grid.Column="2" Background="#1E1E1E">

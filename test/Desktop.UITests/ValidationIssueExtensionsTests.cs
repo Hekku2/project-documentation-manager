@@ -1,5 +1,4 @@
 using Business.Models;
-using NUnit.Framework;
 
 namespace Desktop.UITests;
 

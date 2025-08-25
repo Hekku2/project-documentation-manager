@@ -1,10 +1,7 @@
-using System.Collections.Generic;
-using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
 using Business.Models;
 using Desktop.Controls;
-using NUnit.Framework;
 
 namespace Desktop.UITests;
 
