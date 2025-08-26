@@ -20,15 +20,17 @@ public class FileSystemItemViewModel : ViewModelBase
 
         // Instance-level file selected callback
         private readonly Action<string>? _onFileSelected;
+        private readonly Action<string>? _onFilePreview;
 
     private readonly IFileService? _fileService;
 
-    public FileSystemItemViewModel(FileSystemItem item, bool isRoot = false, IFileService? fileService = null, Action<string>? onFileSelected = null)
+    public FileSystemItemViewModel(FileSystemItem item, bool isRoot = false, IFileService? fileService = null, Action<string>? onFileSelected = null, Action<string>? onFilePreview = null)
     {
         Item = item;
         Children = [];
         _fileService = fileService;
         _onFileSelected = onFileSelected;
+        _onFilePreview = onFilePreview;
         
         // Initialize context menu commands
         InitializeCommands();
@@ -36,7 +38,7 @@ public class FileSystemItemViewModel : ViewModelBase
         // For directories, add a placeholder to show the expand icon
         if (item.IsDirectory && item.HasChildren)
         {
-            Children.Add(new FileSystemItemViewModel(new FileSystemItem { Name = "Loading...", FullPath = "" }, false, null, _onFileSelected));
+            Children.Add(new FileSystemItemViewModel(new FileSystemItem { Name = "Loading...", FullPath = "" }, false, null, _onFileSelected, _onFilePreview));
         }
         else if (!item.IsDirectory)
         {
@@ -188,7 +190,7 @@ public class FileSystemItemViewModel : ViewModelBase
             
             if (Item.HasChildren)
             {
-                Children.Add(new FileSystemItemViewModel(new FileSystemItem { Name = "Loading...", FullPath = "" }, false, null, _onFileSelected));
+                Children.Add(new FileSystemItemViewModel(new FileSystemItem { Name = "Loading...", FullPath = "" }, false, null, _onFileSelected, _onFilePreview));
             }
             
             if (IsExpanded)
@@ -200,8 +202,8 @@ public class FileSystemItemViewModel : ViewModelBase
 
     private void ExecuteShowInPreview()
     {
-        // Placeholder implementation - this option doesn't currently do anything
-        // This command is available for .mdext and .mdsrc files
+        // Open the file in preview mode using the callback
+        _onFilePreview?.Invoke(FullPath);
     }
 
     private async Task LoadChildrenAsync()
@@ -218,7 +220,7 @@ public class FileSystemItemViewModel : ViewModelBase
                 var childViewModels = Item.Children
                     .OrderBy(c => !c.IsDirectory)
                     .ThenBy(c => c.Name)
-                    .Select(child => new FileSystemItemViewModel(child, false, _fileService, _onFileSelected))
+                    .Select(child => new FileSystemItemViewModel(child, false, _fileService, _onFileSelected, _onFilePreview))
                     .ToList();
 
                 // Update the UI on the main thread
@@ -357,7 +359,7 @@ public class FileSystemItemViewModel : ViewModelBase
             }
         }
 
-    var newViewModel = new FileSystemItemViewModel(newItem, false, _fileService, _onFileSelected);
+    var newViewModel = new FileSystemItemViewModel(newItem, false, _fileService, _onFileSelected, _onFilePreview);
 
         // Find the correct position to insert (directories first, then alphabetical)
         var insertIndex = 0;

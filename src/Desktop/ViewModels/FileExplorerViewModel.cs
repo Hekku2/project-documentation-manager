@@ -26,6 +26,7 @@ public class FileExplorerViewModel(ILogger<FileExplorerViewModel> logger, IFileS
     }
 
     public event EventHandler<string>? FileSelected;
+    public event EventHandler<string>? FilePreview;
 
     public async Task InitializeAsync()
     {
@@ -53,7 +54,8 @@ public class FileExplorerViewModel(ILogger<FileExplorerViewModel> logger, IFileS
                     fileStructure,
                     isRoot: true,
                     fileService: fileService,
-                    onFileSelected: OnFileSelected // pass instance callback
+                    onFileSelected: OnFileSelected, // pass instance callback
+                    onFilePreview: OnFilePreview    // pass preview callback
                 );
                 RootItem = rootViewModel;
                 
@@ -84,6 +86,12 @@ public class FileExplorerViewModel(ILogger<FileExplorerViewModel> logger, IFileS
     {
         logger.LogInformation("File selected: {FilePath}", filePath);
         FileSelected?.Invoke(this, filePath);
+    }
+
+    private void OnFilePreview(string filePath)
+    {
+        logger.LogInformation("File preview requested: {FilePath}", filePath);
+        FilePreview?.Invoke(this, filePath);
     }
 
     public void Dispose()

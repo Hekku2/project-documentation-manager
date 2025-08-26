@@ -77,6 +77,11 @@
                 <DataTemplate DataType="models:SettingsEditorContentData">
                     <views:SettingsEditorContent DataContext="{Binding SettingsViewModel}" />
                 </DataTemplate>
+                
+                <!-- File Preview Template -->
+                <DataTemplate DataType="models:FilePreviewContentData">
+                    <views:FilePreviewContent />
+                </DataTemplate>
             </ContentControl.DataTemplates>
         </ContentControl>
     </Grid>

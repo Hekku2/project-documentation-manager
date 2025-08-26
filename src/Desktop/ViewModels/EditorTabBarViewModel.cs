@@ -187,6 +187,60 @@ public class EditorTabBarViewModel(
         }
     }
 
+    public async Task OpenFileInPreviewAsync(string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+            return;
+
+        // Normalize the file path for comparison
+        var normalizedFilePath = Path.GetFullPath(filePath);
+        var fileName = Path.GetFileName(normalizedFilePath);
+        var previewTabId = $"preview_{normalizedFilePath.GetHashCode()}";
+
+        // Check if preview tab already exists
+        var existingTab = EditorTabs.FirstOrDefault(t => t.Id == previewTabId);
+        if (existingTab != null)
+        {
+            SetActiveTab(existingTab);
+            return;
+        }
+
+        try
+        {
+            logger.LogDebug("Opening file in preview: {FilePath}", filePath);
+            
+            var content = await fileService.ReadFileContentAsync(filePath);
+            if (content == null)
+            {
+                logger.LogWarning("Failed to read file content for preview: {FilePath}", filePath);
+                return;
+            }
+
+            var tab = new EditorTab
+            {
+                Id = previewTabId,
+                Title = $"Preview: {fileName}",
+                FilePath = normalizedFilePath,
+                Content = content,
+                IsModified = false,
+                IsActive = true,
+                TabType = TabType.Preview
+            };
+
+            var tabViewModel = new EditorTabViewModel(tab);
+            tabViewModel.CloseRequested += OnTabCloseRequested;
+            tabViewModel.SelectRequested += OnTabSelectRequested;
+            EditorTabs.Add(tabViewModel);
+            SetActiveTab(tabViewModel);
+            
+            logger.LogDebug("File opened in preview successfully: {FilePath}", filePath);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error opening file in preview: {FilePath}", filePath);
+        }
+    }
+
     public void OpenSettingsTab()
     {
         // Check if settings tab already exists

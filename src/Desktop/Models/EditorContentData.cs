@@ -21,3 +21,10 @@ public class SettingsEditorContentData : EditorContentData
     public required SettingsContentViewModel SettingsViewModel { get; set; }
     public ApplicationOptions ApplicationOptions => SettingsViewModel.ApplicationOptions;
 }
+
+public class FilePreviewContentData : EditorContentData
+{
+    public required string FilePath { get; set; }
+    public required string FileContent { get; set; }
+    public required string FileName { get; set; }
+}

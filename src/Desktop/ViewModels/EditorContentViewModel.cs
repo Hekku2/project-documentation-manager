@@ -76,8 +76,14 @@ public class EditorContentViewModel : ViewModelBase
                         ApplicationOptions = _applicationOptions
                     }
                 },
+                TabType.Preview => new FilePreviewContentData
+                {
+                    ContentType = EditorContentType.Preview,
+                    FilePath = activeTab.FilePath ?? string.Empty,
+                    FileContent = activeTab.Content ?? string.Empty,
+                    FileName = System.IO.Path.GetFileName(activeTab.FilePath ?? "Unknown")
+                },
                 // Future content types can be added here:
-                // TabType.Preview => new PreviewEditorContentData { ... },
                 // TabType.Welcome => new WelcomeEditorContentData { ... },
                 _ => null
             };
