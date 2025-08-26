@@ -1,10 +1,12 @@
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using Desktop.Models;
 using Desktop.Services;
 using System;
 using System.IO;
+using System.Diagnostics;
 
 namespace Desktop.ViewModels;
 
@@ -27,6 +29,9 @@ public class FileSystemItemViewModel : ViewModelBase
         Children = [];
         _fileService = fileService;
         _onFileSelected = onFileSelected;
+        
+        // Initialize context menu commands
+        InitializeCommands();
         
         // For directories, add a placeholder to show the expand icon
         if (item.IsDirectory && item.HasChildren)
@@ -89,6 +94,140 @@ public class FileSystemItemViewModel : ViewModelBase
             {
                 // File was selected, notify via callback
                 _onFileSelected?.Invoke(FullPath);
+            }
+        }
+    }
+
+    // Context Menu Commands
+    public ICommand OpenCommand { get; private set; } = null!;
+    public ICommand OpenWithCommand { get; private set; } = null!;
+    public ICommand ShowInExplorerCommand { get; private set; } = null!;
+    public ICommand CopyPathCommand { get; private set; } = null!;
+    public ICommand RefreshCommand { get; private set; } = null!;
+
+    private void InitializeCommands()
+    {
+        OpenCommand = new RelayCommand(ExecuteOpen, CanExecuteOpen);
+        OpenWithCommand = new RelayCommand(ExecuteOpenWith, CanExecuteFileCommand);
+        ShowInExplorerCommand = new RelayCommand(ExecuteShowInExplorer, CanExecuteShowInExplorer);
+        CopyPathCommand = new RelayCommand(ExecuteCopyPath, CanExecutePathCommand);
+        RefreshCommand = new RelayCommand(ExecuteRefresh, CanExecuteRefresh);
+    }
+
+    private bool CanExecuteOpen() => !string.IsNullOrEmpty(FullPath);
+    private bool CanExecuteFileCommand() => !IsDirectory && !string.IsNullOrEmpty(FullPath);
+    private bool CanExecuteShowInExplorer() => !string.IsNullOrEmpty(FullPath) && (File.Exists(FullPath) || Directory.Exists(FullPath));
+    private bool CanExecutePathCommand() => !string.IsNullOrEmpty(FullPath);
+    private bool CanExecuteRefresh() => IsDirectory && !string.IsNullOrEmpty(FullPath);
+
+    private void ExecuteOpen()
+    {
+        if (IsDirectory)
+        {
+            // For directories, just expand them
+            IsExpanded = !IsExpanded;
+        }
+        else
+        {
+            // For files, open them in the editor
+            _onFileSelected?.Invoke(FullPath);
+        }
+    }
+
+    private void ExecuteOpenWith()
+    {
+        if (!IsDirectory && File.Exists(FullPath))
+        {
+            try
+            {
+                var psi = new ProcessStartInfo
+                {
+                    FileName = "rundll32.exe",
+                    Arguments = $"shell32.dll,OpenAs_RunDLL {FullPath}",
+                    UseShellExecute = true
+                };
+                Process.Start(psi);
+            }
+            catch
+            {
+                // Fallback to opening with default application
+                ExecuteOpenWithDefault();
+            }
+        }
+    }
+
+    private void ExecuteOpenWithDefault()
+    {
+        if (File.Exists(FullPath))
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo(FullPath) { UseShellExecute = true });
+            }
+            catch
+            {
+                // Ignore if cannot open
+            }
+        }
+    }
+
+    private void ExecuteShowInExplorer()
+    {
+        try
+        {
+            if (File.Exists(FullPath))
+            {
+                // Select the file in Explorer
+                Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{FullPath}\"") { UseShellExecute = true });
+            }
+            else if (Directory.Exists(FullPath))
+            {
+                // Open the directory in Explorer
+                Process.Start(new ProcessStartInfo("explorer.exe", $"\"{FullPath}\"") { UseShellExecute = true });
+            }
+        }
+        catch
+        {
+            // Ignore if cannot open Explorer
+        }
+    }
+
+    private async void ExecuteCopyPath()
+    {
+        try
+        {
+            if (!string.IsNullOrEmpty(FullPath))
+            {
+                // Access clipboard through TopLevel
+                var topLevel = Avalonia.Controls.TopLevel.GetTopLevel(Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop ? desktop.MainWindow : null);
+                if (topLevel?.Clipboard != null)
+                {
+                    await topLevel.Clipboard.SetTextAsync(FullPath);
+                }
+            }
+        }
+        catch
+        {
+            // Ignore if cannot access clipboard
+        }
+    }
+
+    private void ExecuteRefresh()
+    {
+        if (IsDirectory && _childrenLoaded)
+        {
+            // Clear children and reload
+            _childrenLoaded = false;
+            Children.Clear();
+            
+            if (Item.HasChildren)
+            {
+                Children.Add(new FileSystemItemViewModel(new FileSystemItem { Name = "Loading...", FullPath = "" }, false, null, _onFileSelected));
+            }
+            
+            if (IsExpanded)
+            {
+                _ = LoadChildrenAsync();
             }
         }
     }
