@@ -153,18 +153,31 @@ public abstract class MainWindowTestBase
         ]
     };
 
+    protected EditorViewModel CreateEditorViewModel(
+        EditorTabBarViewModel? editorTabBarViewModel = null, 
+        EditorContentViewModel? editorContentViewModel = null,
+        IEditorStateService? editorStateService = null)
+    {
+        editorStateService ??= _editorStateService;
+        editorTabBarViewModel ??= new EditorTabBarViewModel(_tabBarLogger, _fileService, editorStateService);
+        editorContentViewModel ??= new EditorContentViewModel(_contentLogger, editorStateService, _options, serviceProvider, _markdownCombinationService, _markdownFileCollectorService);
+        
+        var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
+        var editorLogger = Substitute.For<ILogger<Desktop.ViewModels.EditorViewModel>>();
+        return new Desktop.ViewModels.EditorViewModel(editorLogger, _options, editorTabBarViewModel, editorContentViewModel, hotkeyService);
+    }
+
     protected MainWindow CreateMainWindow()
     {
         _fileService.GetFileStructureAsync().Returns(Task.FromResult<FileSystemItem?>(CreateSimpleTestStructure()));
         _fileService.GetFileStructureAsync(Arg.Any<string>()).Returns(Task.FromResult<FileSystemItem?>(CreateSimpleTestStructure()));
         
         _editorStateService = new EditorStateService(_stateLogger);
-        var editorTabBarViewModel = new EditorTabBarViewModel(_tabBarLogger, _fileService, _editorStateService);
-        var editorContentViewModel = new EditorContentViewModel(_contentLogger, _editorStateService, _options, serviceProvider, _markdownCombinationService, _markdownFileCollectorService);
+        var editorViewModel = CreateEditorViewModel();
         
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
         var fileExplorerViewModel = new FileExplorerViewModel(Substitute.For<ILogger<FileExplorerViewModel>>(), _fileService);
-        var viewModel = new MainWindowViewModel(_vmLogger, _options, _editorStateService, editorTabBarViewModel, editorContentViewModel, _logTransitionService, hotkeyService);
+        var viewModel = new MainWindowViewModel(_vmLogger, _options, _editorStateService, editorViewModel, _logTransitionService, hotkeyService);
         return new MainWindow(viewModel, fileExplorerViewModel);
     }
 
@@ -174,12 +187,11 @@ public abstract class MainWindowTestBase
         _fileService.GetFileStructureAsync(Arg.Any<string>()).Returns(Task.FromResult<FileSystemItem?>(CreateNestedTestStructure()));
         
         var editorStateService = new EditorStateService(_stateLogger);
-        var editorTabBarViewModel = new EditorTabBarViewModel(_tabBarLogger, _fileService, editorStateService);
-        var editorContentViewModel = new EditorContentViewModel(_contentLogger, editorStateService, _options, serviceProvider, _markdownCombinationService, _markdownFileCollectorService);
+        var editorViewModel = CreateEditorViewModel(editorStateService: editorStateService);
         
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
         var fileExplorerViewModel = new FileExplorerViewModel(Substitute.For<ILogger<FileExplorerViewModel>>(), _fileService);
-        var viewModel = new MainWindowViewModel(_vmLogger, _options, editorStateService, editorTabBarViewModel, editorContentViewModel, _logTransitionService, hotkeyService);
+        var viewModel = new MainWindowViewModel(_vmLogger, _options, editorStateService, editorViewModel, _logTransitionService, hotkeyService);
         return new MainWindow(viewModel, fileExplorerViewModel);
     }
     

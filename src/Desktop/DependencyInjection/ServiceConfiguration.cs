@@ -17,6 +17,7 @@ public static class ServiceConfiguration
         services.AddSingleton<Desktop.ViewModels.MainWindowViewModel>();
         services.AddSingleton<Desktop.ViewModels.EditorTabBarViewModel>();
         services.AddSingleton<Desktop.ViewModels.EditorContentViewModel>();
+        services.AddSingleton<Desktop.ViewModels.EditorViewModel>();
         services.AddSingleton<Desktop.ViewModels.FileExplorerViewModel>();
         services.AddTransient<Desktop.ViewModels.BuildConfirmationDialogViewModel>();
         

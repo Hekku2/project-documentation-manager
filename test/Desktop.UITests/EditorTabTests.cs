@@ -603,7 +603,8 @@ public class EditorTabTests : MainWindowTestBase
     {
         // Arrange
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
-        var viewModel = new MainWindowViewModel(_vmLogger, _options, _editorStateService, new EditorTabBarViewModel(_tabBarLogger, _fileService, _editorStateService), new EditorContentViewModel(_contentLogger, _editorStateService, _options, serviceProvider, _markdownCombinationService, _markdownFileCollectorService), _logTransitionService, hotkeyService);
+        var editorViewModel = CreateEditorViewModel();
+        var viewModel = new MainWindowViewModel(_vmLogger, _options, _editorStateService, editorViewModel, _logTransitionService, hotkeyService);
         
         // Open settings tab first
         viewModel.EditorTabBar.OpenSettingsTab();
@@ -639,7 +640,8 @@ public class EditorTabTests : MainWindowTestBase
     {
         // Arrange
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
-        var viewModel = new MainWindowViewModel(_vmLogger, _options, _editorStateService, new EditorTabBarViewModel(_tabBarLogger, _fileService, _editorStateService), new EditorContentViewModel(_contentLogger, _editorStateService, _options, serviceProvider, _markdownCombinationService, _markdownFileCollectorService), _logTransitionService, hotkeyService);
+        var editorViewModel = CreateEditorViewModel();
+        var viewModel = new MainWindowViewModel(_vmLogger, _options, _editorStateService, editorViewModel, _logTransitionService, hotkeyService);
         
         const string testFilePath = "/test/file.md";
         

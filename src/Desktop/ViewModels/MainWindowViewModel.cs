@@ -32,8 +32,7 @@ public class MainWindowViewModel : ViewModelBase
         ILogger<MainWindowViewModel> logger, 
         IOptions<ApplicationOptions> applicationOptions, 
         IEditorStateService editorStateService,
-        EditorTabBarViewModel editorTabBarViewModel,
-        EditorContentViewModel editorContentViewModel,
+        EditorViewModel editorViewModel,
         ILogTransitionService logTransitionService,
         IHotkeyService hotkeyService)
     {
@@ -42,8 +41,9 @@ public class MainWindowViewModel : ViewModelBase
         _editorStateService = editorStateService;
         _logTransitionService = logTransitionService;
         _hotkeyService = hotkeyService;
-        EditorTabBar = editorTabBarViewModel;
-        EditorContent = editorContentViewModel;
+        Editor = editorViewModel;
+        EditorTabBar = editorViewModel.EditorTabBar;
+        EditorContent = editorViewModel.EditorContent;
         
         BottomPanelTabs = new ObservableCollection<BottomPanelTabViewModel>();
         ExitCommand = new RelayCommand(RequestApplicationExit);
@@ -72,6 +72,9 @@ public class MainWindowViewModel : ViewModelBase
         // Subscribe to build confirmation dialog events
         EditorContent.ShowBuildConfirmationDialog += OnShowBuildConfirmationDialog;
         
+        // Subscribe to editor hotkey change requests
+        EditorViewModel.ApplyHotkeyChangesRequested += (sender, args) => ApplyHotkeyChanges();
+        
         // Initialize bottom panel tabs
         InitializeBottomPanelTabs();
         
@@ -81,6 +84,8 @@ public class MainWindowViewModel : ViewModelBase
 
     
     public ObservableCollection<BottomPanelTabViewModel> BottomPanelTabs { get; }
+    
+    public EditorViewModel Editor { get; }
     
     public EditorTabBarViewModel EditorTabBar { get; }
     

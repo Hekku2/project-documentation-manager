@@ -41,12 +41,13 @@ public class ErrorNavigationTests
         
         var logTransitionService = Substitute.For<Desktop.Logging.ILogTransitionService>();
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
+        var editorLogger = Substitute.For<ILogger<Desktop.ViewModels.EditorViewModel>>();
+        var editorViewModel = new Desktop.ViewModels.EditorViewModel(editorLogger, options, editorTabBarViewModel, editorContentViewModel, hotkeyService);
         var viewModel = new MainWindowViewModel(
             logger, 
             options, 
             editorStateService,
-            editorTabBarViewModel,
-            editorContentViewModel,
+            editorViewModel,
             logTransitionService,
             hotkeyService);
 
@@ -138,12 +139,13 @@ public class ErrorNavigationTests
         
         var logTransitionService = Substitute.For<Desktop.Logging.ILogTransitionService>();
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
+        var editorLogger = Substitute.For<ILogger<Desktop.ViewModels.EditorViewModel>>();
+        var editorViewModel = new Desktop.ViewModels.EditorViewModel(editorLogger, options, editorTabBarViewModel, editorContentViewModel, hotkeyService);
         var viewModel = new MainWindowViewModel(
             logger, 
             options, 
             editorStateService,
-            editorTabBarViewModel,
-            editorContentViewModel,
+            editorViewModel,
             logTransitionService,
             hotkeyService);
 

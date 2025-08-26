@@ -65,7 +65,7 @@
                     </Grid.RowDefinitions>
                     
                     <!-- Editor Content -->
-                    <views:EditorUserControl Grid.Row="0" />
+                    <views:EditorUserControl Grid.Row="0" DataContext="{Binding Editor}" />
                     
                     <!-- Bottom Panel -->
                     <views:BottomPanelUserControl Grid.Row="1" />
