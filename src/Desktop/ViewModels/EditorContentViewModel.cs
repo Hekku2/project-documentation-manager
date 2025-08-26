@@ -271,40 +271,24 @@ public class EditorContentViewModel : ViewModelBase
             IsCompiled = false
         };
 
-        // Generate HTML content for markdown files
-        if (fileName.EndsWith(".md", StringComparison.OrdinalIgnoreCase) ||
-            fileName.EndsWith(".markdown", StringComparison.OrdinalIgnoreCase))
+        try
         {
-            try
-            {
-                previewData.HtmlContent = _markdownRenderingService.ConvertToHtml(rawContent);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error converting markdown to HTML: {FilePath}", filePath);
-                previewData.HtmlContent = null; // Fall back to text display
-            }
+            var compiledContent = CompileMarkdownTemplate(filePath, rawContent);
+            previewData.CompiledContent = compiledContent;
+            previewData.IsCompiled = true;
+            
+            // Convert the compiled markdown to HTML for display
+            previewData.HtmlContent = $"<body>{_markdownRenderingService.ConvertToHtml(compiledContent)}</body>";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error compiling markdown template: {FilePath}", filePath);
+            previewData.CompilationError = ex.Message;
+            previewData.IsCompiled = false;
         }
 
-        // Only compile markdown template files (.mdext)
-        if (fileName.EndsWith(".mdext", StringComparison.OrdinalIgnoreCase))
-        {
-            try
-            {
-                var compiledContent = CompileMarkdownTemplate(filePath, rawContent);
-                previewData.CompiledContent = compiledContent;
-                previewData.IsCompiled = true;
-                
-                // Convert the compiled markdown to HTML for display
-                previewData.HtmlContent = _markdownRenderingService.ConvertToHtml(compiledContent);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error compiling markdown template: {FilePath}", filePath);
-                previewData.CompilationError = ex.Message;
-                previewData.IsCompiled = false;
-            }
-        }
+        _logger.LogDebug("Preview content created for file: {FilePath}, IsCompiled: {IsCompiled}, Html: {Html}", 
+            filePath, previewData.IsCompiled, previewData.HtmlContent);
 
         return previewData;
     }

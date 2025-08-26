@@ -64,6 +64,7 @@
         <!-- HTML Panel for markdown files -->
         <av:HtmlPanel Text="{Binding HtmlContent}"
                       Background="#1E1E1E"
+                      BaseStylesheet="body { color: #CCCCCC; }"
                       IsVisible="{Binding HasHtmlContent}" />
         <!-- Fallback to text viewer for non-markdown files -->
         <ScrollViewer HorizontalScrollBarVisibility="Auto"
