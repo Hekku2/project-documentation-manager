@@ -100,7 +100,6 @@ public class FileSystemItemViewModel : ViewModelBase
 
     // Context Menu Commands
     public ICommand OpenCommand { get; private set; } = null!;
-    public ICommand OpenWithCommand { get; private set; } = null!;
     public ICommand ShowInExplorerCommand { get; private set; } = null!;
     public ICommand CopyPathCommand { get; private set; } = null!;
     public ICommand RefreshCommand { get; private set; } = null!;
@@ -108,14 +107,12 @@ public class FileSystemItemViewModel : ViewModelBase
     private void InitializeCommands()
     {
         OpenCommand = new RelayCommand(ExecuteOpen, CanExecuteOpen);
-        OpenWithCommand = new RelayCommand(ExecuteOpenWith, CanExecuteFileCommand);
         ShowInExplorerCommand = new RelayCommand(ExecuteShowInExplorer, CanExecuteShowInExplorer);
         CopyPathCommand = new RelayCommand(ExecuteCopyPath, CanExecutePathCommand);
         RefreshCommand = new RelayCommand(ExecuteRefresh, CanExecuteRefresh);
     }
 
     private bool CanExecuteOpen() => !string.IsNullOrEmpty(FullPath);
-    private bool CanExecuteFileCommand() => !IsDirectory && !string.IsNullOrEmpty(FullPath);
     private bool CanExecuteShowInExplorer() => !string.IsNullOrEmpty(FullPath) && (File.Exists(FullPath) || Directory.Exists(FullPath));
     private bool CanExecutePathCommand() => !string.IsNullOrEmpty(FullPath);
     private bool CanExecuteRefresh() => IsDirectory && !string.IsNullOrEmpty(FullPath);
@@ -134,42 +131,6 @@ public class FileSystemItemViewModel : ViewModelBase
         }
     }
 
-    private void ExecuteOpenWith()
-    {
-        if (!IsDirectory && File.Exists(FullPath))
-        {
-            try
-            {
-                var psi = new ProcessStartInfo
-                {
-                    FileName = "rundll32.exe",
-                    Arguments = $"shell32.dll,OpenAs_RunDLL {FullPath}",
-                    UseShellExecute = true
-                };
-                Process.Start(psi);
-            }
-            catch
-            {
-                // Fallback to opening with default application
-                ExecuteOpenWithDefault();
-            }
-        }
-    }
-
-    private void ExecuteOpenWithDefault()
-    {
-        if (File.Exists(FullPath))
-        {
-            try
-            {
-                Process.Start(new ProcessStartInfo(FullPath) { UseShellExecute = true });
-            }
-            catch
-            {
-                // Ignore if cannot open
-            }
-        }
-    }
 
     private void ExecuteShowInExplorer()
     {

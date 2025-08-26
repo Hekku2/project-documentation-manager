@@ -30,7 +30,6 @@ public class ContextMenuTests : MainWindowTestBase
         Assert.Multiple(() =>
         {
             Assert.That(viewModel.OpenCommand, Is.Not.Null, "OpenCommand should be initialized");
-            Assert.That(viewModel.OpenWithCommand, Is.Not.Null, "OpenWithCommand should be initialized");
             Assert.That(viewModel.ShowInExplorerCommand, Is.Not.Null, "ShowInExplorerCommand should be initialized");
             Assert.That(viewModel.CopyPathCommand, Is.Not.Null, "CopyPathCommand should be initialized");
             Assert.That(viewModel.RefreshCommand, Is.Not.Null, "RefreshCommand should be initialized");
@@ -52,8 +51,7 @@ public class ContextMenuTests : MainWindowTestBase
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(viewModel.OpenCommand.CanExecute(null), Is.True, "Open should be available for files");
-            Assert.That(viewModel.OpenWithCommand.CanExecute(null), Is.True, "OpenWith should be available for files");
+            Assert.That(viewModel.OpenCommand.CanExecute(null), Is.True, "Open should be available for files (but hidden in context menu)");
             Assert.That(viewModel.CopyPathCommand.CanExecute(null), Is.True, "CopyPath should be available for files");
             Assert.That(viewModel.RefreshCommand.CanExecute(null), Is.False, "Refresh should NOT be available for files");
         });
@@ -75,7 +73,6 @@ public class ContextMenuTests : MainWindowTestBase
         Assert.Multiple(() =>
         {
             Assert.That(viewModel.OpenCommand.CanExecute(null), Is.True, "Open should be available for directories");
-            Assert.That(viewModel.OpenWithCommand.CanExecute(null), Is.False, "OpenWith should NOT be available for directories");
             Assert.That(viewModel.CopyPathCommand.CanExecute(null), Is.True, "CopyPath should be available for directories");
             Assert.That(viewModel.RefreshCommand.CanExecute(null), Is.True, "Refresh should be available for directories");
         });
