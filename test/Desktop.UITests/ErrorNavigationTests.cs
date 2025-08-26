@@ -24,6 +24,7 @@ public class ErrorNavigationTests
         var serviceProvider = Substitute.For<IServiceProvider>();
         var markdownCombinationService = Substitute.For<IMarkdownCombinationService>();
         var markdownFileCollectorService = Substitute.For<IMarkdownFileCollectorService>();
+        var markdownRenderingService = Substitute.For<Desktop.Services.IMarkdownRenderingService>();
 
         options.Value.Returns(new ApplicationOptions 
         { 
@@ -37,7 +38,7 @@ public class ErrorNavigationTests
         
         var editorStateService = new EditorStateService(stateLogger);
         var editorTabBarViewModel = new EditorTabBarViewModel(tabBarLogger, fileService, editorStateService);
-        var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService);
+        var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService, markdownRenderingService);
         
         var logTransitionService = Substitute.For<Desktop.Logging.ILogTransitionService>();
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
@@ -122,6 +123,7 @@ public class ErrorNavigationTests
         var serviceProvider = Substitute.For<IServiceProvider>();
         var markdownCombinationService = Substitute.For<IMarkdownCombinationService>();
         var markdownFileCollectorService = Substitute.For<IMarkdownFileCollectorService>();
+        var markdownRenderingService = Substitute.For<Desktop.Services.IMarkdownRenderingService>();
 
         options.Value.Returns(new ApplicationOptions 
         { 
@@ -135,7 +137,7 @@ public class ErrorNavigationTests
         
         var editorStateService = new EditorStateService(stateLogger);
         var editorTabBarViewModel = new EditorTabBarViewModel(tabBarLogger, fileService, editorStateService);
-        var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService);
+        var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService, markdownRenderingService);
         
         var logTransitionService = Substitute.For<Desktop.Logging.ILogTransitionService>();
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();

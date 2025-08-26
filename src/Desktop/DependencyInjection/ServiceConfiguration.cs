@@ -39,6 +39,7 @@ public static class ServiceConfiguration
         services.AddSingleton<Desktop.Services.IFileService, Desktop.Services.FileService>();
         services.AddSingleton<Desktop.Services.IEditorStateService, Desktop.Services.EditorStateService>();
         services.AddSingleton<Desktop.Services.IHotkeyService, Desktop.Services.HotkeyService>();
+        services.AddSingleton<Desktop.Services.IMarkdownRenderingService, Desktop.Services.MarkdownRenderingService>();
         
         // Register business services
         services.AddTransient<Business.Services.IMarkdownCombinationService, Business.Services.MarkdownCombinationService>();

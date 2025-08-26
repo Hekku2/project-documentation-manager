@@ -146,6 +146,7 @@ public class MenuAndCommandTests : MainWindowTestBase
         
         var markdownCombinationService = Substitute.For<IMarkdownCombinationService>();
         var markdownFileCollectorService = Substitute.For<IMarkdownFileCollectorService>();
+        var markdownRenderingService = Substitute.For<Desktop.Services.IMarkdownRenderingService>();
         
         var stateLogger = Substitute.For<ILogger<EditorStateService>>();
         var tabBarLogger = Substitute.For<ILogger<EditorTabBarViewModel>>();
@@ -153,7 +154,7 @@ public class MenuAndCommandTests : MainWindowTestBase
         
         var editorStateService = new EditorStateService(stateLogger);
         var editorTabBarViewModel = new EditorTabBarViewModel(tabBarLogger, fileService, editorStateService);
-        var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService);
+        var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService, markdownRenderingService);
         
         var logTransitionService = Substitute.For<Desktop.Logging.ILogTransitionService>();
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();

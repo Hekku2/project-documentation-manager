@@ -3,6 +3,7 @@
              xmlns:models="clr-namespace:Desktop.Models"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:av="clr-namespace:TheArtOfDev.HtmlRenderer.Avalonia;assembly=Avalonia.HtmlRenderer"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Desktop.Views.FilePreviewContent"
              x:DataType="models:FilePreviewContentData">
@@ -60,8 +61,14 @@
         </Border>
         
         <!-- File content viewer -->
+        <!-- HTML Panel for markdown files -->
+        <av:HtmlPanel Text="{Binding HtmlContent}"
+                      Background="#1E1E1E"
+                      IsVisible="{Binding HasHtmlContent}" />
+        <!-- Fallback to text viewer for non-markdown files -->
         <ScrollViewer HorizontalScrollBarVisibility="Auto"
-                      VerticalScrollBarVisibility="Auto">
+                      VerticalScrollBarVisibility="Auto"
+                      IsVisible="{Binding !HasHtmlContent}">
             <TextBox Text="{Binding DisplayContent}"
                      IsReadOnly="True"
                      Background="#1E1E1E"

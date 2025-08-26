@@ -21,6 +21,7 @@ public class EditorContentViewModel : ViewModelBase
     private readonly IServiceProvider _serviceProvider;
     private readonly IMarkdownCombinationService _markdownCombinationService;
     private readonly IMarkdownFileCollectorService _markdownFileCollectorService;
+    private readonly IMarkdownRenderingService _markdownRenderingService;
 
     public EditorContentViewModel(
         ILogger<EditorContentViewModel> logger,
@@ -28,7 +29,8 @@ public class EditorContentViewModel : ViewModelBase
         IOptions<ApplicationOptions> applicationOptions,
         IServiceProvider serviceProvider,
         IMarkdownCombinationService markdownCombinationService,
-        IMarkdownFileCollectorService markdownFileCollectorService)
+        IMarkdownFileCollectorService markdownFileCollectorService,
+        IMarkdownRenderingService markdownRenderingService)
     {
         _logger = logger;
         _editorStateService = editorStateService;
@@ -36,6 +38,7 @@ public class EditorContentViewModel : ViewModelBase
         _serviceProvider = serviceProvider;
         _markdownCombinationService = markdownCombinationService;
         _markdownFileCollectorService = markdownFileCollectorService;
+        _markdownRenderingService = markdownRenderingService;
 
         ValidateCommand = new RelayCommand(ValidateDocumentation, CanValidateDocumentation);
         ValidateAllCommand = new RelayCommand(ValidateAllDocumentation, CanValidateAllDocumentation);
@@ -257,6 +260,8 @@ public class EditorContentViewModel : ViewModelBase
         var fileName = System.IO.Path.GetFileName(filePath);
         var rawContent = activeTab.Content ?? string.Empty;
 
+        _logger.LogDebug("Creating preview content for file: {FilePath}", filePath);
+
         var previewData = new FilePreviewContentData
         {
             ContentType = EditorContentType.Preview,
@@ -266,6 +271,21 @@ public class EditorContentViewModel : ViewModelBase
             IsCompiled = false
         };
 
+        // Generate HTML content for markdown files
+        if (fileName.EndsWith(".md", StringComparison.OrdinalIgnoreCase) ||
+            fileName.EndsWith(".markdown", StringComparison.OrdinalIgnoreCase))
+        {
+            try
+            {
+                previewData.HtmlContent = _markdownRenderingService.ConvertToHtml(rawContent);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error converting markdown to HTML: {FilePath}", filePath);
+                previewData.HtmlContent = null; // Fall back to text display
+            }
+        }
+
         // Only compile markdown template files (.mdext)
         if (fileName.EndsWith(".mdext", StringComparison.OrdinalIgnoreCase))
         {
@@ -274,6 +294,9 @@ public class EditorContentViewModel : ViewModelBase
                 var compiledContent = CompileMarkdownTemplate(filePath, rawContent);
                 previewData.CompiledContent = compiledContent;
                 previewData.IsCompiled = true;
+                
+                // Convert the compiled markdown to HTML for display
+                previewData.HtmlContent = _markdownRenderingService.ConvertToHtml(compiledContent);
             }
             catch (Exception ex)
             {

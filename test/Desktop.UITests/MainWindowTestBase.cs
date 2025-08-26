@@ -23,6 +23,7 @@ public abstract class MainWindowTestBase
     protected IServiceProvider serviceProvider = null!;
     protected IMarkdownCombinationService _markdownCombinationService = null!;
     protected IMarkdownFileCollectorService _markdownFileCollectorService = null!;
+    protected Desktop.Services.IMarkdownRenderingService _markdownRenderingService = null!;
     protected EditorStateService _editorStateService = null!;
     protected Logging.ILogTransitionService _logTransitionService = null!;
 
@@ -38,6 +39,7 @@ public abstract class MainWindowTestBase
         serviceProvider = Substitute.For<IServiceProvider>();
         _markdownCombinationService = Substitute.For<IMarkdownCombinationService>();
         _markdownFileCollectorService = Substitute.For<IMarkdownFileCollectorService>();
+        _markdownRenderingService = Substitute.For<Desktop.Services.IMarkdownRenderingService>();
         _logTransitionService = Substitute.For<Logging.ILogTransitionService>();
         _editorStateService = new EditorStateService(_stateLogger);
         
@@ -160,7 +162,7 @@ public abstract class MainWindowTestBase
     {
         editorStateService ??= _editorStateService;
         editorTabBarViewModel ??= new EditorTabBarViewModel(_tabBarLogger, _fileService, editorStateService);
-        editorContentViewModel ??= new EditorContentViewModel(_contentLogger, editorStateService, _options, serviceProvider, _markdownCombinationService, _markdownFileCollectorService);
+        editorContentViewModel ??= new EditorContentViewModel(_contentLogger, editorStateService, _options, serviceProvider, _markdownCombinationService, _markdownFileCollectorService, _markdownRenderingService);
         
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
         var editorLogger = Substitute.For<ILogger<Desktop.ViewModels.EditorViewModel>>();
