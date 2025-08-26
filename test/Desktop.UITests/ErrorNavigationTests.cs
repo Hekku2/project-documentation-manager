@@ -22,6 +22,8 @@ public class ErrorNavigationTests
         var options = Substitute.For<IOptions<ApplicationOptions>>();
         var fileService = Substitute.For<IFileService>();
         var serviceProvider = Substitute.For<IServiceProvider>();
+        var paneLogger = Substitute.For<ILogger<EditorPaneViewModel>>();
+        serviceProvider.GetRequiredService<ILogger<EditorPaneViewModel>>().Returns(paneLogger);
         var markdownCombinationService = Substitute.For<IMarkdownCombinationService>();
         var markdownFileCollectorService = Substitute.For<IMarkdownFileCollectorService>();
 
@@ -35,7 +37,7 @@ public class ErrorNavigationTests
         var tabBarLogger = Substitute.For<ILogger<EditorTabBarViewModel>>();
         var contentLogger = Substitute.For<ILogger<EditorContentViewModel>>();
         
-        var editorStateService = new EditorStateService(stateLogger);
+        var editorStateService = new EditorStateService(stateLogger, serviceProvider);
         var editorTabBarViewModel = new EditorTabBarViewModel(tabBarLogger, fileService, editorStateService);
         var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService);
         
@@ -119,6 +121,8 @@ public class ErrorNavigationTests
         var options = Substitute.For<IOptions<ApplicationOptions>>();
         var fileService = Substitute.For<IFileService>();
         var serviceProvider = Substitute.For<IServiceProvider>();
+        var paneLogger = Substitute.For<ILogger<EditorPaneViewModel>>();
+        serviceProvider.GetRequiredService<ILogger<EditorPaneViewModel>>().Returns(paneLogger);
         var markdownCombinationService = Substitute.For<IMarkdownCombinationService>();
         var markdownFileCollectorService = Substitute.For<IMarkdownFileCollectorService>();
 
@@ -132,7 +136,7 @@ public class ErrorNavigationTests
         var tabBarLogger = Substitute.For<ILogger<EditorTabBarViewModel>>();
         var contentLogger = Substitute.For<ILogger<EditorContentViewModel>>();
         
-        var editorStateService = new EditorStateService(stateLogger);
+        var editorStateService = new EditorStateService(stateLogger, serviceProvider);
         var editorTabBarViewModel = new EditorTabBarViewModel(tabBarLogger, fileService, editorStateService);
         var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService);
         

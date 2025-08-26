@@ -16,7 +16,9 @@ public class LogTransitionServiceIntegrationTests
         var options = Microsoft.Extensions.Options.Options.Create(new Desktop.Configuration.ApplicationOptions());
         var fileService = Substitute.For<Desktop.Services.IFileService>();
         var serviceProvider = Substitute.For<System.IServiceProvider>();
-        var editorStateService = new Desktop.Services.EditorStateService(Substitute.For<ILogger<Desktop.Services.EditorStateService>>());
+        var paneLogger = Substitute.For<ILogger<EditorPaneViewModel>>();
+        serviceProvider.GetRequiredService<ILogger<EditorPaneViewModel>>().Returns(paneLogger);
+        var editorStateService = new Desktop.Services.EditorStateService(Substitute.For<ILogger<Desktop.Services.EditorStateService>>(), serviceProvider);
         var editorTabBarViewModel = new EditorTabBarViewModel(
             Substitute.For<ILogger<EditorTabBarViewModel>>(), 
             fileService, 

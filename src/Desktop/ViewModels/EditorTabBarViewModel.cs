@@ -10,14 +10,36 @@ using Desktop.Services;
 
 namespace Desktop.ViewModels;
 
-public class EditorTabBarViewModel(
-    ILogger<EditorTabBarViewModel> logger,
-    IFileService fileService,
-    IEditorStateService editorStateService) : ViewModelBase
+public class EditorTabBarViewModel : ViewModelBase
 {
+    private readonly ILogger<EditorTabBarViewModel> _logger;
+    private readonly IFileService _fileService;
+    private readonly IEditorStateService _editorStateService;
+    
+    public EditorTabBarViewModel(
+        ILogger<EditorTabBarViewModel> logger,
+        IFileService fileService,
+        IEditorStateService editorStateService)
+    {
+        _logger = logger;
+        _fileService = fileService;
+        _editorStateService = editorStateService;
+        
+        // Subscribe to editor state changes
+        _editorStateService.MultiPaneModeChanged += OnMultiPaneModeChanged;
+    }
+    
+    private void OnMultiPaneModeChanged(object? sender, bool isMultiPaneMode)
+    {
+        OnPropertyChanged(nameof(IsMultiPaneMode));
+    }
     public ObservableCollection<EditorTabViewModel> EditorTabs { get; } = [];
 
-    public EditorTabViewModel? ActiveTab => editorStateService.ActiveTab;
+    public EditorTabViewModel? ActiveTab => _editorStateService.ActiveTab;
+    
+    public bool IsMultiPaneMode => _editorStateService.IsMultiPaneMode;
+    
+    public ObservableCollection<EditorPaneViewModel> Panes => _editorStateService.Panes;
 
     public async Task OpenFileAsync(string filePath)
     {
@@ -38,12 +60,12 @@ public class EditorTabBarViewModel(
 
         try
         {
-            logger.LogDebug("Opening file: {FilePath}", filePath);
+            _logger.LogDebug("Opening file: {FilePath}", filePath);
             
-            var content = await fileService.ReadFileContentAsync(filePath);
+            var content = await _fileService.ReadFileContentAsync(filePath);
             if (content == null)
             {
-                logger.LogWarning("Failed to read file content: {FilePath}", filePath);
+                _logger.LogWarning("Failed to read file content: {FilePath}", filePath);
                 return;
             }
 
@@ -63,19 +85,27 @@ public class EditorTabBarViewModel(
             tabViewModel.CloseRequested += OnTabCloseRequested;
             tabViewModel.SelectRequested += OnTabSelectRequested;
             EditorTabs.Add(tabViewModel);
+            
+            // Add tab to the active pane
+            var activePane = _editorStateService.ActivePane;
+            if (activePane != null)
+            {
+                activePane.AddTab(tabViewModel);
+            }
+            
             SetActiveTab(tabViewModel);
             
-            logger.LogDebug("File opened successfully: {FilePath}", filePath);
+            _logger.LogDebug("File opened successfully: {FilePath}", filePath);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error opening file: {FilePath}", filePath);
+            _logger.LogError(ex, "Error opening file: {FilePath}", filePath);
         }
     }
 
     public void SetActiveTab(EditorTabViewModel? tab)
     {
-        editorStateService.SetActiveTab(tab);
+        _editorStateService.SetActiveTab(tab);
         OnPropertyChanged(nameof(ActiveTab));
     }
 
@@ -107,7 +137,7 @@ public class EditorTabBarViewModel(
             SetActiveTab(newActiveTab);
         }
         
-        logger.LogDebug("Tab closed: {TabTitle}", tab.Title);
+        _logger.LogDebug("Tab closed: {TabTitle}", tab.Title);
     }
 
     private async Task<bool> SaveTabAsync(EditorTabViewModel tab)
@@ -117,21 +147,21 @@ public class EditorTabBarViewModel(
 
         try
         {
-            var success = await fileService.WriteFileContentAsync(tab.FilePath, tab.Content);
+            var success = await _fileService.WriteFileContentAsync(tab.FilePath, tab.Content);
             if (success)
             {
                 tab.IsModified = false;
-                logger.LogDebug("File saved: {FilePath}", tab.FilePath);
+                _logger.LogDebug("File saved: {FilePath}", tab.FilePath);
             }
             else
             {
-                logger.LogWarning("Failed to save file: {FilePath}", tab.FilePath);
+                _logger.LogWarning("Failed to save file: {FilePath}", tab.FilePath);
             }
             return success;
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error saving file: {FilePath}", tab.FilePath);
+            _logger.LogError(ex, "Error saving file: {FilePath}", tab.FilePath);
             return false;
         }
     }
@@ -145,7 +175,7 @@ public class EditorTabBarViewModel(
         var success = await SaveTabAsync(activeTab);
         if (success)
         {
-            logger.LogInformation("File saved: {FilePath}", activeTab.FilePath);
+            _logger.LogInformation("File saved: {FilePath}", activeTab.FilePath);
         }
     }
 
@@ -159,11 +189,11 @@ public class EditorTabBarViewModel(
 
         if (!modifiedTabs.Any())
         {
-            logger.LogDebug("No modified files to save");
+            _logger.LogDebug("No modified files to save");
             return;
         }
 
-        logger.LogInformation("Saving {Count} modified files", modifiedTabs.Count);
+        _logger.LogInformation("Saving {Count} modified files", modifiedTabs.Count);
 
         var saveResults = new List<(EditorTabViewModel tab, bool success)>();
 
@@ -178,11 +208,11 @@ public class EditorTabBarViewModel(
 
         if (failureCount == 0)
         {
-            logger.LogInformation("Successfully saved all {Count} files", successCount);
+            _logger.LogInformation("Successfully saved all {Count} files", successCount);
         }
         else
         {
-            logger.LogWarning("Save completed: {SuccessCount} successful, {FailureCount} failed", 
+            _logger.LogWarning("Save completed: {SuccessCount} successful, {FailureCount} failed", 
                 successCount, failureCount);
         }
     }
@@ -199,7 +229,7 @@ public class EditorTabBarViewModel(
 
         try
         {
-            logger.LogDebug("Opening Settings tab");
+            _logger.LogDebug("Opening Settings tab");
             
             var tab = new EditorTab
             {
@@ -218,11 +248,11 @@ public class EditorTabBarViewModel(
             EditorTabs.Add(tabViewModel);
             SetActiveTab(tabViewModel);
             
-            logger.LogDebug("Settings tab opened successfully");
+            _logger.LogDebug("Settings tab opened successfully");
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error opening Settings tab");
+            _logger.LogError(ex, "Error opening Settings tab");
         }
     }
 }

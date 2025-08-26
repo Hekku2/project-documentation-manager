@@ -10,7 +10,14 @@
              x:Class="Desktop.Views.EditorUserControl"
              x:DataType="vm:MainWindowViewModel">
 
-    <Grid>
+    <Panel>
+        <!-- Multi-pane mode -->
+        <UniformGrid IsVisible="{Binding EditorTabBar.IsMultiPaneMode}" Rows="2" Columns="2" Name="PanesGrid">
+            <!-- Panes will be added dynamically in code-behind -->
+        </UniformGrid>
+        
+        <!-- Single-pane mode (original layout) -->
+    <Grid IsVisible="{Binding !EditorTabBar.IsMultiPaneMode}">
         <Grid.RowDefinitions>
             <!-- Tab Bar -->
             <RowDefinition Height="40" />
@@ -226,5 +233,6 @@
                 </ScrollViewer>
             </Grid>
         </ScrollViewer>
-    </Grid>
+        </Grid>
+    </Panel>
 </UserControl>

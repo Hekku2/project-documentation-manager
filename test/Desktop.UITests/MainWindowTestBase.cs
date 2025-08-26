@@ -39,7 +39,12 @@ public abstract class MainWindowTestBase
         _markdownCombinationService = Substitute.For<IMarkdownCombinationService>();
         _markdownFileCollectorService = Substitute.For<IMarkdownFileCollectorService>();
         _logTransitionService = Substitute.For<Logging.ILogTransitionService>();
-        _editorStateService = new EditorStateService(_stateLogger);
+        
+        // Setup service provider to return required loggers
+        var paneLogger = Substitute.For<ILogger<EditorPaneViewModel>>();
+        serviceProvider.GetRequiredService<ILogger<EditorPaneViewModel>>().Returns(paneLogger);
+        
+        _editorStateService = new EditorStateService(_stateLogger, serviceProvider);
         
         // Set up common fileService behavior
         _fileService.IsValidFolder(Arg.Any<string>()).Returns(true);
@@ -158,7 +163,7 @@ public abstract class MainWindowTestBase
         _fileService.GetFileStructureAsync().Returns(Task.FromResult<FileSystemItem?>(CreateSimpleTestStructure()));
         _fileService.GetFileStructureAsync(Arg.Any<string>()).Returns(Task.FromResult<FileSystemItem?>(CreateSimpleTestStructure()));
         
-        _editorStateService = new EditorStateService(_stateLogger);
+        _editorStateService = new EditorStateService(_stateLogger, serviceProvider);
         var editorTabBarViewModel = new EditorTabBarViewModel(_tabBarLogger, _fileService, _editorStateService);
         var editorContentViewModel = new EditorContentViewModel(_contentLogger, _editorStateService, _options, serviceProvider, _markdownCombinationService, _markdownFileCollectorService);
         
@@ -173,7 +178,7 @@ public abstract class MainWindowTestBase
         _fileService.GetFileStructureAsync().Returns(Task.FromResult<FileSystemItem?>(CreateNestedTestStructure()));
         _fileService.GetFileStructureAsync(Arg.Any<string>()).Returns(Task.FromResult<FileSystemItem?>(CreateNestedTestStructure()));
         
-        var editorStateService = new EditorStateService(_stateLogger);
+        var editorStateService = new EditorStateService(_stateLogger, serviceProvider);
         var editorTabBarViewModel = new EditorTabBarViewModel(_tabBarLogger, _fileService, editorStateService);
         var editorContentViewModel = new EditorContentViewModel(_contentLogger, editorStateService, _options, serviceProvider, _markdownCombinationService, _markdownFileCollectorService);
         

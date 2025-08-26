@@ -13,8 +13,19 @@ public class BoolToColorConverter : IValueConverter
     {
         if (value is bool isActive)
         {
-            // Active tab: bright blue background
-            // Inactive tab: dark gray background
+            if (parameter is string colorPair)
+            {
+                // Parameter format: "TrueColor,FalseColor"
+                var colors = colorPair.Split(',');
+                if (colors.Length == 2)
+                {
+                    return isActive ? 
+                        new SolidColorBrush(Color.Parse(colors[0].Trim())) : 
+                        new SolidColorBrush(Color.Parse(colors[1].Trim()));
+                }
+            }
+            
+            // Default colors: Active tab: bright blue background, Inactive tab: dark gray background
             return isActive ? new SolidColorBrush(Color.Parse("#007ACC")) : new SolidColorBrush(Color.Parse("#3E3E42"));
         }
 

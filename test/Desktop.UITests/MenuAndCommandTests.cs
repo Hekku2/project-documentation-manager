@@ -129,6 +129,8 @@ public class MenuAndCommandTests : MainWindowTestBase
         var options = Options.Create(new ApplicationOptions());
         var fileService = Substitute.For<IFileService>();
         var serviceProvider = Substitute.For<IServiceProvider>();
+        var paneLogger = Substitute.For<ILogger<EditorPaneViewModel>>();
+        serviceProvider.GetRequiredService<ILogger<EditorPaneViewModel>>().Returns(paneLogger);
         
         // Setup mock services for BuildConfirmationDialogViewModel
         var mockFileCollector = Substitute.For<IMarkdownFileCollectorService>();
@@ -151,7 +153,7 @@ public class MenuAndCommandTests : MainWindowTestBase
         var tabBarLogger = Substitute.For<ILogger<EditorTabBarViewModel>>();
         var contentLogger = Substitute.For<ILogger<EditorContentViewModel>>();
         
-        var editorStateService = new EditorStateService(stateLogger);
+        var editorStateService = new EditorStateService(stateLogger, serviceProvider);
         var editorTabBarViewModel = new EditorTabBarViewModel(tabBarLogger, fileService, editorStateService);
         var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService);
         

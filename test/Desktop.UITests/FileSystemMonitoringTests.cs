@@ -43,6 +43,8 @@ public class FileSystemMonitoringTests
         var options = Options.Create(new ApplicationOptions());
         var fileService = Substitute.For<IFileService>();
         var serviceProvider = Substitute.For<IServiceProvider>();
+        var paneLogger = Substitute.For<ILogger<EditorPaneViewModel>>();
+        serviceProvider.GetRequiredService<ILogger<EditorPaneViewModel>>().Returns(paneLogger);
         
         fileService.GetFileStructureAsync().Returns(Task.FromResult<FileSystemItem?>(CreateTestStructure()));
         fileService.GetFileStructureAsync(Arg.Any<string>()).Returns(Task.FromResult<FileSystemItem?>(CreateTestStructure()));
@@ -53,7 +55,7 @@ public class FileSystemMonitoringTests
         var markdownCombinationService = Substitute.For<IMarkdownCombinationService>();
         var markdownFileCollectorService = Substitute.For<IMarkdownFileCollectorService>();
         
-        var editorStateService = new EditorStateService(stateLogger);
+        var editorStateService = new EditorStateService(stateLogger, serviceProvider);
         var editorTabBarViewModel = new EditorTabBarViewModel(tabBarLogger, fileService, editorStateService);
         var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService);
         

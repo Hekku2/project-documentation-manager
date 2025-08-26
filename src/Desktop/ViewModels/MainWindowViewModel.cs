@@ -54,6 +54,8 @@ public class MainWindowViewModel : ViewModelBase
         SaveCommand = new RelayCommand(async () => await SaveActiveFileAsync(), CanSave);
         SaveAllCommand = new RelayCommand(async () => await SaveAllAsync(), CanSaveAll);
         ApplyHotkeyChangesCommand = new RelayCommand(ApplyHotkeyChanges);
+        SplitEditorHorizontalCommand = new RelayCommand(SplitEditorHorizontal, CanSplitEditor);
+        SplitEditorVerticalCommand = new RelayCommand(SplitEditorVertical, CanSplitEditor);
         
         _logger.LogInformation("MainWindowViewModel initialized");
         _logger.LogInformation("Default project folder: {Folder}", _applicationOptions.DefaultProjectFolder);
@@ -121,6 +123,10 @@ public class MainWindowViewModel : ViewModelBase
     public ICommand SaveAllCommand { get; }
     
     public ICommand ApplyHotkeyChangesCommand { get; }
+    
+    public ICommand SplitEditorHorizontalCommand { get; }
+    
+    public ICommand SplitEditorVerticalCommand { get; }
     
     public event EventHandler? ExitRequested;
     public event EventHandler<BuildConfirmationDialogViewModel>? ShowBuildConfirmationDialog;
@@ -510,5 +516,30 @@ public class MainWindowViewModel : ViewModelBase
         {
             _logger.LogError(ex, "Error applying hotkey changes");
         }
+    }
+
+    private void SplitEditorHorizontal()
+    {
+        var activePane = _editorStateService.ActivePane;
+        if (activePane != null)
+        {
+            activePane.SplitHorizontalCommand.Execute(null);
+            _logger.LogInformation("Editor split horizontally");
+        }
+    }
+
+    private void SplitEditorVertical()
+    {
+        var activePane = _editorStateService.ActivePane;
+        if (activePane != null)
+        {
+            activePane.SplitVerticalCommand.Execute(null);
+            _logger.LogInformation("Editor split vertically");
+        }
+    }
+
+    private bool CanSplitEditor()
+    {
+        return _editorStateService.ActivePane != null && _editorStateService.ActiveTab != null;
     }
 }

@@ -27,6 +27,9 @@
             <MenuItem Header="View">
                 <MenuItem Header="Logs" Command="{Binding ShowLogsCommand}" />
                 <MenuItem Header="Errors" Command="{Binding ShowErrorsCommand}" />
+                <Separator />
+                <MenuItem Header="Split Editor Horizontally" Command="{Binding SplitEditorHorizontalCommand}" />
+                <MenuItem Header="Split Editor Vertically" Command="{Binding SplitEditorVerticalCommand}" />
             </MenuItem>
             <MenuItem Header="Compile">
                 <MenuItem Header="Compile documentation" Command="{Binding EditorContent.BuildDocumentationCommand}" InputGesture="F6" />
