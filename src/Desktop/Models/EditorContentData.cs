@@ -27,4 +27,12 @@ public class FilePreviewContentData : EditorContentData
     public required string FilePath { get; set; }
     public required string FileContent { get; set; }
     public required string FileName { get; set; }
+    public string? CompiledContent { get; set; }
+    public bool IsCompiled { get; set; }
+    public string? CompilationError { get; set; }
+    
+    /// <summary>
+    /// Gets the content to display - compiled content if available and successful, otherwise raw content
+    /// </summary>
+    public string DisplayContent => IsCompiled && !string.IsNullOrEmpty(CompiledContent) ? CompiledContent : FileContent;
 }

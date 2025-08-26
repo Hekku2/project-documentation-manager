@@ -1,4 +1,6 @@
 using System;
+using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -8,7 +10,6 @@ using Desktop.Models;
 using Desktop.Services;
 using Business.Services;
 using Business.Models;
-using System.Linq;
 
 namespace Desktop.ViewModels;
 
@@ -76,13 +77,7 @@ public class EditorContentViewModel : ViewModelBase
                         ApplicationOptions = _applicationOptions
                     }
                 },
-                TabType.Preview => new FilePreviewContentData
-                {
-                    ContentType = EditorContentType.Preview,
-                    FilePath = activeTab.FilePath ?? string.Empty,
-                    FileContent = activeTab.Content ?? string.Empty,
-                    FileName = System.IO.Path.GetFileName(activeTab.FilePath ?? "Unknown")
-                },
+                TabType.Preview => CreatePreviewContentData(activeTab),
                 // Future content types can be added here:
                 // TabType.Welcome => new WelcomeEditorContentData { ... },
                 _ => null
@@ -254,5 +249,68 @@ public class EditorContentViewModel : ViewModelBase
     private bool CanBuildDocumentation()
     {
         return true;
+    }
+
+    private FilePreviewContentData CreatePreviewContentData(EditorTabViewModel activeTab)
+    {
+        var filePath = activeTab.FilePath ?? string.Empty;
+        var fileName = System.IO.Path.GetFileName(filePath);
+        var rawContent = activeTab.Content ?? string.Empty;
+
+        var previewData = new FilePreviewContentData
+        {
+            ContentType = EditorContentType.Preview,
+            FilePath = filePath,
+            FileContent = rawContent,
+            FileName = fileName,
+            IsCompiled = false
+        };
+
+        // Only compile markdown template files (.mdext)
+        if (fileName.EndsWith(".mdext", StringComparison.OrdinalIgnoreCase))
+        {
+            try
+            {
+                var compiledContent = CompileMarkdownTemplate(filePath, rawContent);
+                previewData.CompiledContent = compiledContent;
+                previewData.IsCompiled = true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error compiling markdown template: {FilePath}", filePath);
+                previewData.CompilationError = ex.Message;
+                previewData.IsCompiled = false;
+            }
+        }
+
+        return previewData;
+    }
+
+    private string CompileMarkdownTemplate(string filePath, string content)
+    {
+        // Get the directory containing the file to find source documents
+        var fileDirectory = System.IO.Path.GetDirectoryName(filePath);
+        if (string.IsNullOrEmpty(fileDirectory))
+        {
+            throw new InvalidOperationException($"Could not determine directory for file: {filePath}");
+        }
+
+        // Create MarkdownDocument for the template
+        var templateDocument = new Business.Models.MarkdownDocument
+        {
+            FileName = System.IO.Path.GetFileName(filePath),
+            FilePath = filePath,
+            Content = content
+        };
+
+        // Collect source documents from the same directory (synchronously for preview)
+        var sourceDocuments = Task.Run(async () => 
+            await _markdownFileCollectorService.CollectSourceFilesAsync(fileDirectory)).Result;
+
+        // Compile the template with source documents
+        var compiledDocuments = _markdownCombinationService.BuildDocumentation([templateDocument], sourceDocuments);
+        var compiledDocument = compiledDocuments.FirstOrDefault();
+
+        return compiledDocument?.Content ?? content; // Fallback to original content if compilation fails
     }
 }
