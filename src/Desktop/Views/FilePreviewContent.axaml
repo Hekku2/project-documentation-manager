@@ -40,7 +40,22 @@
                      TextWrapping="NoWrap"
                      Padding="10"
                      BorderThickness="0"
-                     SelectionBrush="#264F78" />
+                     SelectionBrush="#264F78">
+                <TextBox.Styles>
+                    <!-- Remove hover highlighting -->
+                    <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
+                        <Setter Property="Background" Value="#1E1E1E" />
+                        <Setter Property="BorderBrush" Value="Transparent" />
+                        <Setter Property="BorderThickness" Value="0" />
+                    </Style>
+                    <!-- Keep focus highlighting -->
+                    <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+                        <Setter Property="Background" Value="#1E1E1E" />
+                        <Setter Property="BorderBrush" Value="#007ACC" />
+                        <Setter Property="BorderThickness" Value="1" />
+                    </Style>
+                </TextBox.Styles>
+            </TextBox>
         </ScrollViewer>
     </DockPanel>
 </UserControl>
