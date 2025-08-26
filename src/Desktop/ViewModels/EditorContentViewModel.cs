@@ -51,6 +51,38 @@ public class EditorContentViewModel : ViewModelBase
     public ValidationResult? CurrentValidationResult => _editorStateService.CurrentValidationResult;
     public EditorTabViewModel? ActiveTab => _editorStateService.ActiveTab;
     public bool IsActiveTabSettings => ActiveTab?.TabType == TabType.Settings;
+    
+    public EditorContentData? CurrentContentData
+    {
+        get
+        {
+            var activeTab = ActiveTab;
+            if (activeTab == null) return null;
+
+            return activeTab.TabType switch
+            {
+                TabType.File => new FileEditorContentData
+                {
+                    ContentType = EditorContentType.File,
+                    ActiveTab = activeTab,
+                    CurrentValidationResult = CurrentValidationResult,
+                    ActiveFilePath = ActiveFilePath
+                },
+                TabType.Settings => new SettingsEditorContentData
+                {
+                    ContentType = EditorContentType.Settings,
+                    SettingsViewModel = new SettingsContentViewModel(_serviceProvider.GetRequiredService<ILogger<SettingsContentViewModel>>())
+                    {
+                        ApplicationOptions = _applicationOptions
+                    }
+                },
+                // Future content types can be added here:
+                // TabType.Preview => new PreviewEditorContentData { ... },
+                // TabType.Welcome => new WelcomeEditorContentData { ... },
+                _ => null
+            };
+        }
+    }
 
     public ICommand ValidateCommand { get; }
     public ICommand ValidateAllCommand { get; }
@@ -65,6 +97,7 @@ public class EditorContentViewModel : ViewModelBase
         OnPropertyChanged(nameof(ActiveFilePath));
         OnPropertyChanged(nameof(ActiveTab));
         OnPropertyChanged(nameof(IsActiveTabSettings));
+        OnPropertyChanged(nameof(CurrentContentData));
         
         // Update command states
         ((RelayCommand)ValidateCommand).RaiseCanExecuteChanged();
@@ -73,6 +106,7 @@ public class EditorContentViewModel : ViewModelBase
     private void OnValidationResultChanged(object? sender, ValidationResult? validationResult)
     {
         OnPropertyChanged(nameof(CurrentValidationResult));
+        OnPropertyChanged(nameof(CurrentContentData));
     }
 
     private async void ValidateDocumentation()

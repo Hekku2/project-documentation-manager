@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
 using Desktop.ViewModels;
@@ -43,16 +44,23 @@ public class MainWindowBasicTests : MainWindowTestBase
     }
 
     [AvaloniaTest]
-    public void MainWindow_Should_Have_Document_Editor()
+    public async Task MainWindow_Should_Have_Document_Editor()
     {
         var window = CreateMainWindow();
         window.Show();
+        
+        // Open a file first to ensure FileEditorContent is displayed
+        var viewModel = (MainWindowViewModel)window.DataContext!;
+        await viewModel.EditorTabBar.OpenFileAsync("/test/file.md");
+        
+        await Task.Delay(100); // Allow UI to update
 
-        // Find the DocumentEditor within the EditorUserControl
+        // Find the DocumentEditor within the FileEditorContent
         var editorUserControl = window.GetVisualDescendants().OfType<EditorUserControl>().FirstOrDefault();
         Assert.That(editorUserControl, Is.Not.Null, "EditorUserControl not found");
         
-        var documentEditor = editorUserControl!.FindControl<TextBox>("DocumentEditor");
+        var fileEditorContent = editorUserControl!.GetVisualDescendants().OfType<Desktop.Views.FileEditorContent>().FirstOrDefault();
+        var documentEditor = fileEditorContent?.FindControl<TextBox>("DocumentEditor");
         Assert.Multiple(() =>
         {
             Assert.That(documentEditor, Is.Not.Null, "Document editor not found");

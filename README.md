@@ -1,5 +1,9 @@
 # Project Documentation Manager
 
+NOTE: This project is developed mostly with AI. This means that the code quality
+and implemented solutions may not be optimal etc. I don't recommend taking these
+code lines as a positive of code quality.
+
 Personal project for creating a tool for managing project documentation.
 
 Purposes of this project

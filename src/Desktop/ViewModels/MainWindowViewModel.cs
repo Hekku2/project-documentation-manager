@@ -72,8 +72,8 @@ public class MainWindowViewModel : ViewModelBase
         // Subscribe to build confirmation dialog events
         EditorContent.ShowBuildConfirmationDialog += OnShowBuildConfirmationDialog;
         
-        // Subscribe to editor hotkey change requests
-        EditorViewModel.ApplyHotkeyChangesRequested += (sender, args) => ApplyHotkeyChanges();
+        // Subscribe to settings hotkey change requests
+        SettingsContentViewModel.ApplyHotkeyChangesRequested += (sender, args) => ApplyHotkeyChanges();
         
         // Initialize bottom panel tabs
         InitializeBottomPanelTabs();

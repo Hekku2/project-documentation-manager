@@ -21,12 +21,4 @@ public class EditorViewModel(
     public EditorTabBarViewModel EditorTabBar { get; } = editorTabBarViewModel;
     public EditorContentViewModel EditorContent { get; } = editorContentViewModel;
     public ApplicationOptions ApplicationOptions => _applicationOptions;
-
-    public ICommand ApplyHotkeyChangesCommand { get; } = new RelayCommand(() =>
-    {
-        logger.LogInformation("Hotkey changes requested from editor");
-        ApplyHotkeyChangesRequested?.Invoke(null, EventArgs.Empty);
-    });
-
-    public static event EventHandler? ApplyHotkeyChangesRequested;
 }

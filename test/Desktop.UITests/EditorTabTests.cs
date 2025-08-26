@@ -343,7 +343,8 @@ public class EditorTabTests : MainWindowTestBase
             
             // Editor should display README content
             var editorUserControl = window.GetVisualDescendants().OfType<EditorUserControl>().FirstOrDefault();
-            var editorTextBox = editorUserControl?.FindControl<TextBox>("DocumentEditor");
+            var fileEditorContent = editorUserControl?.GetVisualDescendants().OfType<Desktop.Views.FileEditorContent>().FirstOrDefault();
+            var editorTextBox = fileEditorContent?.FindControl<TextBox>("DocumentEditor");
             Assert.That(editorTextBox?.Text, Is.EqualTo("Mock file content"), "Editor should display README content");
         });
 
