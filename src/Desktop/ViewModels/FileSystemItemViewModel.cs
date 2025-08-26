@@ -66,6 +66,8 @@ public class FileSystemItemViewModel : ViewModelBase
     public string FullPath => Item.FullPath;
     public bool IsDirectory => Item.IsDirectory;
     public bool HasChildren => Children.Count > 0;
+    public bool IsMarkdownTemplate => !IsDirectory && (FullPath.EndsWith(".mdext", StringComparison.OrdinalIgnoreCase) || 
+                                                         FullPath.EndsWith(".mdsrc", StringComparison.OrdinalIgnoreCase));
 
     public bool IsExpanded
     {
@@ -103,6 +105,7 @@ public class FileSystemItemViewModel : ViewModelBase
     public ICommand ShowInExplorerCommand { get; private set; } = null!;
     public ICommand CopyPathCommand { get; private set; } = null!;
     public ICommand RefreshCommand { get; private set; } = null!;
+    public ICommand ShowInPreviewCommand { get; private set; } = null!;
 
     private void InitializeCommands()
     {
@@ -110,12 +113,14 @@ public class FileSystemItemViewModel : ViewModelBase
         ShowInExplorerCommand = new RelayCommand(ExecuteShowInExplorer, CanExecuteShowInExplorer);
         CopyPathCommand = new RelayCommand(ExecuteCopyPath, CanExecutePathCommand);
         RefreshCommand = new RelayCommand(ExecuteRefresh, CanExecuteRefresh);
+        ShowInPreviewCommand = new RelayCommand(ExecuteShowInPreview, CanExecuteShowInPreview);
     }
 
     private bool CanExecuteOpen() => !string.IsNullOrEmpty(FullPath);
     private bool CanExecuteShowInExplorer() => !string.IsNullOrEmpty(FullPath) && (File.Exists(FullPath) || Directory.Exists(FullPath));
     private bool CanExecutePathCommand() => !string.IsNullOrEmpty(FullPath);
     private bool CanExecuteRefresh() => IsDirectory && !string.IsNullOrEmpty(FullPath);
+    private bool CanExecuteShowInPreview() => IsMarkdownTemplate;
 
     private void ExecuteOpen()
     {
@@ -191,6 +196,12 @@ public class FileSystemItemViewModel : ViewModelBase
                 _ = LoadChildrenAsync();
             }
         }
+    }
+
+    private void ExecuteShowInPreview()
+    {
+        // Placeholder implementation - this option doesn't currently do anything
+        // This command is available for .mdext and .mdsrc files
     }
 
     private async Task LoadChildrenAsync()
