@@ -18,6 +18,7 @@ public class EditorTabViewModel : ViewModelBase
         _isActive = tab.IsActive;
         CloseCommand = new RelayCommand(() => CloseRequested?.Invoke(this));
         SelectCommand = new RelayCommand(() => SelectRequested?.Invoke(this));
+        ShowPreviewCommand = new RelayCommand(() => PreviewRequested?.Invoke(this), CanShowPreview);
     }
 
     public EditorTab Tab { get; }
@@ -66,10 +67,20 @@ public class EditorTabViewModel : ViewModelBase
     }
 
     public string DisplayTitle => IsModified ? $"{Title} •" : Title;
+    
+    public bool IsMarkdownTemplate => TabType == TabType.File && 
+                                      !string.IsNullOrEmpty(FilePath) && 
+                                      (FilePath.EndsWith(".mdext", StringComparison.OrdinalIgnoreCase) || 
+                                       FilePath.EndsWith(".mdsrc", StringComparison.OrdinalIgnoreCase) ||
+                                       FilePath.EndsWith(".md", StringComparison.OrdinalIgnoreCase));
 
     public ICommand CloseCommand { get; }
     public ICommand SelectCommand { get; }
+    public ICommand ShowPreviewCommand { get; }
 
     public event Action<EditorTabViewModel>? CloseRequested;
     public event Action<EditorTabViewModel>? SelectRequested;
+    public event Action<EditorTabViewModel>? PreviewRequested;
+
+    private bool CanShowPreview() => IsMarkdownTemplate;
 }

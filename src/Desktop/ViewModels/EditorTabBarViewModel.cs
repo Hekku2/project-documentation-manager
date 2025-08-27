@@ -62,6 +62,7 @@ public class EditorTabBarViewModel(
             var tabViewModel = new EditorTabViewModel(tab);
             tabViewModel.CloseRequested += OnTabCloseRequested;
             tabViewModel.SelectRequested += OnTabSelectRequested;
+            tabViewModel.PreviewRequested += OnTabPreviewRequested;
             EditorTabs.Add(tabViewModel);
             SetActiveTab(tabViewModel);
             
@@ -89,6 +90,14 @@ public class EditorTabBarViewModel(
         SetActiveTab(tab);
     }
 
+    private async void OnTabPreviewRequested(EditorTabViewModel tab)
+    {
+        if (tab.FilePath != null)
+        {
+            await OpenFileInPreviewAsync(tab.FilePath);
+        }
+    }
+
     public void CloseTab(EditorTabViewModel tab)
     {
         if (!EditorTabs.Contains(tab))
@@ -97,6 +106,7 @@ public class EditorTabBarViewModel(
         // Unsubscribe from events to prevent memory leaks
         tab.CloseRequested -= OnTabCloseRequested;
         tab.SelectRequested -= OnTabSelectRequested;
+        tab.PreviewRequested -= OnTabPreviewRequested;
         
         EditorTabs.Remove(tab);
         
@@ -230,6 +240,7 @@ public class EditorTabBarViewModel(
             var tabViewModel = new EditorTabViewModel(tab);
             tabViewModel.CloseRequested += OnTabCloseRequested;
             tabViewModel.SelectRequested += OnTabSelectRequested;
+            tabViewModel.PreviewRequested += OnTabPreviewRequested;
             EditorTabs.Add(tabViewModel);
             SetActiveTab(tabViewModel);
             
@@ -269,6 +280,7 @@ public class EditorTabBarViewModel(
             var tabViewModel = new EditorTabViewModel(tab);
             tabViewModel.CloseRequested += OnTabCloseRequested;
             tabViewModel.SelectRequested += OnTabSelectRequested;
+            tabViewModel.PreviewRequested += OnTabPreviewRequested;
             EditorTabs.Add(tabViewModel);
             SetActiveTab(tabViewModel);
             
