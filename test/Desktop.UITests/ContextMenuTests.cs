@@ -102,6 +102,15 @@ public class ContextMenuTests : MainWindowTestBase
         };
         var mdsrcViewModel = new FileSystemItemViewModel(mdsrcItem);
 
+        // Arrange - Test .md file
+        var mdItem = new FileSystemItem
+        {
+            Name = "readme.md",
+            FullPath = "/test/path/readme.md",
+            IsDirectory = false
+        };
+        var mdViewModel = new FileSystemItemViewModel(mdItem);
+
         // Assert
         Assert.Multiple(() =>
         {
@@ -112,6 +121,10 @@ public class ContextMenuTests : MainWindowTestBase
             // Test .mdsrc file
             Assert.That(mdsrcViewModel.IsMarkdownTemplate, Is.True, ".mdsrc file should be identified as markdown template");
             Assert.That(mdsrcViewModel.ShowInPreviewCommand.CanExecute(null), Is.True, "ShowInPreview should be available for .mdsrc files");
+            
+            // Test .md file
+            Assert.That(mdViewModel.IsMarkdownTemplate, Is.True, ".md file should be identified as markdown template");
+            Assert.That(mdViewModel.ShowInPreviewCommand.CanExecute(null), Is.True, "ShowInPreview should be available for .md files");
             
             // Verify other commands work normally
             Assert.That(mdextViewModel.OpenCommand.CanExecute(null), Is.True, "Open should be available for markdown template files");

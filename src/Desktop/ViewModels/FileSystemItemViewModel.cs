@@ -69,7 +69,8 @@ public class FileSystemItemViewModel : ViewModelBase
     public bool IsDirectory => Item.IsDirectory;
     public bool HasChildren => Children.Count > 0;
     public bool IsMarkdownTemplate => !IsDirectory && (FullPath.EndsWith(".mdext", StringComparison.OrdinalIgnoreCase) || 
-                                                         FullPath.EndsWith(".mdsrc", StringComparison.OrdinalIgnoreCase));
+                                                         FullPath.EndsWith(".mdsrc", StringComparison.OrdinalIgnoreCase) ||
+                                                         FullPath.EndsWith(".md", StringComparison.OrdinalIgnoreCase));
 
     public bool IsExpanded
     {
