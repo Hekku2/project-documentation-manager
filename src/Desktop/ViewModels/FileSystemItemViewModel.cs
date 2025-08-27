@@ -105,6 +105,7 @@ public class FileSystemItemViewModel : ViewModelBase
 
     // Context Menu Commands
     public ICommand OpenCommand { get; private set; } = null!;
+    public ICommand NewCommand { get; private set; } = null!;
     public ICommand ShowInExplorerCommand { get; private set; } = null!;
     public ICommand CopyPathCommand { get; private set; } = null!;
     public ICommand RefreshCommand { get; private set; } = null!;
@@ -113,6 +114,7 @@ public class FileSystemItemViewModel : ViewModelBase
     private void InitializeCommands()
     {
         OpenCommand = new RelayCommand(ExecuteOpen, CanExecuteOpen);
+        NewCommand = new RelayCommand(() => { }, () => false); // Disabled command for directories
         ShowInExplorerCommand = new RelayCommand(ExecuteShowInExplorer, CanExecuteShowInExplorer);
         CopyPathCommand = new RelayCommand(ExecuteCopyPath, CanExecutePathCommand);
         RefreshCommand = new RelayCommand(ExecuteRefresh, CanExecuteRefresh);
