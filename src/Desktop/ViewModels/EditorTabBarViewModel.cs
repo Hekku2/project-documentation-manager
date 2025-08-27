@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using Microsoft.Extensions.Logging;
 using Desktop.Models;
 using Desktop.Services;
@@ -18,6 +19,8 @@ public class EditorTabBarViewModel(
     public ObservableCollection<EditorTabViewModel> EditorTabs { get; } = [];
 
     public EditorTabViewModel? ActiveTab => editorStateService.ActiveTab;
+
+    public ICommand NewFileCommand { get; } = new RelayCommand(() => { }, () => false); // Disabled command
 
     public async Task OpenFileAsync(string filePath)
     {
