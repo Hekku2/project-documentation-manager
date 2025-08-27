@@ -287,8 +287,8 @@ public class EditorContentViewModel : ViewModelBase
             previewData.IsCompiled = false;
         }
 
-        _logger.LogDebug("Preview content created for file: {FilePath}, IsCompiled: {IsCompiled}, Html: {Html}", 
-            filePath, previewData.IsCompiled, previewData.HtmlContent);
+        _logger.LogDebug("Preview content created for file: {FilePath}, IsCompiled: {IsCompiled}, HasHtmlContent: {HasHtmlContent}", 
+            filePath, previewData.IsCompiled, previewData.HasHtmlContent);
 
         return previewData;
     }

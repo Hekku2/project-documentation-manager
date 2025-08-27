@@ -293,14 +293,25 @@ public class FileSystemItemViewModel : ViewModelBase
         if (string.Equals(Item.FullPath, path, StringComparison.OrdinalIgnoreCase))
             return this;
 
-        if (!_childrenLoaded || !IsExpanded)
+        // Check if the requested path is a child of this item
+        if (!path.StartsWith(Item.FullPath, StringComparison.OrdinalIgnoreCase))
             return null;
 
-        foreach (var child in Children)
+        // If children are loaded, search through them
+        if (_childrenLoaded)
         {
-            var result = child.FindViewModelByPath(path);
-            if (result != null)
-                return result;
+            foreach (var child in Children)
+            {
+                var result = child.FindViewModelByPath(path);
+                if (result != null)
+                    return result;
+            }
+        }
+
+        // If this is a directory and the path could be a child, return this as potential parent
+        if (Item.IsDirectory && path.StartsWith(Item.FullPath + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+        {
+            return this; // Return this directory as the closest parent found
         }
 
         return null;
@@ -308,9 +319,58 @@ public class FileSystemItemViewModel : ViewModelBase
 
     private void HandleItemCreated(FileSystemItemViewModel parentViewModel, string itemPath, bool isDirectory)
     {
-        // Only handle if the parent is expanded and loaded
+        // If parent is not expanded or loaded, we still need to update the underlying data structure
+        // but we don't need to update the UI immediately
         if (!parentViewModel.IsExpanded || !parentViewModel._childrenLoaded)
+        {
+            // Update the underlying Item.Children collection so the change is reflected when expanded
+            if (parentViewModel.Item.IsDirectory)
+            {
+                var childFileName = Path.GetFileName(itemPath);
+                var existingItem = parentViewModel.Item.Children.FirstOrDefault(c => 
+                    string.Equals(c.Name, childFileName, StringComparison.OrdinalIgnoreCase));
+                
+                if (existingItem == null)
+                {
+                    var childItem = new FileSystemItem
+                    {
+                        Name = childFileName,
+                        FullPath = itemPath,
+                        IsDirectory = isDirectory
+                    };
+                    
+                    // Try to get file/directory properties
+                    try
+                    {
+                        childItem.LastModified = isDirectory ? Directory.GetLastWriteTime(itemPath) : File.GetLastWriteTime(itemPath);
+                        childItem.Size = isDirectory ? 0 : new FileInfo(itemPath).Length;
+                        
+                        // If it's a directory, check if it has children
+                        if (isDirectory)
+                        {
+                            var dirInfo = new DirectoryInfo(itemPath);
+                            var hasChildren = dirInfo.GetDirectories().Any(d => !IsHiddenOrSystem(d.Attributes)) ||
+                                             dirInfo.GetFiles().Any(f => !IsHiddenOrSystem(f.Attributes));
+                            
+                            if (hasChildren)
+                            {
+                                // Add a placeholder child to indicate it has children
+                                childItem.Children.Add(new FileSystemItem { Name = "Placeholder", FullPath = "" });
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        // Use default values if file system access fails
+                        childItem.LastModified = DateTime.Now;
+                        childItem.Size = 0;
+                    }
+                    
+                    parentViewModel.Item.Children.Add(childItem);
+                }
+            }
             return;
+        }
 
         // Check if item already exists
         var fileName = Path.GetFileName(itemPath);
@@ -393,12 +453,29 @@ public class FileSystemItemViewModel : ViewModelBase
     private void HandleItemDeleted(FileSystemItemViewModel parentViewModel, string itemPath)
     {
         var fileName = Path.GetFileName(itemPath);
-        var itemToRemove = parentViewModel.Children.FirstOrDefault(c => 
-            string.Equals(c.Name, fileName, StringComparison.OrdinalIgnoreCase));
         
-        if (itemToRemove != null)
+        // Remove from UI children if loaded
+        if (parentViewModel._childrenLoaded)
         {
-            parentViewModel.Children.Remove(itemToRemove);
+            var itemToRemove = parentViewModel.Children.FirstOrDefault(c => 
+                string.Equals(c.Name, fileName, StringComparison.OrdinalIgnoreCase));
+            
+            if (itemToRemove != null)
+            {
+                parentViewModel.Children.Remove(itemToRemove);
+            }
+        }
+        
+        // Also remove from underlying data structure
+        if (parentViewModel.Item.IsDirectory)
+        {
+            var dataItemToRemove = parentViewModel.Item.Children.FirstOrDefault(c => 
+                string.Equals(c.Name, fileName, StringComparison.OrdinalIgnoreCase));
+            
+            if (dataItemToRemove != null)
+            {
+                parentViewModel.Item.Children.Remove(dataItemToRemove);
+            }
         }
     }
 

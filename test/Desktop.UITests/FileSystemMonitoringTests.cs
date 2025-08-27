@@ -8,6 +8,7 @@ using Desktop.Services;
 using Desktop.Models;
 using NSubstitute;
 using Business.Services;
+using System.Linq;
 
 namespace Desktop.UITests;
 
@@ -348,12 +349,13 @@ public class FileSystemMonitoringTests
         await Task.Delay(1000);
 
         // Now it should load the actual children (including the original main.cs)
-        // But the newfile.cs won't be there since it wasn't added to the original model
+        // And the newfile.cs should be there since the file system change was tracked in the underlying model
         Assert.Multiple(() =>
         {
             Assert.That(srcFolder.IsExpanded, Is.True, "src folder should be expanded");
-            Assert.That(srcFolder.Children.Count, Is.EqualTo(1), "src should have actual children loaded");
-            Assert.That(srcFolder.Children[0].Name, Is.EqualTo("main.cs"), "src should have main.cs");
+            Assert.That(srcFolder.Children.Count, Is.EqualTo(2), "src should have actual children loaded including the new file");
+            var childrenNames = srcFolder.Children.Select(c => c.Name).OrderBy(n => n).ToArray();
+            Assert.That(childrenNames, Is.EqualTo(new[] { "main.cs", "newfile.cs" }), "src should have both main.cs and newfile.cs");
         });
     }
 
