@@ -50,6 +50,20 @@ public class FileSystemMonitoringTests
         fileService.IsValidFolder(Arg.Any<string>()).Returns(true);
         fileService.ReadFileContentAsync(Arg.Any<string>()).Returns("Mock file content");
         fileService.IsMonitoringFileSystem.Returns(false);
+        fileService.CreateFileSystemItem(Arg.Any<string>(), Arg.Any<bool>()).Returns(callInfo =>
+        {
+            var path = callInfo.Arg<string>();
+            var isDirectory = callInfo.Arg<bool>();
+            var fileName = System.IO.Path.GetFileName(path);
+            return new FileSystemItem
+            {
+                Name = fileName,
+                FullPath = path,
+                IsDirectory = isDirectory,
+                LastModified = DateTime.Now,
+                Size = isDirectory ? 0 : 100
+            };
+        });
         
         var markdownCombinationService = Substitute.For<IMarkdownCombinationService>();
         var markdownFileCollectorService = Substitute.For<IMarkdownFileCollectorService>();
@@ -63,7 +77,8 @@ public class FileSystemMonitoringTests
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
         var editorLogger = Substitute.For<ILogger<Desktop.ViewModels.EditorViewModel>>();
         var editorViewModel = new Desktop.ViewModels.EditorViewModel(editorLogger, options, editorTabBarViewModel, editorContentViewModel, hotkeyService);
-        var fileExplorerViewModel = new FileExplorerViewModel(Substitute.For<ILogger<FileExplorerViewModel>>(), fileService);
+        var fileSystemExplorerService = Substitute.For<Desktop.Services.IFileSystemExplorerService>();
+        var fileExplorerViewModel = new FileExplorerViewModel(Substitute.For<ILogger<FileExplorerViewModel>>(), fileService, fileSystemExplorerService);
         var viewModel = new MainWindowViewModel(vmLogger, options, editorStateService, editorViewModel, logTransitionService, hotkeyService);
         var window = new MainWindow(viewModel, fileExplorerViewModel);
         

@@ -178,7 +178,8 @@ public abstract class MainWindowTestBase
         var editorViewModel = CreateEditorViewModel();
         
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
-        var fileExplorerViewModel = new FileExplorerViewModel(Substitute.For<ILogger<FileExplorerViewModel>>(), _fileService);
+        var fileSystemExplorerService = Substitute.For<Desktop.Services.IFileSystemExplorerService>();
+        var fileExplorerViewModel = new FileExplorerViewModel(Substitute.For<ILogger<FileExplorerViewModel>>(), _fileService, fileSystemExplorerService);
         var viewModel = new MainWindowViewModel(_vmLogger, _options, _editorStateService, editorViewModel, _logTransitionService, hotkeyService);
         return new MainWindow(viewModel, fileExplorerViewModel);
     }
@@ -192,7 +193,8 @@ public abstract class MainWindowTestBase
         var editorViewModel = CreateEditorViewModel(editorStateService: editorStateService);
         
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
-        var fileExplorerViewModel = new FileExplorerViewModel(Substitute.For<ILogger<FileExplorerViewModel>>(), _fileService);
+        var fileSystemExplorerService = Substitute.For<Desktop.Services.IFileSystemExplorerService>();
+        var fileExplorerViewModel = new FileExplorerViewModel(Substitute.For<ILogger<FileExplorerViewModel>>(), _fileService, fileSystemExplorerService);
         var viewModel = new MainWindowViewModel(_vmLogger, _options, editorStateService, editorViewModel, _logTransitionService, hotkeyService);
         return new MainWindow(viewModel, fileExplorerViewModel);
     }
@@ -202,7 +204,8 @@ public abstract class MainWindowTestBase
         _fileService.GetFileStructureAsync().Returns(Task.FromResult<FileSystemItem?>(CreateNestedTestStructure()));
         _fileService.GetFileStructureAsync(Arg.Any<string>()).Returns(Task.FromResult<FileSystemItem?>(CreateNestedTestStructure()));
         
-        var fileExplorerViewModel = new FileExplorerViewModel(Substitute.For<ILogger<FileExplorerViewModel>>(), _fileService);
+        var fileSystemExplorerService = Substitute.For<Desktop.Services.IFileSystemExplorerService>();
+        var fileExplorerViewModel = new FileExplorerViewModel(Substitute.For<ILogger<FileExplorerViewModel>>(), _fileService, fileSystemExplorerService);
         return new FileExplorerUserControl(fileExplorerViewModel);
     }
     
@@ -211,7 +214,8 @@ public abstract class MainWindowTestBase
         _fileService.GetFileStructureAsync().Returns(Task.FromResult<FileSystemItem?>(CreateSimpleTestStructure()));
         _fileService.GetFileStructureAsync(Arg.Any<string>()).Returns(Task.FromResult<FileSystemItem?>(CreateSimpleTestStructure()));
         
-        var fileExplorerViewModel = new FileExplorerViewModel(Substitute.For<ILogger<FileExplorerViewModel>>(), _fileService);
+        var fileSystemExplorerService = Substitute.For<Desktop.Services.IFileSystemExplorerService>();
+        var fileExplorerViewModel = new FileExplorerViewModel(Substitute.For<ILogger<FileExplorerViewModel>>(), _fileService, fileSystemExplorerService);
         return new FileExplorerUserControl(fileExplorerViewModel);
     }
     

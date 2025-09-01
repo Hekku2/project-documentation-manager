@@ -6,7 +6,6 @@ using Desktop.Models;
 using Desktop.Services;
 using System;
 using System.IO;
-using System.Diagnostics;
 
 namespace Desktop.ViewModels;
 
@@ -23,14 +22,16 @@ public class FileSystemItemViewModel : ViewModelBase
         private readonly Action<string>? _onFilePreview;
 
     private readonly IFileService? _fileService;
+    private readonly IFileSystemExplorerService? _fileSystemExplorerService;
 
-    public FileSystemItemViewModel(FileSystemItem item, bool isRoot = false, IFileService? fileService = null, Action<string>? onFileSelected = null, Action<string>? onFilePreview = null)
+    public FileSystemItemViewModel(FileSystemItem item, bool isRoot = false, IFileService? fileService = null, Action<string>? onFileSelected = null, Action<string>? onFilePreview = null, IFileSystemExplorerService? fileSystemExplorerService = null)
     {
         Item = item;
         Children = [];
         _fileService = fileService;
         _onFileSelected = onFileSelected;
         _onFilePreview = onFilePreview;
+        _fileSystemExplorerService = fileSystemExplorerService;
         
         // Initialize context menu commands
         InitializeCommands();
@@ -38,7 +39,7 @@ public class FileSystemItemViewModel : ViewModelBase
         // For directories, add a placeholder to show the expand icon
         if (item.IsDirectory && item.HasChildren)
         {
-            Children.Add(new FileSystemItemViewModel(new FileSystemItem { Name = "Loading...", FullPath = "" }, false, null, _onFileSelected, _onFilePreview));
+            Children.Add(new FileSystemItemViewModel(new FileSystemItem { Name = "Loading...", FullPath = "" }, false, null, _onFileSelected, _onFilePreview, _fileSystemExplorerService));
         }
         else if (!item.IsDirectory)
         {
@@ -144,23 +145,7 @@ public class FileSystemItemViewModel : ViewModelBase
 
     private void ExecuteShowInExplorer()
     {
-        try
-        {
-            if (File.Exists(FullPath))
-            {
-                // Select the file in Explorer
-                Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{FullPath}\"") { UseShellExecute = true });
-            }
-            else if (Directory.Exists(FullPath))
-            {
-                // Open the directory in Explorer
-                Process.Start(new ProcessStartInfo("explorer.exe", $"\"{FullPath}\"") { UseShellExecute = true });
-            }
-        }
-        catch
-        {
-            // Ignore if cannot open Explorer
-        }
+        _fileSystemExplorerService?.ShowInExplorer(FullPath);
     }
 
     private async void ExecuteCopyPath()
@@ -193,7 +178,7 @@ public class FileSystemItemViewModel : ViewModelBase
             
             if (Item.HasChildren)
             {
-                Children.Add(new FileSystemItemViewModel(new FileSystemItem { Name = "Loading...", FullPath = "" }, false, null, _onFileSelected, _onFilePreview));
+                Children.Add(new FileSystemItemViewModel(new FileSystemItem { Name = "Loading...", FullPath = "" }, false, null, _onFileSelected, _onFilePreview, _fileSystemExplorerService));
             }
             
             if (IsExpanded)
@@ -223,7 +208,7 @@ public class FileSystemItemViewModel : ViewModelBase
                 var childViewModels = Item.Children
                     .OrderBy(c => !c.IsDirectory)
                     .ThenBy(c => c.Name)
-                    .Select(child => new FileSystemItemViewModel(child, false, _fileService, _onFileSelected, _onFilePreview))
+                    .Select(child => new FileSystemItemViewModel(child, false, _fileService, _onFileSelected, _onFilePreview, _fileSystemExplorerService))
                     .ToList();
 
                 // Update the UI on the main thread
@@ -335,41 +320,11 @@ public class FileSystemItemViewModel : ViewModelBase
                 
                 if (existingItem == null)
                 {
-                    var childItem = new FileSystemItem
+                    var childItem = _fileService?.CreateFileSystemItem(itemPath, isDirectory);
+                    if (childItem != null)
                     {
-                        Name = childFileName,
-                        FullPath = itemPath,
-                        IsDirectory = isDirectory
-                    };
-                    
-                    // Try to get file/directory properties
-                    try
-                    {
-                        childItem.LastModified = isDirectory ? Directory.GetLastWriteTime(itemPath) : File.GetLastWriteTime(itemPath);
-                        childItem.Size = isDirectory ? 0 : new FileInfo(itemPath).Length;
-                        
-                        // If it's a directory, check if it has children
-                        if (isDirectory)
-                        {
-                            var dirInfo = new DirectoryInfo(itemPath);
-                            var hasChildren = dirInfo.GetDirectories().Any(d => !IsHiddenOrSystem(d.Attributes)) ||
-                                             dirInfo.GetFiles().Any(f => !IsHiddenOrSystem(f.Attributes));
-                            
-                            if (hasChildren)
-                            {
-                                // Add a placeholder child to indicate it has children
-                                childItem.Children.Add(new FileSystemItem { Name = "Placeholder", FullPath = "" });
-                            }
-                        }
+                        parentViewModel.Item.Children.Add(childItem);
                     }
-                    catch
-                    {
-                        // Use default values if file system access fails
-                        childItem.LastModified = DateTime.Now;
-                        childItem.Size = 0;
-                    }
-                    
-                    parentViewModel.Item.Children.Add(childItem);
                 }
             }
             return;
@@ -381,52 +336,15 @@ public class FileSystemItemViewModel : ViewModelBase
             return;
 
         // Create the new file system item
-        var newItem = new FileSystemItem
-        {
-            Name = fileName,
-            FullPath = itemPath,
-            IsDirectory = isDirectory
-        };
+        var newItem = _fileService?.CreateFileSystemItem(itemPath, isDirectory);
+        if (newItem == null)
+            return;
 
-        // Try to get file/directory properties, but don't fail if they're not accessible
-        try
-        {
-            newItem.LastModified = isDirectory ? Directory.GetLastWriteTime(itemPath) : File.GetLastWriteTime(itemPath);
-            newItem.Size = isDirectory ? 0 : new FileInfo(itemPath).Length;
-        }
-        catch
-        {
-            // Use default values if file system access fails (e.g., during testing)
-            newItem.LastModified = DateTime.Now;
-            newItem.Size = 0;
-        }
-
-        // If it's a directory, populate its children for the lazy loading
-        if (isDirectory)
-        {
-            try
-            {
-                var dirInfo = new DirectoryInfo(itemPath);
-                var hasChildren = dirInfo.GetDirectories().Any(d => !IsHiddenOrSystem(d.Attributes)) ||
-                                 dirInfo.GetFiles().Any(f => !IsHiddenOrSystem(f.Attributes));
-                
-                if (hasChildren)
-                {
-                    // Add a placeholder child to indicate it has children
-                    newItem.Children.Add(new FileSystemItem { Name = "Placeholder", FullPath = "" });
-                }
-            }
-            catch
-            {
-                // Ignore errors when checking for children
-            }
-        }
-
-    var newViewModel = new FileSystemItemViewModel(newItem, false, _fileService, _onFileSelected, _onFilePreview);
+        var newViewModel = new FileSystemItemViewModel(newItem, false, _fileService, _onFileSelected, _onFilePreview, _fileSystemExplorerService);
 
         // Find the correct position to insert (directories first, then alphabetical)
         var insertIndex = 0;
-        for (int i = 0; i < parentViewModel.Children.Count; i++)
+        for (var i = 0; i < parentViewModel.Children.Count; i++)
         {
             var existingChild = parentViewModel.Children[i];
             
@@ -453,7 +371,7 @@ public class FileSystemItemViewModel : ViewModelBase
         parentViewModel.Children.Insert(insertIndex, newViewModel);
     }
 
-    private void HandleItemDeleted(FileSystemItemViewModel parentViewModel, string itemPath)
+    private static void HandleItemDeleted(FileSystemItemViewModel parentViewModel, string itemPath)
     {
         var fileName = Path.GetFileName(itemPath);
         
@@ -505,9 +423,5 @@ public class FileSystemItemViewModel : ViewModelBase
         }
     }
 
-    private static bool IsHiddenOrSystem(FileAttributes attributes)
-    {
-        return (attributes & (FileAttributes.Hidden | FileAttributes.System)) != 0;
-    }
 
 }

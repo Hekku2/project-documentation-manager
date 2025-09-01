@@ -6,7 +6,7 @@ using Desktop.Services;
 
 namespace Desktop.ViewModels;
 
-public class FileExplorerViewModel(ILogger<FileExplorerViewModel> logger, IFileService fileService) : ViewModelBase, IDisposable
+public class FileExplorerViewModel(ILogger<FileExplorerViewModel> logger, IFileService fileService, IFileSystemExplorerService fileSystemExplorerService) : ViewModelBase, IDisposable
 {
     private bool _isLoading;
     private FileSystemItemViewModel? _rootItem;
@@ -55,7 +55,8 @@ public class FileExplorerViewModel(ILogger<FileExplorerViewModel> logger, IFileS
                     isRoot: true,
                     fileService: fileService,
                     onFileSelected: OnFileSelected, // pass instance callback
-                    onFilePreview: OnFilePreview    // pass preview callback
+                    onFilePreview: OnFilePreview,    // pass preview callback
+                    fileSystemExplorerService: fileSystemExplorerService
                 );
                 RootItem = rootViewModel;
                 
