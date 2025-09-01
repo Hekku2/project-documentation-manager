@@ -16,15 +16,21 @@ public class FileSystemItemViewModel : ViewModelBase
     private bool _isLoading;
     private bool _childrenLoaded;
 
-
-        // Instance-level file selected callback
-        private readonly Action<string>? _onFileSelected;
-        private readonly Action<string>? _onFilePreview;
+    // Instance-level file selected callback
+    private readonly Action<string>? _onFileSelected;
+    private readonly Action<string>? _onFilePreview;
 
     private readonly IFileService? _fileService;
-    private readonly IFileSystemExplorerService? _fileSystemExplorerService;
+    private readonly IFileSystemExplorerService _fileSystemExplorerService;
 
-    public FileSystemItemViewModel(FileSystemItem item, bool isRoot = false, IFileService? fileService = null, Action<string>? onFileSelected = null, Action<string>? onFilePreview = null, IFileSystemExplorerService? fileSystemExplorerService = null)
+    public FileSystemItemViewModel(
+        FileSystemItem item,
+        IFileSystemExplorerService fileSystemExplorerService,
+        bool isRoot = false,
+        IFileService? fileService = null,
+        Action<string>? onFileSelected = null,
+        Action<string>? onFilePreview = null
+        )
     {
         Item = item;
         Children = [];
@@ -39,7 +45,7 @@ public class FileSystemItemViewModel : ViewModelBase
         // For directories, add a placeholder to show the expand icon
         if (item.IsDirectory && item.HasChildren)
         {
-            Children.Add(new FileSystemItemViewModel(new FileSystemItem { Name = "Loading...", FullPath = "" }, false, null, _onFileSelected, _onFilePreview, _fileSystemExplorerService));
+            Children.Add(new FileSystemItemViewModel(new FileSystemItem { Name = "Loading...", FullPath = "" }, _fileSystemExplorerService, false, null, _onFileSelected, _onFilePreview));
         }
         else if (!item.IsDirectory)
         {
@@ -178,7 +184,7 @@ public class FileSystemItemViewModel : ViewModelBase
             
             if (Item.HasChildren)
             {
-                Children.Add(new FileSystemItemViewModel(new FileSystemItem { Name = "Loading...", FullPath = "" }, false, null, _onFileSelected, _onFilePreview, _fileSystemExplorerService));
+                Children.Add(new FileSystemItemViewModel(new FileSystemItem { Name = "Loading...", FullPath = "" }, _fileSystemExplorerService, false, null, _onFileSelected, _onFilePreview));
             }
             
             if (IsExpanded)
@@ -208,7 +214,7 @@ public class FileSystemItemViewModel : ViewModelBase
                 var childViewModels = Item.Children
                     .OrderBy(c => !c.IsDirectory)
                     .ThenBy(c => c.Name)
-                    .Select(child => new FileSystemItemViewModel(child, false, _fileService, _onFileSelected, _onFilePreview, _fileSystemExplorerService))
+                    .Select(child => new FileSystemItemViewModel(child, _fileSystemExplorerService, false, _fileService, _onFileSelected, _onFilePreview))
                     .ToList();
 
                 // Update the UI on the main thread
@@ -340,7 +346,7 @@ public class FileSystemItemViewModel : ViewModelBase
         if (newItem == null)
             return;
 
-        var newViewModel = new FileSystemItemViewModel(newItem, false, _fileService, _onFileSelected, _onFilePreview, _fileSystemExplorerService);
+        var newViewModel = new FileSystemItemViewModel(newItem, _fileSystemExplorerService, false, _fileService, _onFileSelected, _onFilePreview);
 
         // Find the correct position to insert (directories first, then alphabetical)
         var insertIndex = 0;
