@@ -29,7 +29,8 @@
                   Foreground="#CCCCCC"
                   IsVisible="{Binding !IsLoading}"
                   VerticalAlignment="Stretch"
-                  HorizontalAlignment="Stretch">
+                  HorizontalAlignment="Stretch"
+                  >
             <TreeView.ItemTemplate>
                 <TreeDataTemplate ItemsSource="{Binding Children}" x:DataType="vm:FileSystemItemViewModel">
                     <StackPanel Orientation="Horizontal">
@@ -74,6 +75,9 @@
                     </StackPanel>
                 </TreeDataTemplate>
             </TreeView.ItemTemplate>
+            <TreeView.Resources>
+                <SolidColorBrush x:Key="TreeViewItemForeground"  Color="White"/>
+            </TreeView.Resources>
             <TreeView.Styles>
                 <Style Selector="TreeViewItem" x:DataType="vm:FileSystemItemViewModel">
                     <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />

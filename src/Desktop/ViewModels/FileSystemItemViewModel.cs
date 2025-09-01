@@ -42,12 +42,8 @@ public class FileSystemItemViewModel : ViewModelBase
         // Initialize context menu commands
         InitializeCommands();
         
-        // For directories, add a placeholder to show the expand icon
-        if (item.IsDirectory && item.HasChildren)
-        {
-            Children.Add(new FileSystemItemViewModel(new FileSystemItem { Name = "Loading...", FullPath = "" }, _fileSystemExplorerService, false, null, _onFileSelected, _onFilePreview));
-        }
-        else if (!item.IsDirectory)
+        // For files, mark as loaded since they don't have children
+        if (!item.IsDirectory)
         {
             // For files, mark as loaded since they don't have children
             _childrenLoaded = true;
@@ -59,10 +55,10 @@ public class FileSystemItemViewModel : ViewModelBase
             _fileService.FileSystemChanged += OnFileSystemChanged;
         }
         
-        // Auto-expand only the actual root directory
+        // Auto-expand only the actual root directory (without preloading)
         if (item.IsDirectory && isRoot)
         {
-            _ = LoadChildrenAsync();
+            _ = LoadChildrenAsync(true); // Don't preload for auto-expansion
             IsExpanded = true;
         }
     }
@@ -74,7 +70,7 @@ public class FileSystemItemViewModel : ViewModelBase
     public string Name => Item.DisplayName;
     public string FullPath => Item.FullPath;
     public bool IsDirectory => Item.IsDirectory;
-    public bool HasChildren => Children.Count > 0;
+    public bool HasChildren => IsDirectory && (!_childrenLoaded || Children.Count > 0);
     public bool IsMarkdownTemplate => !IsDirectory && (FullPath.EndsWith(".mdext", StringComparison.OrdinalIgnoreCase) || 
                                                          FullPath.EndsWith(".mdsrc", StringComparison.OrdinalIgnoreCase) ||
                                                          FullPath.EndsWith(".md", StringComparison.OrdinalIgnoreCase));
@@ -86,7 +82,7 @@ public class FileSystemItemViewModel : ViewModelBase
         {
             if (SetProperty(ref _isExpanded, value) && value && !_childrenLoaded)
             {
-                _ = LoadChildrenAsync();
+                _ = LoadChildrenAsync(true); // Enable preloading for manual expansion
             }
         }
     }
@@ -182,14 +178,10 @@ public class FileSystemItemViewModel : ViewModelBase
             _childrenLoaded = false;
             Children.Clear();
             
-            if (Item.HasChildren)
-            {
-                Children.Add(new FileSystemItemViewModel(new FileSystemItem { Name = "Loading...", FullPath = "" }, _fileSystemExplorerService, false, null, _onFileSelected, _onFilePreview));
-            }
             
             if (IsExpanded)
             {
-                _ = LoadChildrenAsync();
+                _ = LoadChildrenAsync(true); // Enable preloading on refresh since it's a manual action
             }
         }
     }
@@ -200,7 +192,7 @@ public class FileSystemItemViewModel : ViewModelBase
         _onFilePreview?.Invoke(FullPath);
     }
 
-    private async Task LoadChildrenAsync()
+    private async Task LoadChildrenAsync(bool enablePreloading = false)
     {
         if (_childrenLoaded || IsLoading || !Item.IsDirectory)
             return;
@@ -225,6 +217,12 @@ public class FileSystemItemViewModel : ViewModelBase
                     {
                         Children.Add(childViewModel);
                     }
+                    
+                    // Only preload the next level if explicitly enabled
+                    if (enablePreloading)
+                    {
+                        PreloadNextLevel();
+                    }
                 });
             });
 
@@ -233,6 +231,68 @@ public class FileSystemItemViewModel : ViewModelBase
         finally
         {
             IsLoading = false;
+        }
+    }
+
+    private async void PreloadNextLevel()
+    {
+        // Get all directory children that aren't already loaded
+        var directoryChildren = Children
+            .Where(child => child.IsDirectory && !child._childrenLoaded)
+            .ToList();
+
+        if (directoryChildren.Count == 0)
+            return;
+
+        // Start preloading tasks for each directory child
+        var preloadTasks = directoryChildren.Select(async child =>
+        {
+            try
+            {
+                // Load children without expanding the UI
+                await child.LoadChildrenInternalAsync();
+            }
+            catch
+            {
+                // Ignore preloading errors - they shouldn't affect the main functionality
+            }
+        });
+
+        // Wait for all preloading to complete in the background
+        await Task.WhenAll(preloadTasks);
+    }
+
+    private async Task LoadChildrenInternalAsync()
+    {
+        if (_childrenLoaded || IsLoading || !Item.IsDirectory)
+            return;
+
+        try
+        {
+            await Task.Run(() =>
+            {
+                var childViewModels = Item.Children
+                    .OrderBy(c => !c.IsDirectory)
+                    .ThenBy(c => c.Name)
+                    .Select(child => new FileSystemItemViewModel(child, _fileSystemExplorerService, false, _fileService, _onFileSelected, _onFilePreview))
+                    .ToList();
+
+                // Update the UI on the main thread
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    Children.Clear();
+                    foreach (var childViewModel in childViewModels)
+                    {
+                        Children.Add(childViewModel);
+                    }
+                });
+            });
+
+            _childrenLoaded = true;
+        }
+        catch
+        {
+            // Handle any loading errors silently for preloading
         }
     }
 
@@ -354,10 +414,6 @@ public class FileSystemItemViewModel : ViewModelBase
         {
             var existingChild = parentViewModel.Children[i];
             
-            // Skip the loading placeholder
-            if (existingChild.Name == "Loading...")
-                continue;
-
             // Directories come before files
             if (isDirectory && !existingChild.IsDirectory)
                 break;
