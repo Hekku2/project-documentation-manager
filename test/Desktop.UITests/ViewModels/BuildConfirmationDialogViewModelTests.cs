@@ -7,7 +7,7 @@ using Business.Services;
 using Business.Models;
 using NSubstitute;
 
-namespace Desktop.UITests;
+namespace Desktop.UITests.ViewModels;
 
 [NonParallelizable]
 public class BuildConfirmationDialogViewModelTests

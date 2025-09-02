@@ -544,6 +544,4 @@ public class FileSystemItemViewModel : ViewModelBase
             }
         }
     }
-
-
 }
