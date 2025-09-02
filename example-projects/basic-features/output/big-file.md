@@ -1,6 +1,6 @@
 # Big file
 
-This is an bigger exmaple files
+This is a bigger example file
 
 Table import example
 
