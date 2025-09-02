@@ -22,7 +22,7 @@ public abstract class MainWindowTestBase
     protected ILogger<EditorStateService> _stateLogger = null!;
     protected IOptions<ApplicationOptions> _options = null!;
     protected IFileService _fileService = null!;
-    protected IServiceProvider serviceProvider = null!;
+    protected IServiceProvider _serviceProvider = null!;
     protected IMarkdownCombinationService _markdownCombinationService = null!;
     protected IMarkdownFileCollectorService _markdownFileCollectorService = null!;
     protected Desktop.Services.IMarkdownRenderingService _markdownRenderingService = null!;
@@ -40,10 +40,10 @@ public abstract class MainWindowTestBase
         _stateLogger = Substitute.For<ILogger<EditorStateService>>();
         _options = Options.Create(new ApplicationOptions());
         _fileService = Substitute.For<IFileService>();
-        serviceProvider = Substitute.For<IServiceProvider>();
+        _serviceProvider = Substitute.For<IServiceProvider>();
         
         // Setup service provider to return mock loggers for all needed types  
-        serviceProvider.GetService(typeof(ILogger<SettingsContentViewModel>)).Returns(Substitute.For<ILogger<SettingsContentViewModel>>());
+        _serviceProvider.GetService(typeof(ILogger<SettingsContentViewModel>)).Returns(Substitute.For<ILogger<SettingsContentViewModel>>());
         _markdownCombinationService = Substitute.For<IMarkdownCombinationService>();
         _markdownFileCollectorService = Substitute.For<IMarkdownFileCollectorService>();
         _markdownRenderingService = Substitute.For<Desktop.Services.IMarkdownRenderingService>();
@@ -193,7 +193,7 @@ public abstract class MainWindowTestBase
         editorStateService ??= _editorStateService;
         editorTabBarViewModel ??= new EditorTabBarViewModel(_tabBarLogger, _fileService, editorStateService);
         var settingsContentViewModelFactory = Substitute.For<ISettingsContentViewModelFactory>();
-        editorContentViewModel ??= new EditorContentViewModel(_contentLogger, editorStateService, _options, serviceProvider, _markdownCombinationService, _markdownFileCollectorService, _markdownRenderingService, settingsContentViewModelFactory);
+        editorContentViewModel ??= new EditorContentViewModel(_contentLogger, editorStateService, _options, _serviceProvider, _markdownCombinationService, _markdownFileCollectorService, _markdownRenderingService, settingsContentViewModelFactory);
         
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
         var editorLogger = Substitute.For<ILogger<Desktop.ViewModels.EditorViewModel>>();
