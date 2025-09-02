@@ -4,3 +4,5 @@ File 2 contents
 
  * File 2 feature
 <MarkDownExtension operation="insert" file="common/common.mdsrc" />
+
+<MarkDownExtension operation="insert" file="common/table-example.mdsrc" />

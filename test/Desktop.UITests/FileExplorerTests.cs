@@ -59,9 +59,10 @@ public class FileExplorerTests : MainWindowTestBase
         Assert.That(srcFolder, Is.Not.Null, "src folder should exist");
         Assert.That(srcFolder!.IsExpanded, Is.False, "src folder should not be expanded initially");
 
-        // Initially, src folder should have a placeholder child (Loading...)
-        Assert.That(srcFolder.Children.Count, Is.EqualTo(1), "src folder should have placeholder child");
-        Assert.That(srcFolder.Children[0].Name, Is.EqualTo("Loading..."), "Should have loading placeholder");
+        // With the new loading behavior, visible folders load their children immediately
+        // So src folder should now have children loaded since it's visible in the tree
+        Assert.That(srcFolder.Children.Count, Is.GreaterThan(0), "src folder should have children loaded when visible");
+        Assert.That(srcFolder.HasChildren, Is.True, "src folder should indicate it has children");
 
         // Expand the src folder and wait for children to load
         await ExpandFolderAndWaitAsync(srcFolder);

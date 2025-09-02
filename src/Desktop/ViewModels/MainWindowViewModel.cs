@@ -51,8 +51,8 @@ public class MainWindowViewModel : ViewModelBase
         ShowLogsCommand = new RelayCommand(ShowLogOutput);
         ShowErrorsCommand = new RelayCommand(ShowErrorOutput);
         SettingsCommand = new RelayCommand(OpenSettingsTab);
-        SaveCommand = new RelayCommand(async () => await SaveActiveFileAsync(), CanSave);
-        SaveAllCommand = new RelayCommand(async () => await SaveAllAsync(), CanSaveAll);
+        SaveCommand = new RelayCommand(OnSave, CanSave);
+        SaveAllCommand = new RelayCommand(OnSaveAll, CanSaveAll);
         ApplyHotkeyChangesCommand = new RelayCommand(ApplyHotkeyChanges);
         
         _logger.LogInformation("MainWindowViewModel initialized");
@@ -143,6 +143,16 @@ public class MainWindowViewModel : ViewModelBase
     public async Task SaveAllAsync()
     {
         await EditorTabBar.SaveAllAsync();
+    }
+
+    private async void OnSave()
+    {
+        await SaveActiveFileAsync();
+    }
+
+    private async void OnSaveAll()
+    {
+        await SaveAllAsync();
     }
 
     private bool CanSave()

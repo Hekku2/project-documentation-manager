@@ -42,6 +42,11 @@
                                             Padding="0"
                                             HorizontalContentAlignment="Stretch"
                                             VerticalContentAlignment="Stretch">
+                                        <Button.ContextMenu>
+                                            <ContextMenu>
+                                                <MenuItem Header="Close" Command="{Binding CloseCommand}" IsEnabled="{Binding IsClosable}" />
+                                            </ContextMenu>
+                                        </Button.ContextMenu>
                                         <StackPanel Orientation="Horizontal" Margin="15,6">
                                             <TextBlock Name="BottomTabTitle"
                                                        Text="{Binding Title}" 

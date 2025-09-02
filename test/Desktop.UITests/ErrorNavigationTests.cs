@@ -2,53 +2,26 @@ using Avalonia.Headless.NUnit;
 using Desktop.Models;
 using Desktop.ViewModels;
 using Business.Models;
-using Business.Services;
 using Desktop.Services;
-using Microsoft.Extensions.Options;
-using Microsoft.Extensions.Logging;
 using NSubstitute;
-using Desktop.Configuration;
 
 namespace Desktop.UITests;
 
 [TestFixture]
-public class ErrorNavigationTests
+public class ErrorNavigationTests : MainWindowTestBase
 {
     [AvaloniaTest]
     public void UpdateErrorPanelWithValidationResults_CreatesErrorEntriesWithNavigation()
     {
         // Arrange
-        var logger = Substitute.For<ILogger<MainWindowViewModel>>();
-        var options = Substitute.For<IOptions<ApplicationOptions>>();
-        var fileService = Substitute.For<IFileService>();
-        var serviceProvider = Substitute.For<IServiceProvider>();
-        var markdownCombinationService = Substitute.For<IMarkdownCombinationService>();
-        var markdownFileCollectorService = Substitute.For<IMarkdownFileCollectorService>();
-
-        options.Value.Returns(new ApplicationOptions 
-        { 
-            DefaultProjectFolder = "/test",
-            DefaultOutputFolder = "/output"
-        });
-
-        var stateLogger = Substitute.For<ILogger<EditorStateService>>();
-        var tabBarLogger = Substitute.For<ILogger<EditorTabBarViewModel>>();
-        var contentLogger = Substitute.For<ILogger<EditorContentViewModel>>();
-        
-        var editorStateService = new EditorStateService(stateLogger);
-        var editorTabBarViewModel = new EditorTabBarViewModel(tabBarLogger, fileService, editorStateService);
-        var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService);
-        
-        var logTransitionService = Substitute.For<Desktop.Logging.ILogTransitionService>();
-        var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
-        var editorLogger = Substitute.For<ILogger<Desktop.ViewModels.EditorViewModel>>();
-        var editorViewModel = new Desktop.ViewModels.EditorViewModel(editorLogger, options, editorTabBarViewModel, editorContentViewModel, hotkeyService);
+        var editorViewModel = CreateEditorViewModel();
+        var hotkeyService = Substitute.For<IHotkeyService>();
         var viewModel = new MainWindowViewModel(
-            logger, 
-            options, 
-            editorStateService,
+            _vmLogger, 
+            _options, 
+            _editorStateService,
             editorViewModel,
-            logTransitionService,
+            _logTransitionService,
             hotkeyService);
 
         var validationResult = new ValidationResult
@@ -116,37 +89,14 @@ public class ErrorNavigationTests
     public void UpdateErrorPanelWithValidationResults_FallsBackToDirectivePath_WhenSourceFileIsNull()
     {
         // Arrange
-        var logger = Substitute.For<ILogger<MainWindowViewModel>>();
-        var options = Substitute.For<IOptions<ApplicationOptions>>();
-        var fileService = Substitute.For<IFileService>();
-        var serviceProvider = Substitute.For<IServiceProvider>();
-        var markdownCombinationService = Substitute.For<IMarkdownCombinationService>();
-        var markdownFileCollectorService = Substitute.For<IMarkdownFileCollectorService>();
-
-        options.Value.Returns(new ApplicationOptions 
-        { 
-            DefaultProjectFolder = "/test",
-            DefaultOutputFolder = "/output"
-        });
-
-        var stateLogger = Substitute.For<ILogger<EditorStateService>>();
-        var tabBarLogger = Substitute.For<ILogger<EditorTabBarViewModel>>();
-        var contentLogger = Substitute.For<ILogger<EditorContentViewModel>>();
-        
-        var editorStateService = new EditorStateService(stateLogger);
-        var editorTabBarViewModel = new EditorTabBarViewModel(tabBarLogger, fileService, editorStateService);
-        var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService);
-        
-        var logTransitionService = Substitute.For<Desktop.Logging.ILogTransitionService>();
-        var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
-        var editorLogger = Substitute.For<ILogger<Desktop.ViewModels.EditorViewModel>>();
-        var editorViewModel = new Desktop.ViewModels.EditorViewModel(editorLogger, options, editorTabBarViewModel, editorContentViewModel, hotkeyService);
+        var editorViewModel = CreateEditorViewModel();
+        var hotkeyService = Substitute.For<IHotkeyService>();
         var viewModel = new MainWindowViewModel(
-            logger, 
-            options, 
-            editorStateService,
+            _vmLogger, 
+            _options, 
+            _editorStateService,
             editorViewModel,
-            logTransitionService,
+            _logTransitionService,
             hotkeyService);
 
         var validationResult = new ValidationResult

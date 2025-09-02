@@ -124,6 +124,49 @@ public class FileService(ILogger<FileService> logger, IOptions<ApplicationOption
         return item;
     }
 
+    public FileSystemItem? CreateFileSystemItem(string itemPath, bool isDirectory)
+    {
+        if (string.IsNullOrEmpty(itemPath))
+            return null;
+
+        var fileName = Path.GetFileName(itemPath);
+        if (string.IsNullOrEmpty(fileName))
+            return null;
+
+        var item = new FileSystemItem
+        {
+            Name = fileName,
+            FullPath = itemPath,
+            IsDirectory = isDirectory
+        };
+
+        try
+        {
+            item.LastModified = isDirectory ? Directory.GetLastWriteTime(itemPath) : File.GetLastWriteTime(itemPath);
+            item.Size = isDirectory ? 0 : new FileInfo(itemPath).Length;
+
+            if (isDirectory)
+            {
+                var dirInfo = new DirectoryInfo(itemPath);
+                var hasChildren = dirInfo.GetDirectories().Any(d => !IsHiddenOrSystem(d.Attributes)) ||
+                                 dirInfo.GetFiles().Any(f => !IsHiddenOrSystem(f.Attributes));
+                
+                if (hasChildren)
+                {
+                    item.Children.Add(new FileSystemItem { Name = "Placeholder", FullPath = "" });
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(ex, "Could not get file system properties for {ItemPath}", itemPath);
+            item.LastModified = DateTime.Now;
+            item.Size = 0;
+        }
+
+        return item;
+    }
+
     private static bool IsHiddenOrSystem(FileAttributes attributes)
     {
         return (attributes & (FileAttributes.Hidden | FileAttributes.System)) != 0;

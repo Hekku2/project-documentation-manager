@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using Microsoft.Extensions.Logging;
 using Desktop.Models;
 using Desktop.Services;
@@ -18,6 +19,8 @@ public class EditorTabBarViewModel(
     public ObservableCollection<EditorTabViewModel> EditorTabs { get; } = [];
 
     public EditorTabViewModel? ActiveTab => editorStateService.ActiveTab;
+
+    public ICommand NewFileCommand { get; } = new RelayCommand(() => { }, () => false); // Disabled command
 
     public async Task OpenFileAsync(string filePath)
     {
@@ -62,6 +65,7 @@ public class EditorTabBarViewModel(
             var tabViewModel = new EditorTabViewModel(tab);
             tabViewModel.CloseRequested += OnTabCloseRequested;
             tabViewModel.SelectRequested += OnTabSelectRequested;
+            tabViewModel.PreviewRequested += OnTabPreviewRequested;
             EditorTabs.Add(tabViewModel);
             SetActiveTab(tabViewModel);
             
@@ -89,6 +93,14 @@ public class EditorTabBarViewModel(
         SetActiveTab(tab);
     }
 
+    private async void OnTabPreviewRequested(EditorTabViewModel tab)
+    {
+        if (tab.FilePath != null)
+        {
+            await OpenFileInPreviewAsync(tab.FilePath);
+        }
+    }
+
     public void CloseTab(EditorTabViewModel tab)
     {
         if (!EditorTabs.Contains(tab))
@@ -97,6 +109,7 @@ public class EditorTabBarViewModel(
         // Unsubscribe from events to prevent memory leaks
         tab.CloseRequested -= OnTabCloseRequested;
         tab.SelectRequested -= OnTabSelectRequested;
+        tab.PreviewRequested -= OnTabPreviewRequested;
         
         EditorTabs.Remove(tab);
         
@@ -187,6 +200,61 @@ public class EditorTabBarViewModel(
         }
     }
 
+    public async Task OpenFileInPreviewAsync(string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+            return;
+
+        // Normalize the file path for comparison
+        var normalizedFilePath = Path.GetFullPath(filePath);
+        var fileName = Path.GetFileName(normalizedFilePath);
+        var previewTabId = $"preview_{normalizedFilePath.GetHashCode()}";
+
+        // Check if preview tab already exists
+        var existingTab = EditorTabs.FirstOrDefault(t => t.Id == previewTabId);
+        if (existingTab != null)
+        {
+            SetActiveTab(existingTab);
+            return;
+        }
+
+        try
+        {
+            logger.LogDebug("Opening file in preview: {FilePath}", filePath);
+            
+            var content = await fileService.ReadFileContentAsync(filePath);
+            if (content == null)
+            {
+                logger.LogWarning("Failed to read file content for preview: {FilePath}", filePath);
+                return;
+            }
+
+            var tab = new EditorTab
+            {
+                Id = previewTabId,
+                Title = $"Preview: {fileName}",
+                FilePath = normalizedFilePath,
+                Content = content,
+                IsModified = false,
+                IsActive = true,
+                TabType = TabType.Preview
+            };
+
+            var tabViewModel = new EditorTabViewModel(tab);
+            tabViewModel.CloseRequested += OnTabCloseRequested;
+            tabViewModel.SelectRequested += OnTabSelectRequested;
+            tabViewModel.PreviewRequested += OnTabPreviewRequested;
+            EditorTabs.Add(tabViewModel);
+            SetActiveTab(tabViewModel);
+            
+            logger.LogDebug("File opened in preview successfully: {FilePath}", filePath);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error opening file in preview: {FilePath}", filePath);
+        }
+    }
+
     public void OpenSettingsTab()
     {
         // Check if settings tab already exists
@@ -215,6 +283,7 @@ public class EditorTabBarViewModel(
             var tabViewModel = new EditorTabViewModel(tab);
             tabViewModel.CloseRequested += OnTabCloseRequested;
             tabViewModel.SelectRequested += OnTabSelectRequested;
+            tabViewModel.PreviewRequested += OnTabPreviewRequested;
             EditorTabs.Add(tabViewModel);
             SetActiveTab(tabViewModel);
             

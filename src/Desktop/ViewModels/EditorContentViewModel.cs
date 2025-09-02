@@ -1,4 +1,6 @@
 using System;
+using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -8,7 +10,7 @@ using Desktop.Models;
 using Desktop.Services;
 using Business.Services;
 using Business.Models;
-using System.Linq;
+using Desktop.Factories;
 
 namespace Desktop.ViewModels;
 
@@ -20,6 +22,8 @@ public class EditorContentViewModel : ViewModelBase
     private readonly IServiceProvider _serviceProvider;
     private readonly IMarkdownCombinationService _markdownCombinationService;
     private readonly IMarkdownFileCollectorService _markdownFileCollectorService;
+    private readonly IMarkdownRenderingService _markdownRenderingService;
+    private readonly ISettingsContentViewModelFactory _settingsContentViewModelFactory;
 
     public EditorContentViewModel(
         ILogger<EditorContentViewModel> logger,
@@ -27,7 +31,9 @@ public class EditorContentViewModel : ViewModelBase
         IOptions<ApplicationOptions> applicationOptions,
         IServiceProvider serviceProvider,
         IMarkdownCombinationService markdownCombinationService,
-        IMarkdownFileCollectorService markdownFileCollectorService)
+        IMarkdownFileCollectorService markdownFileCollectorService,
+        IMarkdownRenderingService markdownRenderingService,
+        ISettingsContentViewModelFactory settingsContentViewModelFactory)
     {
         _logger = logger;
         _editorStateService = editorStateService;
@@ -35,6 +41,8 @@ public class EditorContentViewModel : ViewModelBase
         _serviceProvider = serviceProvider;
         _markdownCombinationService = markdownCombinationService;
         _markdownFileCollectorService = markdownFileCollectorService;
+        _markdownRenderingService = markdownRenderingService;
+        _settingsContentViewModelFactory = settingsContentViewModelFactory;
 
         ValidateCommand = new RelayCommand(ValidateDocumentation, CanValidateDocumentation);
         ValidateAllCommand = new RelayCommand(ValidateAllDocumentation, CanValidateAllDocumentation);
@@ -51,37 +59,42 @@ public class EditorContentViewModel : ViewModelBase
     public ValidationResult? CurrentValidationResult => _editorStateService.CurrentValidationResult;
     public EditorTabViewModel? ActiveTab => _editorStateService.ActiveTab;
     public bool IsActiveTabSettings => ActiveTab?.TabType == TabType.Settings;
-    
+
+    private EditorContentData? _currentContentData;
     public EditorContentData? CurrentContentData
     {
-        get
+        get => _currentContentData;
+        private set
         {
-            var activeTab = ActiveTab;
-            if (activeTab == null) return null;
-
-            return activeTab.TabType switch
-            {
-                TabType.File => new FileEditorContentData
-                {
-                    ContentType = EditorContentType.File,
-                    ActiveTab = activeTab,
-                    CurrentValidationResult = CurrentValidationResult,
-                    ActiveFilePath = ActiveFilePath
-                },
-                TabType.Settings => new SettingsEditorContentData
-                {
-                    ContentType = EditorContentType.Settings,
-                    SettingsViewModel = new SettingsContentViewModel(_serviceProvider.GetRequiredService<ILogger<SettingsContentViewModel>>())
-                    {
-                        ApplicationOptions = _applicationOptions
-                    }
-                },
-                // Future content types can be added here:
-                // TabType.Preview => new PreviewEditorContentData { ... },
-                // TabType.Welcome => new WelcomeEditorContentData { ... },
-                _ => null
-            };
+            _currentContentData = value;
+            OnPropertyChanged(nameof(CurrentContentData));
         }
+    }
+
+    private async Task LoadContentData()
+    { 
+        var activeTab = ActiveTab;
+        if (activeTab == null) return;
+
+        CurrentContentData = activeTab.TabType switch
+        {
+            TabType.File => new FileEditorContentData
+            {
+                ContentType = EditorContentType.File,
+                ActiveTab = activeTab,
+                CurrentValidationResult = CurrentValidationResult,
+                ActiveFilePath = ActiveFilePath
+            },
+            TabType.Settings => new SettingsEditorContentData
+            {
+                ContentType = EditorContentType.Settings,
+                SettingsViewModel = _settingsContentViewModelFactory.Create()
+            },
+            TabType.Preview => await CreatePreviewContentData(activeTab),
+            // Future content types can be added here:
+            // TabType.Welcome => new WelcomeEditorContentData { ... },
+            _ => null
+        };
     }
 
     public ICommand ValidateCommand { get; }
@@ -90,7 +103,7 @@ public class EditorContentViewModel : ViewModelBase
 
     public event EventHandler<BuildConfirmationDialogViewModel>? ShowBuildConfirmationDialog;
 
-    private void OnActiveTabChanged(object? sender, EditorTabViewModel? activeTab)
+    private async void OnActiveTabChanged(object? sender, EditorTabViewModel? activeTab)
     {
         OnPropertyChanged(nameof(ActiveFileContent));
         OnPropertyChanged(nameof(ActiveFileName));
@@ -99,14 +112,20 @@ public class EditorContentViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsActiveTabSettings));
         OnPropertyChanged(nameof(CurrentContentData));
         
+        // Load content data for the new active tab
+        await LoadContentData();
+        
         // Update command states
         ((RelayCommand)ValidateCommand).RaiseCanExecuteChanged();
     }
 
-    private void OnValidationResultChanged(object? sender, ValidationResult? validationResult)
+    private async void OnValidationResultChanged(object? sender, ValidationResult? validationResult)
     {
         OnPropertyChanged(nameof(CurrentValidationResult));
         OnPropertyChanged(nameof(CurrentContentData));
+        
+        // Reload content data to update validation results
+        await LoadContentData();
     }
 
     private async void ValidateDocumentation()
@@ -248,5 +267,71 @@ public class EditorContentViewModel : ViewModelBase
     private bool CanBuildDocumentation()
     {
         return true;
+    }
+
+    private async Task<FilePreviewContentData> CreatePreviewContentData(EditorTabViewModel activeTab)
+    {
+        var filePath = activeTab.FilePath ?? string.Empty;
+        var fileName = System.IO.Path.GetFileName(filePath);
+        var rawContent = activeTab.Content ?? string.Empty;
+
+        _logger.LogDebug("Creating preview content for file: {FilePath}", filePath);
+
+        var previewData = new FilePreviewContentData
+        {
+            ContentType = EditorContentType.Preview,
+            FilePath = filePath,
+            FileContent = rawContent,
+            FileName = fileName,
+            IsCompiled = false
+        };
+
+        try
+        {
+            var compiledContent = await CompileMarkdownTemplate(filePath, rawContent);
+            previewData.CompiledContent = compiledContent;
+            previewData.IsCompiled = true;
+            
+            // Convert the compiled markdown to HTML for display
+            previewData.HtmlContent = $"<body>{_markdownRenderingService.ConvertToHtml(compiledContent)}</body>";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error compiling markdown template: {FilePath}", filePath);
+            previewData.CompilationError = ex.Message;
+            previewData.IsCompiled = false;
+        }
+
+        _logger.LogDebug("Preview content created for file: {FilePath}, IsCompiled: {IsCompiled}, HasHtmlContent: {HasHtmlContent}", 
+            filePath, previewData.IsCompiled, previewData.HasHtmlContent);
+
+        return previewData;
+    }
+
+    private async Task<string> CompileMarkdownTemplate(string filePath, string content)
+    {
+        // Get the directory containing the file to find source documents
+        var fileDirectory = System.IO.Path.GetDirectoryName(filePath);
+        if (string.IsNullOrEmpty(fileDirectory))
+        {
+            throw new InvalidOperationException($"Could not determine directory for file: {filePath}");
+        }
+
+        // Create MarkdownDocument for the template
+        var templateDocument = new Business.Models.MarkdownDocument
+        {
+            FileName = System.IO.Path.GetFileName(filePath),
+            FilePath = filePath,
+            Content = content
+        };
+
+        // Collect source documents from the same directory (synchronously for preview)
+        var sourceDocuments = await _markdownFileCollectorService.CollectSourceFilesAsync(fileDirectory);
+
+        // Compile the template with source documents
+        var compiledDocuments = _markdownCombinationService.BuildDocumentation([templateDocument], sourceDocuments);
+        var compiledDocument = compiledDocuments.FirstOrDefault();
+
+        return compiledDocument?.Content ?? content; // Fallback to original content if compilation fails
     }
 }

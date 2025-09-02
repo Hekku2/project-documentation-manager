@@ -2,44 +2,27 @@ using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Desktop.Logging;
 using Desktop.ViewModels;
+using Desktop.Services;
 
 namespace Desktop.UITests;
 
 [TestFixture]
-public class LogTransitionServiceIntegrationTests
+public class LogTransitionServiceIntegrationTests : MainWindowTestBase
 {
     [Test]
     public void MainWindowViewModel_Should_Use_Historical_Logs_For_Log_Tab()
     {
         // Arrange
-        var logger = Substitute.For<ILogger<MainWindowViewModel>>();
-        var options = Microsoft.Extensions.Options.Options.Create(new Desktop.Configuration.ApplicationOptions());
-        var fileService = Substitute.For<Desktop.Services.IFileService>();
-        var serviceProvider = Substitute.For<System.IServiceProvider>();
-        var editorStateService = new Desktop.Services.EditorStateService(Substitute.For<ILogger<Desktop.Services.EditorStateService>>());
-        var editorTabBarViewModel = new EditorTabBarViewModel(
-            Substitute.For<ILogger<EditorTabBarViewModel>>(), 
-            fileService, 
-            editorStateService);
-        var editorContentViewModel = new EditorContentViewModel(
-            Substitute.For<ILogger<EditorContentViewModel>>(), 
-            editorStateService, 
-            options, 
-            serviceProvider, 
-            Substitute.For<Business.Services.IMarkdownCombinationService>(), 
-            Substitute.For<Business.Services.IMarkdownFileCollectorService>());
-        
         var mockLogTransitionService = Substitute.For<ILogTransitionService>();
         var testLogs = "Test historical logs from startup";
         mockLogTransitionService.GetFormattedHistoricalLogs().Returns(testLogs);
         
-        var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
-        var editorLogger = Substitute.For<ILogger<Desktop.ViewModels.EditorViewModel>>();
-        var editorViewModel = new Desktop.ViewModels.EditorViewModel(editorLogger, options, editorTabBarViewModel, editorContentViewModel, hotkeyService);
+        var editorViewModel = CreateEditorViewModel();
+        var hotkeyService = Substitute.For<IHotkeyService>();
         var viewModel = new MainWindowViewModel(
-            logger, 
-            options, 
-            editorStateService,
+            _vmLogger, 
+            _options, 
+            _editorStateService,
             editorViewModel,
             mockLogTransitionService,
             hotkeyService);

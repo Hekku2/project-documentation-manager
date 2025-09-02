@@ -1,6 +1,7 @@
 using Business.Models;
+using NUnit.Framework;
 
-namespace Desktop.UITests;
+namespace Business.Tests;
 
 [TestFixture]
 public class ValidationIssueExtensionsTests
