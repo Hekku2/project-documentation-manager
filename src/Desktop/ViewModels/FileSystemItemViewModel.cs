@@ -41,7 +41,12 @@ public class FileSystemItemViewModel : ViewModelBase
         _fileSystemExplorerService = fileSystemExplorerService;
         
         // Initialize context menu commands
-        InitializeCommands();
+        OpenCommand = new RelayCommand(ExecuteOpen, CanExecuteOpen);
+        NewCommand = new RelayCommand(() => { }, () => false); // Disabled command for directories
+        ShowInExplorerCommand = new RelayCommand(ExecuteShowInExplorer, CanExecuteShowInExplorer);
+        CopyPathCommand = new RelayCommand(ExecuteCopyPath, CanExecutePathCommand);
+        RefreshCommand = new RelayCommand(ExecuteRefresh, CanExecuteRefresh);
+        ShowInPreviewCommand = new RelayCommand(ExecuteShowInPreview, CanExecuteShowInPreview);
         
         // For files, mark as loaded since they don't have children
         if (!item.IsDirectory)
@@ -135,22 +140,13 @@ public class FileSystemItemViewModel : ViewModelBase
     }
 
     // Context Menu Commands
-    public ICommand OpenCommand { get; private set; } = null!;
-    public ICommand NewCommand { get; private set; } = null!;
-    public ICommand ShowInExplorerCommand { get; private set; } = null!;
-    public ICommand CopyPathCommand { get; private set; } = null!;
-    public ICommand RefreshCommand { get; private set; } = null!;
-    public ICommand ShowInPreviewCommand { get; private set; } = null!;
+    public ICommand OpenCommand { get; }
+    public ICommand NewCommand { get; }
+    public ICommand ShowInExplorerCommand { get; }
+    public ICommand CopyPathCommand { get; }
+    public ICommand RefreshCommand { get; }
+    public ICommand ShowInPreviewCommand { get; }
 
-    private void InitializeCommands()
-    {
-        OpenCommand = new RelayCommand(ExecuteOpen, CanExecuteOpen);
-        NewCommand = new RelayCommand(() => { }, () => false); // Disabled command for directories
-        ShowInExplorerCommand = new RelayCommand(ExecuteShowInExplorer, CanExecuteShowInExplorer);
-        CopyPathCommand = new RelayCommand(ExecuteCopyPath, CanExecutePathCommand);
-        RefreshCommand = new RelayCommand(ExecuteRefresh, CanExecuteRefresh);
-        ShowInPreviewCommand = new RelayCommand(ExecuteShowInPreview, CanExecuteShowInPreview);
-    }
 
     private bool CanExecuteOpen() => !string.IsNullOrEmpty(FullPath);
     private bool CanExecuteShowInExplorer() => !string.IsNullOrEmpty(FullPath) && (File.Exists(FullPath) || Directory.Exists(FullPath));
