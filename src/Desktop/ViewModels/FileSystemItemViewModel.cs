@@ -4,8 +4,10 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using Desktop.Models;
 using Desktop.Services;
+using Desktop.Factories;
 using System;
 using System.IO;
+using Microsoft.Extensions.Logging;
 
 namespace Desktop.ViewModels;
 
@@ -21,24 +23,30 @@ public class FileSystemItemViewModel : ViewModelBase
     private readonly Action<string>? _onFileSelected;
     private readonly Action<string>? _onFilePreview;
 
+    private readonly ILogger<FileSystemItemViewModel> _logger;
     private readonly IFileService? _fileService;
     private readonly IFileSystemExplorerService _fileSystemExplorerService;
+    private readonly FileSystemItemViewModelFactory _viewModelFactory;
 
     public FileSystemItemViewModel(
-        FileSystemItem item,
+        ILogger<FileSystemItemViewModel> logger,
+        FileSystemItemViewModelFactory viewModelFactory,
         IFileSystemExplorerService fileSystemExplorerService,
+        FileSystemItem item,
         bool isRoot = false,
         IFileService? fileService = null,
         Action<string>? onFileSelected = null,
         Action<string>? onFilePreview = null
         )
     {
+        _logger = logger;
         Item = item;
         Children = [];
         _fileService = fileService;
         _onFileSelected = onFileSelected;
         _onFilePreview = onFilePreview;
         _fileSystemExplorerService = fileSystemExplorerService;
+        _viewModelFactory = viewModelFactory;
         
         // Initialize context menu commands
         OpenCommand = new RelayCommand(ExecuteOpen, CanExecuteOpen);
@@ -218,25 +226,27 @@ public class FileSystemItemViewModel : ViewModelBase
 
     private async Task LoadChildrenAsync(bool enableDeepPreloading = false)
     {
+        _logger.LogTrace("Loading children for {Path}, DeepPreloading: {DeepPreloading}", FullPath, enableDeepPreloading);
+
         if (_childrenLoaded || IsLoading || !Item.IsDirectory)
             return;
 
         try
         {
             IsLoading = true;
-            
+
             // Use shared core logic for creating and updating children
             var childViewModels = await CreateSortedChildViewModelsAsync();
             await UpdateUIWithChildrenAsync(childViewModels);
 
             _childrenLoaded = true;
-            
+
             // Mark all child folders as visible since they are now in the TreeView
             foreach (var child in childViewModels.Where(c => c.IsDirectory))
             {
                 child.IsVisible = true;
             }
-            
+
             // Only preload the next level if explicitly enabled (when folder is expanded)
             if (enableDeepPreloading)
             {
@@ -246,6 +256,7 @@ public class FileSystemItemViewModel : ViewModelBase
         finally
         {
             IsLoading = false;
+            _logger.LogTrace("Finished loading children for {Path}", FullPath);
         }
     }
 
@@ -319,7 +330,7 @@ public class FileSystemItemViewModel : ViewModelBase
             });
             
             return sortedChildren
-                .Select(child => new FileSystemItemViewModel(child, _fileSystemExplorerService, false, _fileService, _onFileSelected, _onFilePreview))
+                .Select(child => _viewModelFactory.Create(child, false, _onFileSelected, _onFilePreview))
                 .ToArray();
         });
     }
@@ -449,7 +460,7 @@ public class FileSystemItemViewModel : ViewModelBase
         if (newItem == null)
             return;
 
-        var newViewModel = new FileSystemItemViewModel(newItem, _fileSystemExplorerService, false, _fileService, _onFileSelected, _onFilePreview);
+        var newViewModel = _viewModelFactory.Create(newItem, false, _onFileSelected, _onFilePreview);
         
         // Mark the new item as visible since its parent is expanded and loaded
         if (newItem.IsDirectory)

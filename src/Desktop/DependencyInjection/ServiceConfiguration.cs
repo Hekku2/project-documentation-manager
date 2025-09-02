@@ -42,6 +42,9 @@ public static class ServiceConfiguration
         services.AddSingleton<Desktop.Services.IMarkdownRenderingService, Desktop.Services.MarkdownRenderingService>();
         services.AddSingleton<Desktop.Services.IFileSystemExplorerService, Desktop.Services.WindowsFileSystemExplorerService>();
         
+        // Register factories
+        services.AddSingleton<Desktop.Factories.FileSystemItemViewModelFactory>();
+        
         // Register business services
         services.AddTransient<Business.Services.IMarkdownCombinationService, Business.Services.MarkdownCombinationService>();
         services.AddTransient<Business.Services.IMarkdownDocumentFileWriterService, Business.Services.MarkdownDocumentFileWriterService>();

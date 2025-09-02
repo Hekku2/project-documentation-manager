@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 using Desktop.Configuration;
 using Desktop.Services;
 using Desktop.Models;
+using Desktop.Factories;
 using NSubstitute;
 using Business.Services;
 
@@ -27,6 +28,7 @@ public abstract class MainWindowTestBase
     protected EditorStateService _editorStateService = null!;
     protected Logging.ILogTransitionService _logTransitionService = null!;
     protected IFileSystemExplorerService _fileSystemExplorerService = null!;
+    protected FileSystemItemViewModelFactory _viewModelFactory = null!;
 
     [SetUp]
     public void Setup()
@@ -44,6 +46,7 @@ public abstract class MainWindowTestBase
         _logTransitionService = Substitute.For<Logging.ILogTransitionService>();
         _editorStateService = new EditorStateService(_stateLogger);
         _fileSystemExplorerService = Substitute.For<IFileSystemExplorerService>();
+        _viewModelFactory = new FileSystemItemViewModelFactory(Substitute.For<ILoggerFactory>(), _fileService, _fileSystemExplorerService);
 
         // Set up common fileService behavior
         _fileService.IsValidFolder(Arg.Any<string>()).Returns(true);
@@ -181,7 +184,7 @@ public abstract class MainWindowTestBase
         
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
         var fileSystemExplorerService = Substitute.For<Desktop.Services.IFileSystemExplorerService>();
-        var fileExplorerViewModel = new FileExplorerViewModel(Substitute.For<ILogger<FileExplorerViewModel>>(), _fileService, fileSystemExplorerService);
+        var fileExplorerViewModel = new FileExplorerViewModel(Substitute.For<ILogger<FileExplorerViewModel>>(), _fileService, _viewModelFactory);
         var viewModel = new MainWindowViewModel(_vmLogger, _options, _editorStateService, editorViewModel, _logTransitionService, hotkeyService);
         return new MainWindow(viewModel, fileExplorerViewModel);
     }
@@ -195,7 +198,7 @@ public abstract class MainWindowTestBase
         var editorViewModel = CreateEditorViewModel(editorStateService: editorStateService);
         
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
-        var fileExplorerViewModel = new FileExplorerViewModel(Substitute.For<ILogger<FileExplorerViewModel>>(), _fileService, _fileSystemExplorerService);
+        var fileExplorerViewModel = new FileExplorerViewModel(Substitute.For<ILogger<FileExplorerViewModel>>(), _fileService, _viewModelFactory);
         var viewModel = new MainWindowViewModel(_vmLogger, _options, editorStateService, editorViewModel, _logTransitionService, hotkeyService);
         return new MainWindow(viewModel, fileExplorerViewModel);
     }
@@ -205,7 +208,7 @@ public abstract class MainWindowTestBase
         _fileService.GetFileStructureAsync().Returns(Task.FromResult<FileSystemItem?>(CreateNestedTestStructure()));
         _fileService.GetFileStructureAsync(Arg.Any<string>()).Returns(Task.FromResult<FileSystemItem?>(CreateNestedTestStructure()));
         
-        var fileExplorerViewModel = new FileExplorerViewModel(Substitute.For<ILogger<FileExplorerViewModel>>(), _fileService, _fileSystemExplorerService);
+        var fileExplorerViewModel = new FileExplorerViewModel(Substitute.For<ILogger<FileExplorerViewModel>>(), _fileService, _viewModelFactory);
         return new FileExplorerUserControl(fileExplorerViewModel);
     }
     
@@ -214,7 +217,7 @@ public abstract class MainWindowTestBase
         _fileService.GetFileStructureAsync().Returns(Task.FromResult<FileSystemItem?>(CreateSimpleTestStructure()));
         _fileService.GetFileStructureAsync(Arg.Any<string>()).Returns(Task.FromResult<FileSystemItem?>(CreateSimpleTestStructure()));
         
-        var fileExplorerViewModel = new FileExplorerViewModel(Substitute.For<ILogger<FileExplorerViewModel>>(), _fileService, _fileSystemExplorerService);
+        var fileExplorerViewModel = new FileExplorerViewModel(Substitute.For<ILogger<FileExplorerViewModel>>(), _fileService, _viewModelFactory);
         return new FileExplorerUserControl(fileExplorerViewModel);
     }
     

@@ -3,10 +3,11 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Desktop.Services;
+using Desktop.Factories;
 
 namespace Desktop.ViewModels;
 
-public class FileExplorerViewModel(ILogger<FileExplorerViewModel> logger, IFileService fileService, IFileSystemExplorerService fileSystemExplorerService) : ViewModelBase, IDisposable
+public class FileExplorerViewModel(ILogger<FileExplorerViewModel> logger, IFileService fileService, FileSystemItemViewModelFactory viewModelFactory) : ViewModelBase, IDisposable
 {
     private bool _isLoading;
     private FileSystemItemViewModel? _rootItem;
@@ -50,13 +51,11 @@ public class FileExplorerViewModel(ILogger<FileExplorerViewModel> logger, IFileS
             
             if (fileStructure != null)
             {
-                var rootViewModel = new FileSystemItemViewModel(
+                var rootViewModel = viewModelFactory.Create(
                     fileStructure,
                     isRoot: true,
-                    fileService: fileService,
                     onFileSelected: OnFileSelected, // pass instance callback
-                    onFilePreview: OnFilePreview,    // pass preview callback
-                    fileSystemExplorerService: fileSystemExplorerService
+                    onFilePreview: OnFilePreview    // pass preview callback
                 );
                 RootItem = rootViewModel;
                 

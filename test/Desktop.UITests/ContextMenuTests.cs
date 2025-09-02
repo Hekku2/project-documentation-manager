@@ -24,7 +24,7 @@ public class ContextMenuTests : MainWindowTestBase
         };
 
         // Act
-        var viewModel = new FileSystemItemViewModel(fileItem, _fileSystemExplorerService);
+        var viewModel = _viewModelFactory.Create(fileItem);
 
         // Assert
         Assert.Multiple(() =>
@@ -47,7 +47,7 @@ public class ContextMenuTests : MainWindowTestBase
             FullPath = "/test/path/test.txt",
             IsDirectory = false
         };
-        var viewModel = new FileSystemItemViewModel(fileItem, _fileSystemExplorerService);
+        var viewModel = _viewModelFactory.Create(fileItem);
 
         // Assert
         Assert.Multiple(() =>
@@ -69,7 +69,7 @@ public class ContextMenuTests : MainWindowTestBase
             FullPath = "/test/path/TestFolder",
             IsDirectory = true
         };
-        var viewModel = new FileSystemItemViewModel(directoryItem, _fileSystemExplorerService);
+        var viewModel = _viewModelFactory.Create(directoryItem);
 
         // Assert
         Assert.Multiple(() =>
@@ -91,7 +91,7 @@ public class ContextMenuTests : MainWindowTestBase
             FullPath = "/test/path/template.mdext",
             IsDirectory = false
         };
-        var mdextViewModel = new FileSystemItemViewModel(mdextItem, _fileSystemExplorerService);
+        var mdextViewModel = _viewModelFactory.Create(mdextItem);
 
         // Arrange - Test .mdsrc file
         var mdsrcItem = new FileSystemItem
@@ -100,7 +100,7 @@ public class ContextMenuTests : MainWindowTestBase
             FullPath = "/test/path/source.mdsrc",
             IsDirectory = false
         };
-        var mdsrcViewModel = new FileSystemItemViewModel(mdsrcItem, _fileSystemExplorerService);
+        var mdsrcViewModel = _viewModelFactory.Create(mdsrcItem);
 
         // Arrange - Test .md file
         var mdItem = new FileSystemItem
@@ -109,7 +109,7 @@ public class ContextMenuTests : MainWindowTestBase
             FullPath = "/test/path/readme.md",
             IsDirectory = false
         };
-        var mdViewModel = new FileSystemItemViewModel(mdItem, _fileSystemExplorerService);
+        var mdViewModel = _viewModelFactory.Create(mdItem);
 
         // Assert
         Assert.Multiple(() =>
