@@ -191,6 +191,7 @@ public abstract class MainWindowTestBase
                 Substitute.For<ILogger<FileExplorerViewModel>>(),
                 Substitute.For<ILoggerFactory>(),
                 _fileSystemExplorerService,
+                Substitute.For<Desktop.Services.IFileSystemChangeHandler>(),
                 _fileService);
         var viewModel = new MainWindowViewModel(_vmLogger, _options, _editorStateService, editorViewModel, _logTransitionService, hotkeyService);
         return new MainWindow(viewModel, fileExplorerViewModel);
@@ -209,6 +210,7 @@ public abstract class MainWindowTestBase
                 Substitute.For<ILogger<FileExplorerViewModel>>(),
                 Substitute.For<ILoggerFactory>(),
                 _fileSystemExplorerService,
+                Substitute.For<Desktop.Services.IFileSystemChangeHandler>(),
                 _fileService);
         var viewModel = new MainWindowViewModel(_vmLogger, _options, editorStateService, editorViewModel, _logTransitionService, hotkeyService);
         return new MainWindow(viewModel, fileExplorerViewModel);
@@ -223,6 +225,7 @@ public abstract class MainWindowTestBase
                 Substitute.For<ILogger<FileExplorerViewModel>>(),
                 Substitute.For<ILoggerFactory>(),
                 _fileSystemExplorerService,
+                Substitute.For<Desktop.Services.IFileSystemChangeHandler>(),
                 _fileService);
         return new FileExplorerUserControl(fileExplorerViewModel);
     }
@@ -236,6 +239,7 @@ public abstract class MainWindowTestBase
                 Substitute.For<ILogger<FileExplorerViewModel>>(),
                 Substitute.For<ILoggerFactory>(),
                 _fileSystemExplorerService,
+                Substitute.For<Desktop.Services.IFileSystemChangeHandler>(),
                 _fileService);
         return new FileExplorerUserControl(fileExplorerViewModel);
     }

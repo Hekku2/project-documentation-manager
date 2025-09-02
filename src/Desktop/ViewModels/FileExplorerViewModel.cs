@@ -11,6 +11,7 @@ public class FileExplorerViewModel(
     ILogger<FileExplorerViewModel> logger,
     ILoggerFactory loggerFactory,
     IFileSystemExplorerService fileSystemExplorerService,
+    IFileSystemChangeHandler fileSystemChangeHandler,
     IFileService fileService) : ViewModelBase, IDisposable
 {
     private bool _isLoading;
@@ -57,6 +58,7 @@ public class FileExplorerViewModel(
                 loggerFactory,
                 fileService,
                 fileSystemExplorerService,
+                fileSystemChangeHandler,
                 onItemSelected: OnFileSelected,
                 onItemPreview: OnFilePreview);
 

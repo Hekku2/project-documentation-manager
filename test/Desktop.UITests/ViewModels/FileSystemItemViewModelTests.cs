@@ -14,6 +14,7 @@ public class FileSystemItemViewModelTests
     private IFileSystemItemViewModelFactory _fileSystemItemViewModelFactory = null!;
     private IFileService _fileService = null!;
     private IFileSystemExplorerService _fileSystemExplorerService = null!;
+    private IFileSystemChangeHandler _fileSystemChangeHandler = null!;
 
     [SetUp]
     public void Setup()
@@ -23,6 +24,7 @@ public class FileSystemItemViewModelTests
         
         _fileService = Substitute.For<IFileService>();
         _fileSystemExplorerService = Substitute.For<IFileSystemExplorerService>();
+        _fileSystemChangeHandler = Substitute.For<IFileSystemChangeHandler>();
         
         // Set up common fileService behavior
         _fileService.IsValidFolder(Arg.Any<string>()).Returns(true);
@@ -32,6 +34,7 @@ public class FileSystemItemViewModelTests
             loggerFactory,
             _fileService,
             _fileSystemExplorerService,
+            _fileSystemChangeHandler,
             _ => { }, // onItemSelected
             _ => { }  // onItemPreview
         );

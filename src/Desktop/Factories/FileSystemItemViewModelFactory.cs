@@ -10,6 +10,7 @@ public class FileSystemItemViewModelFactory(
     ILoggerFactory loggerFactory,
     IFileService fileService,
     IFileSystemExplorerService fileSystemExplorerService,
+    IFileSystemChangeHandler fileSystemChangeHandler,
     Action<string> onItemSelected,
     Action<string> onItemPreview) : IFileSystemItemViewModelFactory
 {
@@ -31,6 +32,7 @@ public class FileSystemItemViewModelFactory(
             loggerFactory.CreateLogger<FileSystemItemViewModel>(),
             this,
             fileSystemExplorerService,
+            fileSystemChangeHandler,
             item,
             isRoot,
             fileService,

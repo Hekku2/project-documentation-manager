@@ -99,10 +99,12 @@ public class FileSystemMonitoringTests
         var editorLogger = Substitute.For<ILogger<Desktop.ViewModels.EditorViewModel>>();
         var editorViewModel = new Desktop.ViewModels.EditorViewModel(editorLogger, options, editorTabBarViewModel, editorContentViewModel, hotkeyService);
         var fileSystemExplorerService = Substitute.For<Desktop.Services.IFileSystemExplorerService>();
+        var fileSystemChangeHandler = new Desktop.Services.FileSystemChangeHandler(fileService);
         var fileExplorerViewModel = new FileExplorerViewModel(
             Substitute.For<ILogger<FileExplorerViewModel>>(),
             Substitute.For<ILoggerFactory>(),
             fileSystemExplorerService,
+            fileSystemChangeHandler,
             fileService);
         var viewModel = new MainWindowViewModel(vmLogger, options, editorStateService, editorViewModel, logTransitionService, hotkeyService);
         var window = new MainWindow(viewModel, fileExplorerViewModel);

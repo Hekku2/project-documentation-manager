@@ -42,9 +42,13 @@ public static class ServiceConfiguration
         services.AddSingleton<Services.IHotkeyService, Services.HotkeyService>();
         services.AddSingleton<Services.IMarkdownRenderingService, Services.MarkdownRenderingService>();
         services.AddSingleton<Services.IFileSystemExplorerService, Services.WindowsFileSystemExplorerService>();
+        services.AddSingleton<Services.IFileSystemChangeHandler, Services.FileSystemChangeHandler>();
         
         // Register factories
         services.AddSingleton<ISettingsContentViewModelFactory, SettingsContentViewModelFactory>();
+        
+        // Note: IFileSystemItemViewModelFactory cannot be registered in DI because it requires 
+        // runtime callback parameters (onItemSelected, onItemPreview)
         
         // Register business services
         services.AddTransient<Business.Services.IMarkdownCombinationService, Business.Services.MarkdownCombinationService>();
