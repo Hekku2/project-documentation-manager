@@ -92,7 +92,7 @@ public class FileSystemMonitoringTests
         
         var editorStateService = new EditorStateService(stateLogger);
         var editorTabBarViewModel = new EditorTabBarViewModel(tabBarLogger, fileService, editorStateService);
-        var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService, markdownRenderingService);
+        var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService, markdownRenderingService, Substitute.For<Desktop.Factories.ISettingsContentViewModelFactory>());
         
         var logTransitionService = Substitute.For<Desktop.Logging.ILogTransitionService>();
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();

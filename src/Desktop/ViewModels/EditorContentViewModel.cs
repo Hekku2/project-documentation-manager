@@ -10,6 +10,7 @@ using Desktop.Models;
 using Desktop.Services;
 using Business.Services;
 using Business.Models;
+using Desktop.Factories;
 
 namespace Desktop.ViewModels;
 
@@ -22,6 +23,7 @@ public class EditorContentViewModel : ViewModelBase
     private readonly IMarkdownCombinationService _markdownCombinationService;
     private readonly IMarkdownFileCollectorService _markdownFileCollectorService;
     private readonly IMarkdownRenderingService _markdownRenderingService;
+    private readonly ISettingsContentViewModelFactory _settingsContentViewModelFactory;
 
     public EditorContentViewModel(
         ILogger<EditorContentViewModel> logger,
@@ -30,7 +32,8 @@ public class EditorContentViewModel : ViewModelBase
         IServiceProvider serviceProvider,
         IMarkdownCombinationService markdownCombinationService,
         IMarkdownFileCollectorService markdownFileCollectorService,
-        IMarkdownRenderingService markdownRenderingService)
+        IMarkdownRenderingService markdownRenderingService,
+        ISettingsContentViewModelFactory settingsContentViewModelFactory)
     {
         _logger = logger;
         _editorStateService = editorStateService;
@@ -39,6 +42,7 @@ public class EditorContentViewModel : ViewModelBase
         _markdownCombinationService = markdownCombinationService;
         _markdownFileCollectorService = markdownFileCollectorService;
         _markdownRenderingService = markdownRenderingService;
+        _settingsContentViewModelFactory = settingsContentViewModelFactory;
 
         ValidateCommand = new RelayCommand(ValidateDocumentation, CanValidateDocumentation);
         ValidateAllCommand = new RelayCommand(ValidateAllDocumentation, CanValidateAllDocumentation);
@@ -84,7 +88,7 @@ public class EditorContentViewModel : ViewModelBase
             TabType.Settings => new SettingsEditorContentData
             {
                 ContentType = EditorContentType.Settings,
-                SettingsViewModel = CreateSettingsViewModel()
+                SettingsViewModel = _settingsContentViewModelFactory.Create()
             },
             TabType.Preview => await CreatePreviewContentData(activeTab),
             // Future content types can be added here:
@@ -300,15 +304,6 @@ public class EditorContentViewModel : ViewModelBase
             filePath, previewData.IsCompiled, previewData.HasHtmlContent);
 
         return previewData;
-    }
-
-    private SettingsContentViewModel CreateSettingsViewModel()
-    {
-        var logger = _serviceProvider.GetRequiredService<ILogger<SettingsContentViewModel>>();
-        return new SettingsContentViewModel(logger)
-        {
-            ApplicationOptions = _applicationOptions
-        };
     }
 
     private async Task<string> CompileMarkdownTemplate(string filePath, string content)

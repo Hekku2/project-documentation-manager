@@ -28,7 +28,8 @@ public class LogTransitionServiceIntegrationTests
             serviceProvider, 
             Substitute.For<Business.Services.IMarkdownCombinationService>(), 
             Substitute.For<Business.Services.IMarkdownFileCollectorService>(),
-            Substitute.For<Desktop.Services.IMarkdownRenderingService>());
+            Substitute.For<Desktop.Services.IMarkdownRenderingService>(),
+            Substitute.For<Desktop.Factories.ISettingsContentViewModelFactory>());
         
         var mockLogTransitionService = Substitute.For<ILogTransitionService>();
         var testLogs = "Test historical logs from startup";

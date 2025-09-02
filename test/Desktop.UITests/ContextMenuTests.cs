@@ -24,7 +24,7 @@ public class ContextMenuTests : MainWindowTestBase
         };
 
         // Act
-        var viewModel = _viewModelFactory.Create(fileItem);
+        var viewModel = _fileSystemItemViewModelFactory.Create(fileItem);
 
         // Assert
         Assert.Multiple(() =>
@@ -47,7 +47,7 @@ public class ContextMenuTests : MainWindowTestBase
             FullPath = "/test/path/test.txt",
             IsDirectory = false
         };
-        var viewModel = _viewModelFactory.Create(fileItem);
+        var viewModel = _fileSystemItemViewModelFactory.Create(fileItem);
 
         // Assert
         Assert.Multiple(() =>
@@ -69,7 +69,7 @@ public class ContextMenuTests : MainWindowTestBase
             FullPath = "/test/path/TestFolder",
             IsDirectory = true
         };
-        var viewModel = _viewModelFactory.Create(directoryItem);
+        var viewModel = _fileSystemItemViewModelFactory.Create(directoryItem);
 
         // Assert
         Assert.Multiple(() =>
@@ -91,7 +91,7 @@ public class ContextMenuTests : MainWindowTestBase
             FullPath = "/test/path/template.mdext",
             IsDirectory = false
         };
-        var mdextViewModel = _viewModelFactory.Create(mdextItem);
+        var mdextViewModel = _fileSystemItemViewModelFactory.Create(mdextItem);
 
         // Arrange - Test .mdsrc file
         var mdsrcItem = new FileSystemItem
@@ -100,7 +100,7 @@ public class ContextMenuTests : MainWindowTestBase
             FullPath = "/test/path/source.mdsrc",
             IsDirectory = false
         };
-        var mdsrcViewModel = _viewModelFactory.Create(mdsrcItem);
+        var mdsrcViewModel = _fileSystemItemViewModelFactory.Create(mdsrcItem);
 
         // Arrange - Test .md file
         var mdItem = new FileSystemItem
@@ -109,7 +109,7 @@ public class ContextMenuTests : MainWindowTestBase
             FullPath = "/test/path/readme.md",
             IsDirectory = false
         };
-        var mdViewModel = _viewModelFactory.Create(mdItem);
+        var mdViewModel = _fileSystemItemViewModelFactory.Create(mdItem);
 
         // Assert
         Assert.Multiple(() =>

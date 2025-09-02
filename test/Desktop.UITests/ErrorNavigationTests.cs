@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Desktop.Configuration;
+using Desktop.Factories;
 
 namespace Desktop.UITests;
 
@@ -38,7 +39,8 @@ public class ErrorNavigationTests
         
         var editorStateService = new EditorStateService(stateLogger);
         var editorTabBarViewModel = new EditorTabBarViewModel(tabBarLogger, fileService, editorStateService);
-        var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService, markdownRenderingService);
+        var settingsContentViewModelFactory = Substitute.For<ISettingsContentViewModelFactory>();
+        var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService, markdownRenderingService, settingsContentViewModelFactory);
         
         var logTransitionService = Substitute.For<Desktop.Logging.ILogTransitionService>();
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
@@ -137,8 +139,9 @@ public class ErrorNavigationTests
         
         var editorStateService = new EditorStateService(stateLogger);
         var editorTabBarViewModel = new EditorTabBarViewModel(tabBarLogger, fileService, editorStateService);
-        var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService, markdownRenderingService);
-        
+        var settingsContentViewModelFactory = Substitute.For<ISettingsContentViewModelFactory>();
+        var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService, markdownRenderingService, settingsContentViewModelFactory);
+
         var logTransitionService = Substitute.For<Desktop.Logging.ILogTransitionService>();
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
         var editorLogger = Substitute.For<ILogger<Desktop.ViewModels.EditorViewModel>>();
