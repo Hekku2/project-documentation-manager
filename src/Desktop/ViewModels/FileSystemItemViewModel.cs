@@ -15,6 +15,7 @@ public class FileSystemItemViewModel : ViewModelBase
     private bool _isSelected;
     private bool _isLoading;
     private bool _childrenLoaded;
+    private bool _isVisible;
 
     // Instance-level file selected callback
     private readonly Action<string>? _onFileSelected;
@@ -55,13 +56,14 @@ public class FileSystemItemViewModel : ViewModelBase
             _fileService.FileSystemChanged += OnFileSystemChanged;
         }
         
-        // Auto-expand root directory for better UX, but child folders use lazy loading
+        // Auto-expand root directory for better UX
         if (item.IsDirectory && isRoot)
         {
-            // Load root children without preloading to preserve lazy loading for child folders
+            // Mark as visible and load children immediately for root
+            _isVisible = true;
             _ = Task.Run(async () =>
             {
-                await LoadChildrenAsync(false); // No preloading for root
+                await LoadChildrenAsync(false); // No deep preloading for root
                 // Set expanded after loading to trigger UI update
                 Avalonia.Threading.Dispatcher.UIThread.Post(() => IsExpanded = true);
             });
@@ -85,9 +87,30 @@ public class FileSystemItemViewModel : ViewModelBase
         get => _isExpanded;
         set 
         {
-            if (SetProperty(ref _isExpanded, value) && value && !_childrenLoaded)
+            if (SetProperty(ref _isExpanded, value))
             {
-                _ = LoadChildrenAsync(true); // Enable preloading for manual expansion
+                if (value && !_childrenLoaded)
+                {
+                    _ = LoadChildrenAsync(true); // Enable deep preloading for manual expansion
+                }
+                else if (value && _childrenLoaded)
+                {
+                    // Already loaded but now expanded - load children of child folders
+                    PreloadNextLevel();
+                }
+            }
+        }
+    }
+
+    public bool IsVisible
+    {
+        get => _isVisible;
+        set 
+        {
+            if (SetProperty(ref _isVisible, value) && value && !_childrenLoaded && IsDirectory)
+            {
+                // Folder became visible - load its direct children
+                _ = LoadChildrenAsync(false); // Load children but don't preload deeper levels yet
             }
         }
     }
@@ -183,10 +206,10 @@ public class FileSystemItemViewModel : ViewModelBase
             _childrenLoaded = false;
             Children.Clear();
             
-            
-            if (IsExpanded)
+            if (IsVisible)
             {
-                _ = LoadChildrenAsync(true); // Enable preloading on refresh since it's a manual action
+                // If folder is visible, reload with appropriate preloading based on expansion state
+                _ = LoadChildrenAsync(IsExpanded); // Enable deep preloading if expanded
             }
         }
     }
@@ -197,7 +220,7 @@ public class FileSystemItemViewModel : ViewModelBase
         _onFilePreview?.Invoke(FullPath);
     }
 
-    private async Task LoadChildrenAsync(bool enablePreloading = false)
+    private async Task LoadChildrenAsync(bool enableDeepPreloading = false)
     {
         if (_childrenLoaded || IsLoading || !Item.IsDirectory)
             return;
@@ -212,8 +235,14 @@ public class FileSystemItemViewModel : ViewModelBase
 
             _childrenLoaded = true;
             
-            // Only preload the next level if explicitly enabled - do this after marking as loaded
-            if (enablePreloading)
+            // Mark all child folders as visible since they are now in the TreeView
+            foreach (var child in childViewModels.Where(c => c.IsDirectory))
+            {
+                child.IsVisible = true;
+            }
+            
+            // Only preload the next level if explicitly enabled (when folder is expanded)
+            if (enableDeepPreloading)
             {
                 PreloadNextLevel();
             }
@@ -264,6 +293,12 @@ public class FileSystemItemViewModel : ViewModelBase
             await UpdateUIWithChildrenAsync(childViewModels);
 
             _childrenLoaded = true;
+            
+            // Mark all child folders as visible since they are now in the TreeView
+            foreach (var child in childViewModels.Where(c => c.IsDirectory))
+            {
+                child.IsVisible = true;
+            }
         }
         catch
         {
@@ -385,26 +420,26 @@ public class FileSystemItemViewModel : ViewModelBase
 
     private void HandleItemCreated(FileSystemItemViewModel parentViewModel, string itemPath, bool isDirectory)
     {
-        // If parent is not expanded or loaded, we still need to update the underlying data structure
-        // but we don't need to update the UI immediately
-        if (!parentViewModel.IsExpanded || !parentViewModel._childrenLoaded)
+        // Always update the underlying data structure first
+        if (parentViewModel.Item.IsDirectory)
         {
-            // Update the underlying Item.Children collection so the change is reflected when expanded
-            if (parentViewModel.Item.IsDirectory)
+            var childFileName = Path.GetFileName(itemPath);
+            var existingItem = parentViewModel.Item.Children.FirstOrDefault(c => 
+                string.Equals(c.Name, childFileName, StringComparison.OrdinalIgnoreCase));
+            
+            if (existingItem == null)
             {
-                var childFileName = Path.GetFileName(itemPath);
-                var existingItem = parentViewModel.Item.Children.FirstOrDefault(c => 
-                    string.Equals(c.Name, childFileName, StringComparison.OrdinalIgnoreCase));
-                
-                if (existingItem == null)
+                var childItem = _fileService?.CreateFileSystemItem(itemPath, isDirectory);
+                if (childItem != null)
                 {
-                    var childItem = _fileService?.CreateFileSystemItem(itemPath, isDirectory);
-                    if (childItem != null)
-                    {
-                        parentViewModel.Item.Children.Add(childItem);
-                    }
+                    parentViewModel.Item.Children.Add(childItem);
                 }
             }
+        }
+
+        // If parent's UI children are not loaded, no need to update UI immediately
+        if (!parentViewModel._childrenLoaded)
+        {
             return;
         }
 
@@ -419,6 +454,12 @@ public class FileSystemItemViewModel : ViewModelBase
             return;
 
         var newViewModel = new FileSystemItemViewModel(newItem, _fileSystemExplorerService, false, _fileService, _onFileSelected, _onFilePreview);
+        
+        // Mark the new item as visible since its parent is expanded and loaded
+        if (newItem.IsDirectory)
+        {
+            newViewModel.IsVisible = true;
+        }
 
         // Find the correct position to insert (directories first, then alphabetical)
         var insertIndex = 0;

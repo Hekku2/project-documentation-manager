@@ -372,12 +372,12 @@ public class FileSystemMonitoringTests
         // Wait for UI to update
         await Task.Delay(500);
 
-        // Since src folder is not expanded, its children should not be updated
-        // It should still have no children loaded
+        // With the new loading behavior, visible folders load their children immediately
+        // even when not expanded, so children will be loaded but folder stays collapsed
         Assert.Multiple(() =>
         {
             Assert.That(srcFolder.IsExpanded, Is.False, "src folder should still not be expanded");
-            Assert.That(srcFolder.Children.Count, Is.EqualTo(0), "src should still have no children loaded");
+            Assert.That(srcFolder.Children.Count, Is.GreaterThan(0), "src should have children loaded when visible");
             Assert.That(srcFolder.HasChildren, Is.True, "src should indicate it has children");
         });
 
