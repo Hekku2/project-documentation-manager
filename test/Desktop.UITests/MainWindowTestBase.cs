@@ -3,6 +3,7 @@ using Desktop.Views;
 using Desktop.ViewModels;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.DependencyInjection;
 using Desktop.Configuration;
 using Desktop.Services;
 using Desktop.Models;

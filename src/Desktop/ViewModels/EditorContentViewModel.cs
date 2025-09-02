@@ -55,37 +55,42 @@ public class EditorContentViewModel : ViewModelBase
     public ValidationResult? CurrentValidationResult => _editorStateService.CurrentValidationResult;
     public EditorTabViewModel? ActiveTab => _editorStateService.ActiveTab;
     public bool IsActiveTabSettings => ActiveTab?.TabType == TabType.Settings;
-    
+
+    private EditorContentData? _currentContentData;
     public EditorContentData? CurrentContentData
     {
-        get
+        get => _currentContentData;
+        private set
         {
-            var activeTab = ActiveTab;
-            if (activeTab == null) return null;
-
-            return activeTab.TabType switch
-            {
-                TabType.File => new FileEditorContentData
-                {
-                    ContentType = EditorContentType.File,
-                    ActiveTab = activeTab,
-                    CurrentValidationResult = CurrentValidationResult,
-                    ActiveFilePath = ActiveFilePath
-                },
-                TabType.Settings => new SettingsEditorContentData
-                {
-                    ContentType = EditorContentType.Settings,
-                    SettingsViewModel = new SettingsContentViewModel(_serviceProvider.GetRequiredService<ILogger<SettingsContentViewModel>>())
-                    {
-                        ApplicationOptions = _applicationOptions
-                    }
-                },
-                TabType.Preview => CreatePreviewContentData(activeTab),
-                // Future content types can be added here:
-                // TabType.Welcome => new WelcomeEditorContentData { ... },
-                _ => null
-            };
+            _currentContentData = value;
+            OnPropertyChanged(nameof(CurrentContentData));
         }
+    }
+
+    private async Task LoadContentData()
+    { 
+        var activeTab = ActiveTab;
+        if (activeTab == null) return;
+
+        CurrentContentData = activeTab.TabType switch
+        {
+            TabType.File => new FileEditorContentData
+            {
+                ContentType = EditorContentType.File,
+                ActiveTab = activeTab,
+                CurrentValidationResult = CurrentValidationResult,
+                ActiveFilePath = ActiveFilePath
+            },
+            TabType.Settings => new SettingsEditorContentData
+            {
+                ContentType = EditorContentType.Settings,
+                SettingsViewModel = CreateSettingsViewModel()
+            },
+            TabType.Preview => await CreatePreviewContentData(activeTab),
+            // Future content types can be added here:
+            // TabType.Welcome => new WelcomeEditorContentData { ... },
+            _ => null
+        };
     }
 
     public ICommand ValidateCommand { get; }
@@ -94,23 +99,27 @@ public class EditorContentViewModel : ViewModelBase
 
     public event EventHandler<BuildConfirmationDialogViewModel>? ShowBuildConfirmationDialog;
 
-    private void OnActiveTabChanged(object? sender, EditorTabViewModel? activeTab)
+    private async void OnActiveTabChanged(object? sender, EditorTabViewModel? activeTab)
     {
         OnPropertyChanged(nameof(ActiveFileContent));
         OnPropertyChanged(nameof(ActiveFileName));
         OnPropertyChanged(nameof(ActiveFilePath));
         OnPropertyChanged(nameof(ActiveTab));
         OnPropertyChanged(nameof(IsActiveTabSettings));
-        OnPropertyChanged(nameof(CurrentContentData));
+        
+        // Load content data for the new active tab
+        await LoadContentData();
         
         // Update command states
         ((RelayCommand)ValidateCommand).RaiseCanExecuteChanged();
     }
 
-    private void OnValidationResultChanged(object? sender, ValidationResult? validationResult)
+    private async void OnValidationResultChanged(object? sender, ValidationResult? validationResult)
     {
         OnPropertyChanged(nameof(CurrentValidationResult));
-        OnPropertyChanged(nameof(CurrentContentData));
+        
+        // Reload content data to update validation results
+        await LoadContentData();
     }
 
     private async void ValidateDocumentation()
@@ -254,7 +263,7 @@ public class EditorContentViewModel : ViewModelBase
         return true;
     }
 
-    private FilePreviewContentData CreatePreviewContentData(EditorTabViewModel activeTab)
+    private async Task<FilePreviewContentData> CreatePreviewContentData(EditorTabViewModel activeTab)
     {
         var filePath = activeTab.FilePath ?? string.Empty;
         var fileName = System.IO.Path.GetFileName(filePath);
@@ -273,7 +282,7 @@ public class EditorContentViewModel : ViewModelBase
 
         try
         {
-            var compiledContent = CompileMarkdownTemplate(filePath, rawContent);
+            var compiledContent = await CompileMarkdownTemplate(filePath, rawContent);
             previewData.CompiledContent = compiledContent;
             previewData.IsCompiled = true;
             
@@ -293,7 +302,29 @@ public class EditorContentViewModel : ViewModelBase
         return previewData;
     }
 
-    private string CompileMarkdownTemplate(string filePath, string content)
+    private SettingsContentViewModel CreateSettingsViewModel()
+    {
+        try
+        {
+            var logger = _serviceProvider.GetRequiredService<ILogger<SettingsContentViewModel>>();
+            return new SettingsContentViewModel(logger)
+            {
+                ApplicationOptions = _applicationOptions
+            };
+        }
+        catch (InvalidOperationException)
+        {
+            // In tests, the service provider might not have all services registered
+            // Create a simple substitute logger for testing purposes
+            var logger = Microsoft.Extensions.Logging.Abstractions.NullLogger<SettingsContentViewModel>.Instance;
+            return new SettingsContentViewModel(logger)
+            {
+                ApplicationOptions = _applicationOptions
+            };
+        }
+    }
+
+    private async Task<string> CompileMarkdownTemplate(string filePath, string content)
     {
         // Get the directory containing the file to find source documents
         var fileDirectory = System.IO.Path.GetDirectoryName(filePath);
@@ -311,8 +342,7 @@ public class EditorContentViewModel : ViewModelBase
         };
 
         // Collect source documents from the same directory (synchronously for preview)
-        var sourceDocuments = Task.Run(async () => 
-            await _markdownFileCollectorService.CollectSourceFilesAsync(fileDirectory)).Result;
+        var sourceDocuments = await _markdownFileCollectorService.CollectSourceFilesAsync(fileDirectory);
 
         // Compile the template with source documents
         var compiledDocuments = _markdownCombinationService.BuildDocumentation([templateDocument], sourceDocuments);
