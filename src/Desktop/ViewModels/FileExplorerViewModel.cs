@@ -16,6 +16,7 @@ public class FileExplorerViewModel(
 {
     private bool _isLoading;
     private FileSystemItemViewModel? _rootItem;
+    private EventHandler<FileSystemChangedEventArgs>? _eventHandler;
 
     public ObservableCollection<FileSystemItemViewModel> FileSystemItems { get; } = [];
 
@@ -56,7 +57,6 @@ public class FileExplorerViewModel(
             
             var factory = new FileSystemItemViewModelFactory(
                 loggerFactory,
-                fileService,
                 fileSystemExplorerService,
                 fileSystemChangeHandler,
                 onItemSelected: OnFileSelected,
@@ -72,7 +72,17 @@ public class FileExplorerViewModel(
                 FileSystemItems.Clear();
                 FileSystemItems.Add(rootViewModel);
 
-                // Start file system monitoring
+                // Start file system monitoring 
+                _eventHandler = (sender, e) =>
+                {
+                    Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                    {
+                        fileSystemChangeHandler.HandleFileSystemChange(e, rootViewModel, factory);
+                    });
+                };
+
+                fileService.FileSystemChanged += _eventHandler;
+
                 fileService.StartFileSystemMonitoring();
 
                 logger.LogInformation("File structure loaded successfully");
@@ -116,7 +126,12 @@ public class FileExplorerViewModel(
     {
         if (!_disposed)
         {
-            // No static event to unsubscribe
+            if (_eventHandler != null && fileService != null)
+            {
+                fileService.FileSystemChanged -= _eventHandler;
+            }
+            fileService?.StopFileSystemMonitoring();
+
             _disposed = true;
         }
     }

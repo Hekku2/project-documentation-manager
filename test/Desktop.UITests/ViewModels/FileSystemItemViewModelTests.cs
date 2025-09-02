@@ -12,7 +12,6 @@ namespace Desktop.UITests.ViewModels;
 public class FileSystemItemViewModelTests
 {
     private IFileSystemItemViewModelFactory _fileSystemItemViewModelFactory = null!;
-    private IFileService _fileService = null!;
     private IFileSystemExplorerService _fileSystemExplorerService = null!;
     private IFileSystemChangeHandler _fileSystemChangeHandler = null!;
 
@@ -22,17 +21,11 @@ public class FileSystemItemViewModelTests
         var loggerFactory = Substitute.For<ILoggerFactory>();
         loggerFactory.CreateLogger<FileSystemItemViewModel>().Returns(Substitute.For<ILogger<FileSystemItemViewModel>>());
         
-        _fileService = Substitute.For<IFileService>();
         _fileSystemExplorerService = Substitute.For<IFileSystemExplorerService>();
         _fileSystemChangeHandler = Substitute.For<IFileSystemChangeHandler>();
         
-        // Set up common fileService behavior
-        _fileService.IsValidFolder(Arg.Any<string>()).Returns(true);
-        _fileService.ReadFileContentAsync(Arg.Any<string>()).Returns("Mock file content");
-        
         _fileSystemItemViewModelFactory = new FileSystemItemViewModelFactory(
             loggerFactory,
-            _fileService,
             _fileSystemExplorerService,
             _fileSystemChangeHandler,
             _ => { }, // onItemSelected

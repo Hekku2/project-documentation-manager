@@ -110,7 +110,7 @@ public class FileSystemChangeHandler(IFileService fileService) : IFileSystemChan
             return;
 
         var newViewModel = viewModelFactory.CreateChild(newItem);
-        
+
         // Mark the new item as visible since its parent is expanded and loaded
         if (newItem.IsDirectory)
         {

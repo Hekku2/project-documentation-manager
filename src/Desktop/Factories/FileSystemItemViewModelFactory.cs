@@ -6,9 +6,8 @@ using Microsoft.Extensions.Logging;
 
 namespace Desktop.Factories;
 
-public class FileSystemItemViewModelFactory(
+public sealed class FileSystemItemViewModelFactory(
     ILoggerFactory loggerFactory,
-    IFileService fileService,
     IFileSystemExplorerService fileSystemExplorerService,
     IFileSystemChangeHandler fileSystemChangeHandler,
     Action<string> onItemSelected,
@@ -35,7 +34,6 @@ public class FileSystemItemViewModelFactory(
             fileSystemChangeHandler,
             item,
             isRoot,
-            fileService,
             onItemSelected,
             onItemPreview);
     }

@@ -19,12 +19,10 @@ public class FileSystemItemViewModel : ViewModelBase
     private bool _childrenLoaded;
     private bool _isVisible;
 
-    // Instance-level file selected callback
-    private readonly Action<string>? _onFileSelected;
-    private readonly Action<string>? _onFilePreview;
+    private readonly Action<string> _onFileSelected;
+    private readonly Action<string> _onFilePreview;
 
     private readonly ILogger<FileSystemItemViewModel> _logger;
-    private readonly IFileService? _fileService;
     private readonly IFileSystemExplorerService _fileSystemExplorerService;
     private readonly IFileSystemItemViewModelFactory _viewModelFactory;
     private readonly IFileSystemChangeHandler _fileSystemChangeHandler;
@@ -35,16 +33,14 @@ public class FileSystemItemViewModel : ViewModelBase
         IFileSystemExplorerService fileSystemExplorerService,
         IFileSystemChangeHandler fileSystemChangeHandler,
         FileSystemItem item,
-        bool isRoot = false,
-        IFileService? fileService = null,
-        Action<string>? onFileSelected = null,
-        Action<string>? onFilePreview = null
+        bool isRoot,
+        Action<string> onFileSelected,
+        Action<string> onFilePreview
         )
     {
         _logger = logger;
         Item = item;
         Children = [];
-        _fileService = fileService;
         _onFileSelected = onFileSelected;
         _onFilePreview = onFilePreview;
         _fileSystemExplorerService = fileSystemExplorerService;
@@ -64,12 +60,6 @@ public class FileSystemItemViewModel : ViewModelBase
         {
             // For files, mark as loaded since they don't have children
             _childrenLoaded = true;
-        }
-        
-        // Subscribe to file system changes if we have a file service and this is the root
-        if (isRoot && _fileService != null)
-        {
-            _fileService.FileSystemChanged += OnFileSystemChanged;
         }
         
         // Auto-expand root directory for better UX
@@ -353,14 +343,4 @@ public class FileSystemItemViewModel : ViewModelBase
             }
         });
     }
-
-    private void OnFileSystemChanged(object? sender, FileSystemChangedEventArgs e)
-    {
-        // Handle file system changes on the UI thread
-        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-        {
-            _fileSystemChangeHandler.HandleFileSystemChange(e, this, _viewModelFactory);
-        });
-    }
-
 }
