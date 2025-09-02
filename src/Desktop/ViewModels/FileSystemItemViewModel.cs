@@ -33,7 +33,7 @@ public class FileSystemItemViewModel : ViewModelBase
         IFileSystemExplorerService fileSystemExplorerService,
         IFileSystemChangeHandler fileSystemChangeHandler,
         FileSystemItem item,
-        bool isRoot,
+        bool loadChildren,
         Action<string> onFileSelected,
         Action<string> onFilePreview
         )
@@ -63,7 +63,7 @@ public class FileSystemItemViewModel : ViewModelBase
         }
         
         // Auto-expand root directory for better UX
-        if (item.IsDirectory && isRoot)
+        if (item.IsDirectory && loadChildren)
         {
             // Mark as visible and load children immediately for root
             _isVisible = true;
@@ -324,7 +324,7 @@ public class FileSystemItemViewModel : ViewModelBase
             });
             
             return sortedChildren
-                .Select(child => _viewModelFactory.CreateChild(child))
+                .Select(child => _viewModelFactory.CreateChild(child, false))
                 .ToArray();
         });
     }

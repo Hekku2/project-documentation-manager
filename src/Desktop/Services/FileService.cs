@@ -129,6 +129,11 @@ public class FileService(ILogger<FileService> logger, IOptions<ApplicationOption
         if (string.IsNullOrEmpty(itemPath))
             return null;
 
+        if (isDirectory)
+        {
+            return BuildFileStructure(itemPath);
+        }
+
         var fileName = Path.GetFileName(itemPath);
         if (string.IsNullOrEmpty(fileName))
             return null;
@@ -144,18 +149,6 @@ public class FileService(ILogger<FileService> logger, IOptions<ApplicationOption
         {
             item.LastModified = isDirectory ? Directory.GetLastWriteTime(itemPath) : File.GetLastWriteTime(itemPath);
             item.Size = isDirectory ? 0 : new FileInfo(itemPath).Length;
-
-            if (isDirectory)
-            {
-                var dirInfo = new DirectoryInfo(itemPath);
-                var hasChildren = dirInfo.GetDirectories().Any(d => !IsHiddenOrSystem(d.Attributes)) ||
-                                 dirInfo.GetFiles().Any(f => !IsHiddenOrSystem(f.Attributes));
-                
-                if (hasChildren)
-                {
-                    item.Children.Add(new FileSystemItem { Name = "Placeholder", FullPath = "" });
-                }
-            }
         }
         catch (Exception ex)
         {

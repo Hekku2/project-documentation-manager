@@ -13,19 +13,19 @@ public sealed class FileSystemItemViewModelFactory(
     Action<string> onItemSelected,
     Action<string> onItemPreview) : IFileSystemItemViewModelFactory
 {
-    public FileSystemItemViewModel CreateChild(FileSystemItem item)
+    public FileSystemItemViewModel CreateChild(FileSystemItem item, bool loadChildren)
     {
-        return Create(item, isRoot: false);
+        return Create(item, loadChildren: loadChildren);
     }
 
     public FileSystemItemViewModel CreateRoot(FileSystemItem item)
     {
-        return Create(item, isRoot: true);
+        return Create(item, loadChildren: true);
     }
 
     private FileSystemItemViewModel Create(
         FileSystemItem item,
-        bool isRoot = false)
+        bool loadChildren = false)
     {
         return new FileSystemItemViewModel(
             loggerFactory.CreateLogger<FileSystemItemViewModel>(),
@@ -33,7 +33,7 @@ public sealed class FileSystemItemViewModelFactory(
             fileSystemExplorerService,
             fileSystemChangeHandler,
             item,
-            isRoot,
+            loadChildren,
             onItemSelected,
             onItemPreview);
     }
