@@ -76,4 +76,12 @@ public interface IFileService
     /// Gets whether file system monitoring is currently active
     /// </summary>
     bool IsMonitoringFileSystem { get; }
+
+    /// <summary>
+    /// Creates a FileSystemItem from a file or directory path
+    /// </summary>
+    /// <param name="itemPath">Path to the file or directory</param>
+    /// <param name="isDirectory">Whether the path represents a directory</param>
+    /// <returns>FileSystemItem with populated metadata, or null if path is invalid</returns>
+    FileSystemItem? CreateFileSystemItem(string itemPath, bool isDirectory);
 }

@@ -1,6 +1,6 @@
 namespace Desktop.Models;
 
-public enum TabType
+public enum EditorContentType
 {
     File,
     Settings,

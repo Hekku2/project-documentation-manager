@@ -3,10 +3,11 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Desktop.Services;
+using Desktop.Factories;
 
 namespace Desktop.ViewModels;
 
-public class FileExplorerViewModel(ILogger<FileExplorerViewModel> logger, IFileService fileService) : ViewModelBase, IDisposable
+public class FileExplorerViewModel(ILogger<FileExplorerViewModel> logger, IFileService fileService, IFileSystemItemViewModelFactory viewModelFactory) : ViewModelBase, IDisposable
 {
     private bool _isLoading;
     private FileSystemItemViewModel? _rootItem;
@@ -26,6 +27,7 @@ public class FileExplorerViewModel(ILogger<FileExplorerViewModel> logger, IFileS
     }
 
     public event EventHandler<string>? FileSelected;
+    public event EventHandler<string>? FilePreview;
 
     public async Task InitializeAsync()
     {
@@ -49,11 +51,11 @@ public class FileExplorerViewModel(ILogger<FileExplorerViewModel> logger, IFileS
             
             if (fileStructure != null)
             {
-                var rootViewModel = new FileSystemItemViewModel(
+                var rootViewModel = viewModelFactory.Create(
                     fileStructure,
                     isRoot: true,
-                    fileService: fileService,
-                    onFileSelected: OnFileSelected // pass instance callback
+                    onFileSelected: OnFileSelected, // pass instance callback
+                    onFilePreview: OnFilePreview    // pass preview callback
                 );
                 RootItem = rootViewModel;
                 
@@ -84,6 +86,12 @@ public class FileExplorerViewModel(ILogger<FileExplorerViewModel> logger, IFileS
     {
         logger.LogInformation("File selected: {FilePath}", filePath);
         FileSelected?.Invoke(this, filePath);
+    }
+
+    private void OnFilePreview(string filePath)
+    {
+        logger.LogInformation("File preview requested: {FilePath}", filePath);
+        FilePreview?.Invoke(this, filePath);
     }
 
     public void Dispose()

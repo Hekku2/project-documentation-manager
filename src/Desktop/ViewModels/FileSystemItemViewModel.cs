@@ -1,10 +1,13 @@
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using Desktop.Models;
 using Desktop.Services;
+using Desktop.Factories;
 using System;
 using System.IO;
+using Microsoft.Extensions.Logging;
 
 namespace Desktop.ViewModels;
 
@@ -14,26 +17,47 @@ public class FileSystemItemViewModel : ViewModelBase
     private bool _isSelected;
     private bool _isLoading;
     private bool _childrenLoaded;
+    private bool _isVisible;
 
+    // Instance-level file selected callback
+    private readonly Action<string>? _onFileSelected;
+    private readonly Action<string>? _onFilePreview;
 
-        // Instance-level file selected callback
-        private readonly Action<string>? _onFileSelected;
-
+    private readonly ILogger<FileSystemItemViewModel> _logger;
     private readonly IFileService? _fileService;
+    private readonly IFileSystemExplorerService _fileSystemExplorerService;
+    private readonly IFileSystemItemViewModelFactory _viewModelFactory;
 
-    public FileSystemItemViewModel(FileSystemItem item, bool isRoot = false, IFileService? fileService = null, Action<string>? onFileSelected = null)
+    public FileSystemItemViewModel(
+        ILogger<FileSystemItemViewModel> logger,
+        IFileSystemItemViewModelFactory viewModelFactory,
+        IFileSystemExplorerService fileSystemExplorerService,
+        FileSystemItem item,
+        bool isRoot = false,
+        IFileService? fileService = null,
+        Action<string>? onFileSelected = null,
+        Action<string>? onFilePreview = null
+        )
     {
+        _logger = logger;
         Item = item;
         Children = [];
         _fileService = fileService;
         _onFileSelected = onFileSelected;
+        _onFilePreview = onFilePreview;
+        _fileSystemExplorerService = fileSystemExplorerService;
+        _viewModelFactory = viewModelFactory;
         
-        // For directories, add a placeholder to show the expand icon
-        if (item.IsDirectory && item.HasChildren)
-        {
-            Children.Add(new FileSystemItemViewModel(new FileSystemItem { Name = "Loading...", FullPath = "" }, false, null, _onFileSelected));
-        }
-        else if (!item.IsDirectory)
+        // Initialize context menu commands
+        OpenCommand = new RelayCommand(ExecuteOpen, CanExecuteOpen);
+        NewCommand = new RelayCommand(() => { }, () => false); // Disabled command for directories
+        ShowInExplorerCommand = new RelayCommand(ExecuteShowInExplorer, CanExecuteShowInExplorer);
+        CopyPathCommand = new RelayCommand(ExecuteCopyPath, CanExecutePathCommand);
+        RefreshCommand = new RelayCommand(ExecuteRefresh, CanExecuteRefresh);
+        ShowInPreviewCommand = new RelayCommand(ExecuteShowInPreview, CanExecuteShowInPreview);
+        
+        // For files, mark as loaded since they don't have children
+        if (!item.IsDirectory)
         {
             // For files, mark as loaded since they don't have children
             _childrenLoaded = true;
@@ -45,11 +69,17 @@ public class FileSystemItemViewModel : ViewModelBase
             _fileService.FileSystemChanged += OnFileSystemChanged;
         }
         
-        // Auto-expand only the actual root directory
+        // Auto-expand root directory for better UX
         if (item.IsDirectory && isRoot)
         {
-            _ = LoadChildrenAsync();
-            IsExpanded = true;
+            // Mark as visible and load children immediately for root
+            _isVisible = true;
+            _ = Task.Run(async () =>
+            {
+                await LoadChildrenAsync(false); // No deep preloading for root
+                // Set expanded after loading to trigger UI update
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => IsExpanded = true);
+            });
         }
     }
 
@@ -60,16 +90,40 @@ public class FileSystemItemViewModel : ViewModelBase
     public string Name => Item.DisplayName;
     public string FullPath => Item.FullPath;
     public bool IsDirectory => Item.IsDirectory;
-    public bool HasChildren => Children.Count > 0;
+    public bool HasChildren => IsDirectory && (!_childrenLoaded || Children.Count > 0);
+    public bool IsMarkdownTemplate => !IsDirectory && (FullPath.EndsWith(".mdext", StringComparison.OrdinalIgnoreCase) || 
+                                                         FullPath.EndsWith(".mdsrc", StringComparison.OrdinalIgnoreCase) ||
+                                                         FullPath.EndsWith(".md", StringComparison.OrdinalIgnoreCase));
 
     public bool IsExpanded
     {
         get => _isExpanded;
         set 
         {
-            if (SetProperty(ref _isExpanded, value) && value && !_childrenLoaded)
+            if (SetProperty(ref _isExpanded, value))
             {
-                _ = LoadChildrenAsync();
+                if (value && !_childrenLoaded)
+                {
+                    _ = LoadChildrenAsync(true); // Enable deep preloading for manual expansion
+                }
+                else if (value && _childrenLoaded)
+                {
+                    // Already loaded but now expanded - load children of child folders
+                    PreloadNextLevel();
+                }
+            }
+        }
+    }
+
+    public bool IsVisible
+    {
+        get => _isVisible;
+        set 
+        {
+            if (SetProperty(ref _isVisible, value) && value && !_childrenLoaded && IsDirectory)
+            {
+                // Folder became visible - load its direct children
+                _ = LoadChildrenAsync(false); // Load children but don't preload deeper levels yet
             }
         }
     }
@@ -93,40 +147,207 @@ public class FileSystemItemViewModel : ViewModelBase
         }
     }
 
-    private async Task LoadChildrenAsync()
+    // Context Menu Commands
+    public ICommand OpenCommand { get; }
+    public ICommand NewCommand { get; }
+    public ICommand ShowInExplorerCommand { get; }
+    public ICommand CopyPathCommand { get; }
+    public ICommand RefreshCommand { get; }
+    public ICommand ShowInPreviewCommand { get; }
+
+
+    private bool CanExecuteOpen() => !string.IsNullOrEmpty(FullPath);
+    private bool CanExecuteShowInExplorer() => !string.IsNullOrEmpty(FullPath) && (File.Exists(FullPath) || Directory.Exists(FullPath));
+    private bool CanExecutePathCommand() => !string.IsNullOrEmpty(FullPath);
+    private bool CanExecuteRefresh() => IsDirectory && !string.IsNullOrEmpty(FullPath);
+    private bool CanExecuteShowInPreview() => IsMarkdownTemplate;
+
+    private void ExecuteOpen()
     {
+        if (IsDirectory)
+        {
+            // For directories, just expand them
+            IsExpanded = !IsExpanded;
+        }
+        else
+        {
+            // For files, open them in the editor
+            _onFileSelected?.Invoke(FullPath);
+        }
+    }
+
+
+    private void ExecuteShowInExplorer()
+    {
+        _fileSystemExplorerService?.ShowInExplorer(FullPath);
+    }
+
+    private async void ExecuteCopyPath()
+    {
+        try
+        {
+            if (!string.IsNullOrEmpty(FullPath))
+            {
+                // Access clipboard through TopLevel
+                var topLevel = Avalonia.Controls.TopLevel.GetTopLevel(Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop ? desktop.MainWindow : null);
+                if (topLevel?.Clipboard != null)
+                {
+                    await topLevel.Clipboard.SetTextAsync(FullPath);
+                }
+            }
+        }
+        catch(Exception ex)
+        {
+            _logger.LogError(ex, "Failed to copy path to clipboard: {Path}", FullPath);
+        }
+    }
+
+    private void ExecuteRefresh()
+    {
+        if (IsDirectory && _childrenLoaded)
+        {
+            // Clear children and reload
+            _childrenLoaded = false;
+            Children.Clear();
+            
+            if (IsVisible)
+            {
+                // If folder is visible, reload with appropriate preloading based on expansion state
+                _ = LoadChildrenAsync(IsExpanded); // Enable deep preloading if expanded
+            }
+        }
+    }
+
+    private void ExecuteShowInPreview()
+    {
+        // Open the file in preview mode using the callback
+        _onFilePreview?.Invoke(FullPath);
+    }
+
+    private async Task LoadChildrenAsync(bool enableDeepPreloading = false)
+    {
+        _logger.LogTrace("Loading children for {Path}, DeepPreloading: {DeepPreloading}", FullPath, enableDeepPreloading);
+
         if (_childrenLoaded || IsLoading || !Item.IsDirectory)
             return;
 
         try
         {
             IsLoading = true;
-            
-            await Task.Run(() =>
-            {
-                var childViewModels = Item.Children
-                    .OrderBy(c => !c.IsDirectory)
-                    .ThenBy(c => c.Name)
-                    .Select(child => new FileSystemItemViewModel(child, false, _fileService, _onFileSelected))
-                    .ToList();
 
-                // Update the UI on the main thread
-                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-                {
-                    Children.Clear();
-                    foreach (var childViewModel in childViewModels)
-                    {
-                        Children.Add(childViewModel);
-                    }
-                });
-            });
+            // Use shared core logic for creating and updating children
+            var childViewModels = await CreateSortedChildViewModelsAsync();
+            await UpdateUIWithChildrenAsync(childViewModels);
 
             _childrenLoaded = true;
+
+            // Mark all child folders as visible since they are now in the TreeView
+            foreach (var child in childViewModels.Where(c => c.IsDirectory))
+            {
+                child.IsVisible = true;
+            }
+
+            // Only preload the next level if explicitly enabled (when folder is expanded)
+            if (enableDeepPreloading)
+            {
+                PreloadNextLevel();
+            }
         }
         finally
         {
             IsLoading = false;
+            _logger.LogTrace("Finished loading children for {Path}", FullPath);
         }
+    }
+
+    private async void PreloadNextLevel()
+    {
+        // Get all directory children that aren't already loaded
+        var directoryChildren = Children
+            .Where(child => child.IsDirectory && !child._childrenLoaded)
+            .ToList();
+
+        if (directoryChildren.Count == 0)
+            return;
+
+        // Start preloading tasks for each directory child
+        var preloadTasks = directoryChildren.Select(async child =>
+        {
+            try
+            {
+                // Load children without expanding the UI
+                await child.LoadChildrenInternalAsync();
+            }
+            catch
+            {
+                // Ignore preloading errors - they shouldn't affect the main functionality
+            }
+        });
+
+        // Wait for all preloading to complete in the background
+        await Task.WhenAll(preloadTasks);
+    }
+
+    private async Task LoadChildrenInternalAsync()
+    {
+        if (_childrenLoaded || IsLoading || !Item.IsDirectory)
+            return;
+
+        try
+        {
+            // Use shared core logic for creating and updating children (for preloading)
+            var childViewModels = await CreateSortedChildViewModelsAsync();
+            await UpdateUIWithChildrenAsync(childViewModels);
+
+            _childrenLoaded = true;
+            
+            // Mark all child folders as visible since they are now in the TreeView
+            foreach (var child in childViewModels.Where(c => c.IsDirectory))
+            {
+                child.IsVisible = true;
+            }
+        }
+        catch
+        {
+            // Handle any loading errors silently for preloading
+        }
+    }
+
+    private async Task<FileSystemItemViewModel[]> CreateSortedChildViewModelsAsync()
+    {
+        return await Task.Run(() =>
+        {
+            // Single-pass sorting using custom comparer for better performance
+            var sortedChildren = Item.Children.ToArray();
+            Array.Sort(sortedChildren, (x, y) =>
+            {
+                // Directories first, then files
+                var directoryComparison = y.IsDirectory.CompareTo(x.IsDirectory);
+                if (directoryComparison != 0) return directoryComparison;
+                
+                // Then alphabetical by name
+                return string.Compare(x.Name, y.Name, StringComparison.OrdinalIgnoreCase);
+            });
+            
+            return sortedChildren
+                .Select(child => _viewModelFactory.Create(child, false, _onFileSelected, _onFilePreview))
+                .ToArray();
+        });
+    }
+
+    private async Task UpdateUIWithChildrenAsync(FileSystemItemViewModel[] childViewModels)
+    {
+        // Batch update UI on the main thread for better performance
+        await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            Children.Clear();
+            
+            // Batch add all children at once to reduce UI notification overhead
+            foreach (var childViewModel in childViewModels)
+            {
+                Children.Add(childViewModel);
+            }
+        });
     }
 
     private void OnFileSystemChanged(object? sender, FileSystemChangedEventArgs e)
@@ -180,14 +401,25 @@ public class FileSystemItemViewModel : ViewModelBase
         if (string.Equals(Item.FullPath, path, StringComparison.OrdinalIgnoreCase))
             return this;
 
-        if (!_childrenLoaded || !IsExpanded)
+        // Check if the requested path is a child of this item
+        if (!path.StartsWith(Item.FullPath, StringComparison.OrdinalIgnoreCase))
             return null;
 
-        foreach (var child in Children)
+        // If children are loaded, search through them
+        if (_childrenLoaded)
         {
-            var result = child.FindViewModelByPath(path);
-            if (result != null)
-                return result;
+            foreach (var child in Children)
+            {
+                var result = child.FindViewModelByPath(path);
+                if (result != null)
+                    return result;
+            }
+        }
+
+        // If this is a directory and the path could be a child, return this as potential parent
+        if (Item.IsDirectory && path.StartsWith(Item.FullPath + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+        {
+            return this; // Return this directory as the closest parent found
         }
 
         return null;
@@ -195,9 +427,28 @@ public class FileSystemItemViewModel : ViewModelBase
 
     private void HandleItemCreated(FileSystemItemViewModel parentViewModel, string itemPath, bool isDirectory)
     {
-        // Only handle if the parent is expanded and loaded
-        if (!parentViewModel.IsExpanded || !parentViewModel._childrenLoaded)
+        // Always update the underlying data structure first
+        if (parentViewModel.Item.IsDirectory)
+        {
+            var childFileName = Path.GetFileName(itemPath);
+            var existingItem = parentViewModel.Item.Children.FirstOrDefault(c => 
+                string.Equals(c.Name, childFileName, StringComparison.OrdinalIgnoreCase));
+            
+            if (existingItem == null)
+            {
+                var childItem = _fileService?.CreateFileSystemItem(itemPath, isDirectory);
+                if (childItem != null)
+                {
+                    parentViewModel.Item.Children.Add(childItem);
+                }
+            }
+        }
+
+        // If parent's UI children are not loaded, no need to update UI immediately
+        if (!parentViewModel._childrenLoaded)
+        {
             return;
+        }
 
         // Check if item already exists
         var fileName = Path.GetFileName(itemPath);
@@ -205,59 +456,24 @@ public class FileSystemItemViewModel : ViewModelBase
             return;
 
         // Create the new file system item
-        var newItem = new FileSystemItem
-        {
-            Name = fileName,
-            FullPath = itemPath,
-            IsDirectory = isDirectory
-        };
+        var newItem = _fileService?.CreateFileSystemItem(itemPath, isDirectory);
+        if (newItem == null)
+            return;
 
-        // Try to get file/directory properties, but don't fail if they're not accessible
-        try
+        var newViewModel = _viewModelFactory.Create(newItem, false, _onFileSelected, _onFilePreview);
+        
+        // Mark the new item as visible since its parent is expanded and loaded
+        if (newItem.IsDirectory)
         {
-            newItem.LastModified = isDirectory ? Directory.GetLastWriteTime(itemPath) : File.GetLastWriteTime(itemPath);
-            newItem.Size = isDirectory ? 0 : new FileInfo(itemPath).Length;
+            newViewModel.IsVisible = true;
         }
-        catch
-        {
-            // Use default values if file system access fails (e.g., during testing)
-            newItem.LastModified = DateTime.Now;
-            newItem.Size = 0;
-        }
-
-        // If it's a directory, populate its children for the lazy loading
-        if (isDirectory)
-        {
-            try
-            {
-                var dirInfo = new DirectoryInfo(itemPath);
-                var hasChildren = dirInfo.GetDirectories().Any(d => !IsHiddenOrSystem(d.Attributes)) ||
-                                 dirInfo.GetFiles().Any(f => !IsHiddenOrSystem(f.Attributes));
-                
-                if (hasChildren)
-                {
-                    // Add a placeholder child to indicate it has children
-                    newItem.Children.Add(new FileSystemItem { Name = "Placeholder", FullPath = "" });
-                }
-            }
-            catch
-            {
-                // Ignore errors when checking for children
-            }
-        }
-
-    var newViewModel = new FileSystemItemViewModel(newItem, false, _fileService, _onFileSelected);
 
         // Find the correct position to insert (directories first, then alphabetical)
         var insertIndex = 0;
-        for (int i = 0; i < parentViewModel.Children.Count; i++)
+        for (var i = 0; i < parentViewModel.Children.Count; i++)
         {
             var existingChild = parentViewModel.Children[i];
             
-            // Skip the loading placeholder
-            if (existingChild.Name == "Loading...")
-                continue;
-
             // Directories come before files
             if (isDirectory && !existingChild.IsDirectory)
                 break;
@@ -277,15 +493,32 @@ public class FileSystemItemViewModel : ViewModelBase
         parentViewModel.Children.Insert(insertIndex, newViewModel);
     }
 
-    private void HandleItemDeleted(FileSystemItemViewModel parentViewModel, string itemPath)
+    private static void HandleItemDeleted(FileSystemItemViewModel parentViewModel, string itemPath)
     {
         var fileName = Path.GetFileName(itemPath);
-        var itemToRemove = parentViewModel.Children.FirstOrDefault(c => 
-            string.Equals(c.Name, fileName, StringComparison.OrdinalIgnoreCase));
         
-        if (itemToRemove != null)
+        // Remove from UI children if loaded
+        if (parentViewModel._childrenLoaded)
         {
-            parentViewModel.Children.Remove(itemToRemove);
+            var itemToRemove = parentViewModel.Children.FirstOrDefault(c => 
+                string.Equals(c.Name, fileName, StringComparison.OrdinalIgnoreCase));
+            
+            if (itemToRemove != null)
+            {
+                parentViewModel.Children.Remove(itemToRemove);
+            }
+        }
+        
+        // Also remove from underlying data structure
+        if (parentViewModel.Item.IsDirectory)
+        {
+            var dataItemToRemove = parentViewModel.Item.Children.FirstOrDefault(c => 
+                string.Equals(c.Name, fileName, StringComparison.OrdinalIgnoreCase));
+            
+            if (dataItemToRemove != null)
+            {
+                parentViewModel.Item.Children.Remove(dataItemToRemove);
+            }
         }
     }
 
@@ -312,9 +545,5 @@ public class FileSystemItemViewModel : ViewModelBase
         }
     }
 
-    private static bool IsHiddenOrSystem(FileAttributes attributes)
-    {
-        return (attributes & (FileAttributes.Hidden | FileAttributes.System)) != 0;
-    }
 
 }

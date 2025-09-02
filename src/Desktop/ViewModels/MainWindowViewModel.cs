@@ -32,8 +32,7 @@ public class MainWindowViewModel : ViewModelBase
         ILogger<MainWindowViewModel> logger, 
         IOptions<ApplicationOptions> applicationOptions, 
         IEditorStateService editorStateService,
-        EditorTabBarViewModel editorTabBarViewModel,
-        EditorContentViewModel editorContentViewModel,
+        EditorViewModel editorViewModel,
         ILogTransitionService logTransitionService,
         IHotkeyService hotkeyService)
     {
@@ -42,8 +41,9 @@ public class MainWindowViewModel : ViewModelBase
         _editorStateService = editorStateService;
         _logTransitionService = logTransitionService;
         _hotkeyService = hotkeyService;
-        EditorTabBar = editorTabBarViewModel;
-        EditorContent = editorContentViewModel;
+        Editor = editorViewModel;
+        EditorTabBar = editorViewModel.EditorTabBar;
+        EditorContent = editorViewModel.EditorContent;
         
         BottomPanelTabs = new ObservableCollection<BottomPanelTabViewModel>();
         ExitCommand = new RelayCommand(RequestApplicationExit);
@@ -51,8 +51,8 @@ public class MainWindowViewModel : ViewModelBase
         ShowLogsCommand = new RelayCommand(ShowLogOutput);
         ShowErrorsCommand = new RelayCommand(ShowErrorOutput);
         SettingsCommand = new RelayCommand(OpenSettingsTab);
-        SaveCommand = new RelayCommand(async () => await SaveActiveFileAsync(), CanSave);
-        SaveAllCommand = new RelayCommand(async () => await SaveAllAsync(), CanSaveAll);
+        SaveCommand = new RelayCommand(OnSave, CanSave);
+        SaveAllCommand = new RelayCommand(OnSaveAll, CanSaveAll);
         ApplyHotkeyChangesCommand = new RelayCommand(ApplyHotkeyChanges);
         
         _logger.LogInformation("MainWindowViewModel initialized");
@@ -72,6 +72,9 @@ public class MainWindowViewModel : ViewModelBase
         // Subscribe to build confirmation dialog events
         EditorContent.ShowBuildConfirmationDialog += OnShowBuildConfirmationDialog;
         
+        // Subscribe to settings hotkey change requests
+        SettingsContentViewModel.ApplyHotkeyChangesRequested += (sender, args) => ApplyHotkeyChanges();
+        
         // Initialize bottom panel tabs
         InitializeBottomPanelTabs();
         
@@ -81,6 +84,8 @@ public class MainWindowViewModel : ViewModelBase
 
     
     public ObservableCollection<BottomPanelTabViewModel> BottomPanelTabs { get; }
+    
+    public EditorViewModel Editor { get; }
     
     public EditorTabBarViewModel EditorTabBar { get; }
     
@@ -138,6 +143,16 @@ public class MainWindowViewModel : ViewModelBase
     public async Task SaveAllAsync()
     {
         await EditorTabBar.SaveAllAsync();
+    }
+
+    private async void OnSave()
+    {
+        await SaveActiveFileAsync();
+    }
+
+    private async void OnSaveAll()
+    {
+        await SaveAllAsync();
     }
 
     private bool CanSave()

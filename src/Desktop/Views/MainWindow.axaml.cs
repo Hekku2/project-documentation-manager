@@ -36,6 +36,7 @@ public partial class MainWindow : Window
         
         // Wire up file selection from file explorer to main view model
         fileExplorerViewModel.FileSelected += async (sender, filePath) => await viewModel.EditorTabBar.OpenFileAsync(filePath);
+        fileExplorerViewModel.FilePreview += async (sender, filePath) => await viewModel.EditorTabBar.OpenFileInPreviewAsync(filePath);
         
         // Subscribe to exit request
         viewModel.ExitRequested += OnExitRequested;

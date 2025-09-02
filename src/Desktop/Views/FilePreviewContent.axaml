@@ -1,0 +1,102 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="clr-namespace:Desktop.Models"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:av="clr-namespace:TheArtOfDev.HtmlRenderer.Avalonia;assembly=Avalonia.HtmlRenderer"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="Desktop.Views.FilePreviewContent"
+             x:DataType="models:FilePreviewContentData">
+    
+    <DockPanel>
+        <!-- File info header -->
+        <Border DockPanel.Dock="Top" 
+                Background="#2D2D30" 
+                Padding="10,5" 
+                Margin="0,0,0,5">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Preview: " 
+                           Foreground="#CCCCCC" 
+                           FontWeight="Bold" />
+                <TextBlock Text="{Binding FileName}" 
+                           Foreground="#CCCCCC" />
+                <TextBlock Text=" (Compiled)" 
+                           Foreground="#4CAF50" 
+                           FontStyle="Italic" 
+                           Margin="5,0,0,0"
+                           IsVisible="{Binding IsCompiled}" />
+                <TextBlock Text=" (Raw)" 
+                           Foreground="#808080" 
+                           FontStyle="Italic" 
+                           Margin="5,0,0,0"
+                           IsVisible="{Binding !IsCompiled}" />
+                <TextBlock Text=" - Read-only" 
+                           Foreground="#808080" 
+                           FontStyle="Italic" 
+                           Margin="5,0,0,0" />
+                <!-- Error indicator -->
+                <TextBlock Text=" ⚠ Compilation Error" 
+                           Foreground="#F44336" 
+                           FontStyle="Italic" 
+                           Margin="5,0,0,0"
+                           IsVisible="{Binding CompilationError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+            </StackPanel>
+        </Border>
+        
+        <!-- Error panel (if compilation failed) -->
+        <Border DockPanel.Dock="Top" 
+                Background="#442726" 
+                Padding="10,5" 
+                Margin="0,0,0,5"
+                IsVisible="{Binding CompilationError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+            <StackPanel>
+                <TextBlock Text="Compilation Error:" 
+                           Foreground="#F44336" 
+                           FontWeight="Bold" 
+                           Margin="0,0,0,5" />
+                <TextBlock Text="{Binding CompilationError}" 
+                           Foreground="#FFCDD2" 
+                           TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
+        
+        <!-- File content viewer -->
+        <!-- HTML Panel for markdown files -->
+        <av:HtmlPanel Text="{Binding HtmlContent}"
+                      Background="#1E1E1E"
+                      BaseStylesheet="body { color: #CCCCCC; }"
+                      IsVisible="{Binding HasHtmlContent}" />
+        <!-- Fallback to text viewer for non-markdown files -->
+        <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                      VerticalScrollBarVisibility="Auto"
+                      IsVisible="{Binding !HasHtmlContent}">
+            <TextBox Text="{Binding DisplayContent}"
+                     IsReadOnly="True"
+                     Background="#1E1E1E"
+                     Foreground="#CCCCCC"
+                     FontFamily="Consolas,Monaco,monospace"
+                     FontSize="14"
+                     AcceptsReturn="True"
+                     AcceptsTab="True"
+                     TextWrapping="NoWrap"
+                     Padding="10"
+                     BorderThickness="0"
+                     SelectionBrush="#264F78">
+                <TextBox.Styles>
+                    <!-- Remove hover highlighting -->
+                    <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
+                        <Setter Property="Background" Value="#1E1E1E" />
+                        <Setter Property="BorderBrush" Value="Transparent" />
+                        <Setter Property="BorderThickness" Value="0" />
+                    </Style>
+                    <!-- Keep focus highlighting -->
+                    <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+                        <Setter Property="Background" Value="#1E1E1E" />
+                        <Setter Property="BorderBrush" Value="#007ACC" />
+                        <Setter Property="BorderThickness" Value="1" />
+                    </Style>
+                </TextBox.Styles>
+            </TextBox>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>

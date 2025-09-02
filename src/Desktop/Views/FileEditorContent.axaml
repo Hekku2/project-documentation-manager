@@ -1,0 +1,52 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="clr-namespace:Desktop.Models"
+             xmlns:controls="clr-namespace:Desktop.Controls"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="Desktop.Views.FileEditorContent"
+             x:DataType="models:FileEditorContentData">
+    
+    <ScrollViewer Name="EditorScrollViewer">
+        <Grid>
+            <TextBox Name="DocumentEditor" 
+                    Text="{Binding ActiveTab.Content, Mode=TwoWay}"
+                    Background="#1E1E1E" 
+                    Foreground="#D4D4D4"
+                    CaretBrush="#FFFFFF"
+                    SelectionBrush="#264F78"
+                    SelectionForegroundBrush="#FFFFFF"
+                    FontFamily="monospace"
+                    FontSize="14"
+                    AcceptsReturn="True"
+                    AcceptsTab="True"
+                    TextWrapping="Wrap"
+                    BorderThickness="0"
+                    Margin="20"
+                    Watermark="Start typing or open a file...">
+                <TextBox.Styles>
+                    <!-- Remove hover highlighting -->
+                    <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
+                        <Setter Property="Background" Value="#1E1E1E" />
+                        <Setter Property="BorderBrush" Value="Transparent" />
+                        <Setter Property="BorderThickness" Value="0" />
+                    </Style>
+                    <!-- Keep focus highlighting -->
+                    <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+                        <Setter Property="Background" Value="#1E1E1E" />
+                        <Setter Property="BorderBrush" Value="#007ACC" />
+                        <Setter Property="BorderThickness" Value="1" />
+                    </Style>
+                </TextBox.Styles>
+            </TextBox>
+            
+            <!-- Validation Error Overlay -->
+            <controls:ValidationErrorOverlay 
+                ValidationResult="{Binding CurrentValidationResult}"
+                TargetTextBox="{Binding #DocumentEditor}"
+                CurrentFileName="{Binding ActiveFilePath}"
+                IsHitTestVisible="False" />
+        </Grid>
+    </ScrollViewer>
+</UserControl>
