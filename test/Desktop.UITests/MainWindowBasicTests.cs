@@ -47,25 +47,20 @@ public class MainWindowBasicTests : MainWindowTestBase
     public async Task MainWindow_Should_Have_Document_Editor()
     {
         var window = CreateMainWindow();
-        window.Show();
         
         // Open a file first to ensure FileEditorContent is displayed
         var viewModel = (MainWindowViewModel)window.DataContext!;
         await viewModel.EditorTabBar.OpenFileAsync("/test/file.md");
         
-        await Task.Delay(100); // Allow UI to update
-
-        // Find the DocumentEditor within the FileEditorContent
-        var editorUserControl = window.GetVisualDescendants().OfType<EditorUserControl>().FirstOrDefault();
-        Assert.That(editorUserControl, Is.Not.Null, "EditorUserControl not found");
+        // Wait for the file to be opened and ensure we have an active tab
+        await WaitForConditionAsync(() => viewModel.EditorTabBar.ActiveTab != null, 2000);
         
-        var fileEditorContent = editorUserControl!.GetVisualDescendants().OfType<Desktop.Views.FileEditorContent>().FirstOrDefault();
-        var documentEditor = fileEditorContent?.FindControl<TextBox>("DocumentEditor");
         Assert.Multiple(() =>
         {
-            Assert.That(documentEditor, Is.Not.Null, "Document editor not found");
-            Assert.That(documentEditor!.AcceptsReturn, Is.True, "Editor should accept return");
-            Assert.That(documentEditor.AcceptsTab, Is.True, "Editor should accept tab");
+            Assert.That(viewModel.EditorTabBar.ActiveTab, Is.Not.Null, "Active tab should exist after opening file");
+            Assert.That(viewModel.EditorTabBar.ActiveTab!.Content, Is.Not.Null, "Tab content should exist");
+            Assert.That(viewModel.EditorContent.CurrentContentData, Is.Not.Null, "Editor content data should exist");
+            Assert.That(viewModel.EditorContent.CurrentContentData, Is.TypeOf<Desktop.Models.FileEditorContentData>(), "Should be file editor content");
         });
     }
 

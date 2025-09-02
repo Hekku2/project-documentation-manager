@@ -55,11 +55,16 @@ public class FileSystemItemViewModel : ViewModelBase
             _fileService.FileSystemChanged += OnFileSystemChanged;
         }
         
-        // Auto-expand only the actual root directory (without preloading)
+        // Auto-expand root directory for better UX, but child folders use lazy loading
         if (item.IsDirectory && isRoot)
         {
-            _ = LoadChildrenAsync(true); // Don't preload for auto-expansion
-            IsExpanded = true;
+            // Load root children without preloading to preserve lazy loading for child folders
+            _ = Task.Run(async () =>
+            {
+                await LoadChildrenAsync(false); // No preloading for root
+                // Set expanded after loading to trigger UI update
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => IsExpanded = true);
+            });
         }
     }
 
@@ -201,37 +206,9 @@ public class FileSystemItemViewModel : ViewModelBase
         {
             IsLoading = true;
             
-            // Create ViewModels on background thread with optimized sorting
-            var childViewModels = await Task.Run(() =>
-            {
-                // Single-pass sorting using custom comparer for better performance
-                var sortedChildren = Item.Children.ToArray();
-                Array.Sort(sortedChildren, (x, y) =>
-                {
-                    // Directories first, then files
-                    var directoryComparison = y.IsDirectory.CompareTo(x.IsDirectory);
-                    if (directoryComparison != 0) return directoryComparison;
-                    
-                    // Then alphabetical by name
-                    return string.Compare(x.Name, y.Name, StringComparison.OrdinalIgnoreCase);
-                });
-                
-                return sortedChildren
-                    .Select(child => new FileSystemItemViewModel(child, _fileSystemExplorerService, false, _fileService, _onFileSelected, _onFilePreview))
-                    .ToArray();
-            });
-
-            // Batch update UI on the main thread for better performance
-            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
-            {
-                Children.Clear();
-                
-                // Batch add all children at once to reduce UI notification overhead
-                foreach (var childViewModel in childViewModels)
-                {
-                    Children.Add(childViewModel);
-                }
-            });
+            // Use shared core logic for creating and updating children
+            var childViewModels = await CreateSortedChildViewModelsAsync();
+            await UpdateUIWithChildrenAsync(childViewModels);
 
             _childrenLoaded = true;
             
@@ -282,37 +259,9 @@ public class FileSystemItemViewModel : ViewModelBase
 
         try
         {
-            // Create ViewModels on background thread with optimized sorting
-            var childViewModels = await Task.Run(() =>
-            {
-                // Single-pass sorting using custom comparer for better performance
-                var sortedChildren = Item.Children.ToArray();
-                Array.Sort(sortedChildren, (x, y) =>
-                {
-                    // Directories first, then files
-                    var directoryComparison = y.IsDirectory.CompareTo(x.IsDirectory);
-                    if (directoryComparison != 0) return directoryComparison;
-                    
-                    // Then alphabetical by name
-                    return string.Compare(x.Name, y.Name, StringComparison.OrdinalIgnoreCase);
-                });
-                
-                return sortedChildren
-                    .Select(child => new FileSystemItemViewModel(child, _fileSystemExplorerService, false, _fileService, _onFileSelected, _onFilePreview))
-                    .ToArray();
-            });
-
-            // Batch update UI on the main thread for better performance
-            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
-            {
-                Children.Clear();
-                
-                // Batch add all children at once to reduce UI notification overhead
-                foreach (var childViewModel in childViewModels)
-                {
-                    Children.Add(childViewModel);
-                }
-            });
+            // Use shared core logic for creating and updating children (for preloading)
+            var childViewModels = await CreateSortedChildViewModelsAsync();
+            await UpdateUIWithChildrenAsync(childViewModels);
 
             _childrenLoaded = true;
         }
@@ -320,6 +269,43 @@ public class FileSystemItemViewModel : ViewModelBase
         {
             // Handle any loading errors silently for preloading
         }
+    }
+
+    private async Task<FileSystemItemViewModel[]> CreateSortedChildViewModelsAsync()
+    {
+        return await Task.Run(() =>
+        {
+            // Single-pass sorting using custom comparer for better performance
+            var sortedChildren = Item.Children.ToArray();
+            Array.Sort(sortedChildren, (x, y) =>
+            {
+                // Directories first, then files
+                var directoryComparison = y.IsDirectory.CompareTo(x.IsDirectory);
+                if (directoryComparison != 0) return directoryComparison;
+                
+                // Then alphabetical by name
+                return string.Compare(x.Name, y.Name, StringComparison.OrdinalIgnoreCase);
+            });
+            
+            return sortedChildren
+                .Select(child => new FileSystemItemViewModel(child, _fileSystemExplorerService, false, _fileService, _onFileSelected, _onFilePreview))
+                .ToArray();
+        });
+    }
+
+    private async Task UpdateUIWithChildrenAsync(FileSystemItemViewModel[] childViewModels)
+    {
+        // Batch update UI on the main thread for better performance
+        await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            Children.Clear();
+            
+            // Batch add all children at once to reduce UI notification overhead
+            foreach (var childViewModel in childViewModels)
+            {
+                Children.Add(childViewModel);
+            }
+        });
     }
 
     private void OnFileSystemChanged(object? sender, FileSystemChangedEventArgs e)
