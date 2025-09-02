@@ -29,7 +29,7 @@ public abstract class MainWindowTestBase
     protected EditorStateService _editorStateService = null!;
     protected Logging.ILogTransitionService _logTransitionService = null!;
     protected IFileSystemExplorerService _fileSystemExplorerService = null!;
-    protected FileSystemItemViewModelFactory _viewModelFactory = null!;
+    protected IFileSystemItemViewModelFactory _viewModelFactory = null!;
 
     [SetUp]
     public void Setup()
@@ -41,17 +41,41 @@ public abstract class MainWindowTestBase
         _options = Options.Create(new ApplicationOptions());
         _fileService = Substitute.For<IFileService>();
         serviceProvider = Substitute.For<IServiceProvider>();
+        
+        // Setup service provider to return mock loggers for all needed types  
+        serviceProvider.GetService(typeof(ILogger<SettingsContentViewModel>)).Returns(Substitute.For<ILogger<SettingsContentViewModel>>());
         _markdownCombinationService = Substitute.For<IMarkdownCombinationService>();
         _markdownFileCollectorService = Substitute.For<IMarkdownFileCollectorService>();
         _markdownRenderingService = Substitute.For<Desktop.Services.IMarkdownRenderingService>();
         _logTransitionService = Substitute.For<Logging.ILogTransitionService>();
         _editorStateService = new EditorStateService(_stateLogger);
         _fileSystemExplorerService = Substitute.For<IFileSystemExplorerService>();
-        _viewModelFactory = new FileSystemItemViewModelFactory(Substitute.For<ILoggerFactory>(), _fileService, _fileSystemExplorerService);
+        _viewModelFactory = Substitute.For<IFileSystemItemViewModelFactory>();
 
         // Set up common fileService behavior
         _fileService.IsValidFolder(Arg.Any<string>()).Returns(true);
         _fileService.ReadFileContentAsync(Arg.Any<string>()).Returns("Mock file content");
+        
+        // Set up the ViewModelFactory to return actual FileSystemItemViewModel instances
+        _viewModelFactory.Create(Arg.Any<FileSystemItem>(), Arg.Any<bool>(), Arg.Any<Action<string>>(), Arg.Any<Action<string>>())
+            .Returns(callInfo =>
+            {
+                var item = callInfo.ArgAt<FileSystemItem>(0);
+                var isRoot = callInfo.ArgAt<bool>(1);
+                var onFileSelected = callInfo.ArgAt<Action<string>?>(2);
+                var onFilePreview = callInfo.ArgAt<Action<string>?>(3);
+                
+                var logger = Substitute.For<ILogger<FileSystemItemViewModel>>();
+                return new FileSystemItemViewModel(
+                    logger,
+                    _viewModelFactory,
+                    _fileSystemExplorerService,
+                    item,
+                    isRoot,
+                    _fileService,
+                    onFileSelected,
+                    onFilePreview);
+            });
     }
 
     protected static async Task WaitForConditionAsync(Func<bool> condition, int timeoutMs = 2000, int intervalMs = 10)

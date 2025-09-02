@@ -6,10 +6,19 @@ using Microsoft.Extensions.Logging;
 
 namespace Desktop.Factories;
 
+public interface IFileSystemItemViewModelFactory
+{
+    FileSystemItemViewModel Create(
+        FileSystemItem item,
+        bool isRoot = false,
+        Action<string>? onFileSelected = null,
+        Action<string>? onFilePreview = null);
+}
+
 public class FileSystemItemViewModelFactory(
     ILoggerFactory loggerFactory,
     IFileService fileService,
-    IFileSystemExplorerService fileSystemExplorerService)
+    IFileSystemExplorerService fileSystemExplorerService) : IFileSystemItemViewModelFactory
 {
     public FileSystemItemViewModel Create(
         FileSystemItem item,

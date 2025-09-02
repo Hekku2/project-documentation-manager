@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Desktop.Logging;
+using Desktop.Factories;
 
 namespace Desktop.DependencyInjection;
 
@@ -10,19 +11,19 @@ public static class ServiceConfiguration
     public static void ConfigureServices(HostBuilderContext context, IServiceCollection services)
     {
         // Register configuration options
-        services.Configure<Desktop.Configuration.ApplicationOptions>(
-            context.Configuration.GetSection(nameof(Desktop.Configuration.ApplicationOptions)));
+        services.Configure<Configuration.ApplicationOptions>(
+            context.Configuration.GetSection(nameof(Configuration.ApplicationOptions)));
         
         // Register ViewModels
-        services.AddSingleton<Desktop.ViewModels.MainWindowViewModel>();
-        services.AddSingleton<Desktop.ViewModels.EditorTabBarViewModel>();
-        services.AddSingleton<Desktop.ViewModels.EditorContentViewModel>();
-        services.AddSingleton<Desktop.ViewModels.EditorViewModel>();
-        services.AddSingleton<Desktop.ViewModels.FileExplorerViewModel>();
-        services.AddTransient<Desktop.ViewModels.BuildConfirmationDialogViewModel>();
+        services.AddSingleton<ViewModels.MainWindowViewModel>();
+        services.AddSingleton<ViewModels.EditorTabBarViewModel>();
+        services.AddSingleton<ViewModels.EditorContentViewModel>();
+        services.AddSingleton<ViewModels.EditorViewModel>();
+        services.AddSingleton<ViewModels.FileExplorerViewModel>();
+        services.AddTransient<ViewModels.BuildConfirmationDialogViewModel>();
         
         // Register Views
-        services.AddSingleton<Desktop.Views.MainWindow>();
+        services.AddSingleton<Views.MainWindow>();
         
         // Register logging components
         services.AddSingleton<InMemoryLoggerProvider>();
@@ -36,14 +37,15 @@ public static class ServiceConfiguration
         });
         
         // Register application services
-        services.AddSingleton<Desktop.Services.IFileService, Desktop.Services.FileService>();
-        services.AddSingleton<Desktop.Services.IEditorStateService, Desktop.Services.EditorStateService>();
-        services.AddSingleton<Desktop.Services.IHotkeyService, Desktop.Services.HotkeyService>();
-        services.AddSingleton<Desktop.Services.IMarkdownRenderingService, Desktop.Services.MarkdownRenderingService>();
-        services.AddSingleton<Desktop.Services.IFileSystemExplorerService, Desktop.Services.WindowsFileSystemExplorerService>();
+        services.AddSingleton<Services.IFileService, Services.FileService>();
+        services.AddSingleton<Services.IEditorStateService, Services.EditorStateService>();
+        services.AddSingleton<Services.IHotkeyService, Services.HotkeyService>();
+        services.AddSingleton<Services.IMarkdownRenderingService, Services.MarkdownRenderingService>();
+        services.AddSingleton<Services.IFileSystemExplorerService, Services.WindowsFileSystemExplorerService>();
         
         // Register factories
-        services.AddSingleton<Desktop.Factories.FileSystemItemViewModelFactory>();
+        services.AddSingleton<IFileSystemItemViewModelFactory, FileSystemItemViewModelFactory>();
+        services.AddSingleton<ISettingsContentViewModelFactory, SettingsContentViewModelFactory>();
         
         // Register business services
         services.AddTransient<Business.Services.IMarkdownCombinationService, Business.Services.MarkdownCombinationService>();

@@ -7,7 +7,7 @@ using Desktop.Factories;
 
 namespace Desktop.ViewModels;
 
-public class FileExplorerViewModel(ILogger<FileExplorerViewModel> logger, IFileService fileService, FileSystemItemViewModelFactory viewModelFactory) : ViewModelBase, IDisposable
+public class FileExplorerViewModel(ILogger<FileExplorerViewModel> logger, IFileService fileService, IFileSystemItemViewModelFactory viewModelFactory) : ViewModelBase, IDisposable
 {
     private bool _isLoading;
     private FileSystemItemViewModel? _rootItem;

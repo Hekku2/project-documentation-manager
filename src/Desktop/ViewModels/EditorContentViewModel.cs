@@ -304,24 +304,11 @@ public class EditorContentViewModel : ViewModelBase
 
     private SettingsContentViewModel CreateSettingsViewModel()
     {
-        try
+        var logger = _serviceProvider.GetRequiredService<ILogger<SettingsContentViewModel>>();
+        return new SettingsContentViewModel(logger)
         {
-            var logger = _serviceProvider.GetRequiredService<ILogger<SettingsContentViewModel>>();
-            return new SettingsContentViewModel(logger)
-            {
-                ApplicationOptions = _applicationOptions
-            };
-        }
-        catch (InvalidOperationException)
-        {
-            // In tests, the service provider might not have all services registered
-            // Create a simple substitute logger for testing purposes
-            var logger = Microsoft.Extensions.Logging.Abstractions.NullLogger<SettingsContentViewModel>.Instance;
-            return new SettingsContentViewModel(logger)
-            {
-                ApplicationOptions = _applicationOptions
-            };
-        }
+            ApplicationOptions = _applicationOptions
+        };
     }
 
     private async Task<string> CompileMarkdownTemplate(string filePath, string content)

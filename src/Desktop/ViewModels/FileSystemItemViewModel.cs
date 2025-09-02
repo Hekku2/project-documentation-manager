@@ -26,11 +26,11 @@ public class FileSystemItemViewModel : ViewModelBase
     private readonly ILogger<FileSystemItemViewModel> _logger;
     private readonly IFileService? _fileService;
     private readonly IFileSystemExplorerService _fileSystemExplorerService;
-    private readonly FileSystemItemViewModelFactory _viewModelFactory;
+    private readonly IFileSystemItemViewModelFactory _viewModelFactory;
 
     public FileSystemItemViewModel(
         ILogger<FileSystemItemViewModel> logger,
-        FileSystemItemViewModelFactory viewModelFactory,
+        IFileSystemItemViewModelFactory viewModelFactory,
         IFileSystemExplorerService fileSystemExplorerService,
         FileSystemItem item,
         bool isRoot = false,
