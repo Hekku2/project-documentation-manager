@@ -196,9 +196,9 @@ public class FileSystemItemViewModel : ViewModelBase
                 }
             }
         }
-        catch
+        catch(Exception ex)
         {
-            // Ignore if cannot access clipboard
+            _logger.LogError(ex, "Failed to copy path to clipboard: {Path}", FullPath);
         }
     }
 
