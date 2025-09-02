@@ -7,7 +7,7 @@ namespace Desktop.Services;
 
 public class WindowsFileSystemExplorerService(ILogger<WindowsFileSystemExplorerService> logger) : IFileSystemExplorerService
 {
-    // TODO: This should be only used in windows. If other OS is used, provide alternative implementation, or disable the functinality
+    // TODO: This should be only used in windows. If other OS is used, provide alternative implementation, or disable the functionality
     public void ShowInExplorer(string filePath)
     {
         try
