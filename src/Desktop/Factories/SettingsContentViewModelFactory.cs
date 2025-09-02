@@ -5,11 +5,6 @@ using Microsoft.Extensions.Options;
 
 namespace Desktop.Factories;
 
-public interface ISettingsContentViewModelFactory
-{
-    SettingsContentViewModel Create();
-}
-
 public class SettingsContentViewModelFactory(ILoggerFactory loggerFactory, IOptions<ApplicationOptions> applicationOptions) : ISettingsContentViewModelFactory
 {
     public SettingsContentViewModel Create()

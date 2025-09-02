@@ -330,7 +330,7 @@ public class FileSystemItemViewModel : ViewModelBase
             });
             
             return sortedChildren
-                .Select(child => _viewModelFactory.Create(child, false, _onFileSelected, _onFilePreview))
+                .Select(child => _viewModelFactory.CreateChild(child))
                 .ToArray();
         });
     }
@@ -460,7 +460,7 @@ public class FileSystemItemViewModel : ViewModelBase
         if (newItem == null)
             return;
 
-        var newViewModel = _viewModelFactory.Create(newItem, false, _onFileSelected, _onFilePreview);
+        var newViewModel = _viewModelFactory.CreateChild(newItem);
         
         // Mark the new item as visible since its parent is expanded and loaded
         if (newItem.IsDirectory)

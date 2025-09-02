@@ -6,25 +6,26 @@ using Microsoft.Extensions.Logging;
 
 namespace Desktop.Factories;
 
-public interface IFileSystemItemViewModelFactory
-{
-    FileSystemItemViewModel Create(
-        FileSystemItem item,
-        bool isRoot = false,
-        Action<string>? onFileSelected = null,
-        Action<string>? onFilePreview = null);
-}
-
 public class FileSystemItemViewModelFactory(
     ILoggerFactory loggerFactory,
     IFileService fileService,
-    IFileSystemExplorerService fileSystemExplorerService) : IFileSystemItemViewModelFactory
+    IFileSystemExplorerService fileSystemExplorerService,
+    Action<string> onItemSelected,
+    Action<string> onItemPreview) : IFileSystemItemViewModelFactory
 {
-    public FileSystemItemViewModel Create(
+    public FileSystemItemViewModel CreateChild(FileSystemItem item)
+    {
+        return Create(item, isRoot: false);
+    }
+
+    public FileSystemItemViewModel CreateRoot(FileSystemItem item)
+    {
+        return Create(item, isRoot: true);
+    }
+
+    private FileSystemItemViewModel Create(
         FileSystemItem item,
-        bool isRoot = false,
-        Action<string>? onFileSelected = null,
-        Action<string>? onFilePreview = null)
+        bool isRoot = false)
     {
         return new FileSystemItemViewModel(
             loggerFactory.CreateLogger<FileSystemItemViewModel>(),
@@ -33,7 +34,7 @@ public class FileSystemItemViewModelFactory(
             item,
             isRoot,
             fileService,
-            onFileSelected,
-            onFilePreview);
+            onItemSelected,
+            onItemPreview);
     }
 }

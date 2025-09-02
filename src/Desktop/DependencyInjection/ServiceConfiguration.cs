@@ -44,7 +44,6 @@ public static class ServiceConfiguration
         services.AddSingleton<Services.IFileSystemExplorerService, Services.WindowsFileSystemExplorerService>();
         
         // Register factories
-        services.AddSingleton<IFileSystemItemViewModelFactory, FileSystemItemViewModelFactory>();
         services.AddSingleton<ISettingsContentViewModelFactory, SettingsContentViewModelFactory>();
         
         // Register business services

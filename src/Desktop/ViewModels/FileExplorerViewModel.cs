@@ -7,7 +7,11 @@ using Desktop.Factories;
 
 namespace Desktop.ViewModels;
 
-public class FileExplorerViewModel(ILogger<FileExplorerViewModel> logger, IFileService fileService, IFileSystemItemViewModelFactory viewModelFactory) : ViewModelBase, IDisposable
+public class FileExplorerViewModel(
+    ILogger<FileExplorerViewModel> logger,
+    ILoggerFactory loggerFactory,
+    IFileSystemExplorerService fileSystemExplorerService,
+    IFileService fileService) : ViewModelBase, IDisposable
 {
     private bool _isLoading;
     private FileSystemItemViewModel? _rootItem;
@@ -49,22 +53,26 @@ public class FileExplorerViewModel(ILogger<FileExplorerViewModel> logger, IFileS
             
             var fileStructure = await fileService.GetFileStructureAsync();
             
+            var factory = new FileSystemItemViewModelFactory(
+                loggerFactory,
+                fileService,
+                fileSystemExplorerService,
+                onItemSelected: OnFileSelected,
+                onItemPreview: OnFilePreview);
+
             if (fileStructure != null)
             {
-                var rootViewModel = viewModelFactory.Create(
-                    fileStructure,
-                    isRoot: true,
-                    onFileSelected: OnFileSelected, // pass instance callback
-                    onFilePreview: OnFilePreview    // pass preview callback
+                var rootViewModel = factory.CreateRoot(
+                    fileStructure
                 );
                 RootItem = rootViewModel;
-                
+
                 FileSystemItems.Clear();
                 FileSystemItems.Add(rootViewModel);
-                
+
                 // Start file system monitoring
                 fileService.StartFileSystemMonitoring();
-                
+
                 logger.LogInformation("File structure loaded successfully");
             }
             else
