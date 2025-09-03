@@ -1,24 +1,7 @@
-using System;
 using System.Threading.Tasks;
 using Desktop.Models;
 
 namespace Desktop.Services;
-
-public enum FileSystemChangeType
-{
-    Created,
-    Deleted,
-    Changed,
-    Renamed
-}
-
-public class FileSystemChangedEventArgs : EventArgs
-{
-    public FileSystemChangeType ChangeType { get; init; }
-    public string Path { get; init; } = string.Empty;
-    public string? OldPath { get; init; }
-    public bool IsDirectory { get; init; }
-}
 
 public interface IFileService
 {
