@@ -358,10 +358,29 @@ public class FileService(ILogger<FileService> logger, IOptions<ApplicationOption
             return false;
         }
 
-        if (!IsValidFolder(folderPath))
+        // Resolve the absolute path and its root
+        var fullPath = Path.GetFullPath(folderPath);
+        var rootPath = Path.GetPathRoot(fullPath);
+
+        // Refuse to operate on a drive or filesystem root
+        if (string.Equals(
+                fullPath.TrimEnd(Path.DirectorySeparatorChar),
+                rootPath?.TrimEnd(Path.DirectorySeparatorChar),
+                StringComparison.OrdinalIgnoreCase))
         {
-            logger.LogWarning("Folder does not exist or is not accessible: {FolderPath}", folderPath);
+            logger.LogError(
+                "Refusing to delete contents of a root directory: {FolderPath}",
+                folderPath);
             return false;
+        }
+
+        // If the folder genuinely doesn’t exist, treat it as “already clean”
+        if (!Directory.Exists(fullPath))
+        {
+            logger.LogInformation(
+                "Folder does not exist; treating as already clean: {FolderPath}",
+                folderPath);
+            return true;
         }
 
         try
