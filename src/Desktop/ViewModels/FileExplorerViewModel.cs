@@ -7,10 +7,17 @@ using Desktop.Factories;
 
 namespace Desktop.ViewModels;
 
-public class FileExplorerViewModel(ILogger<FileExplorerViewModel> logger, IFileService fileService, IFileSystemItemViewModelFactory viewModelFactory) : ViewModelBase, IDisposable
+public class FileExplorerViewModel : ViewModelBase, IDisposable
 {
     private bool _isLoading;
     private FileSystemItemViewModel? _rootItem;
+    private bool _disposed = false;
+    private readonly ILogger<FileExplorerViewModel> _logger;
+    private readonly ILoggerFactory _loggerFactory;
+    private readonly IFileSystemExplorerService _fileSystemExplorerService;
+    private readonly IFileSystemChangeHandler _fileSystemChangeHandler;
+    private readonly IFileService _fileService;
+    private readonly FileSystemItemViewModelFactory _fileSystemItemViewModelFactory;
 
     public ObservableCollection<FileSystemItemViewModel> FileSystemItems { get; } = [];
 
@@ -29,9 +36,31 @@ public class FileExplorerViewModel(ILogger<FileExplorerViewModel> logger, IFileS
     public event EventHandler<string>? FileSelected;
     public event EventHandler<string>? FilePreview;
 
+    public FileExplorerViewModel(
+        ILogger<FileExplorerViewModel> logger,
+        ILoggerFactory loggerFactory,
+        IFileSystemExplorerService fileSystemExplorerService,
+        IFileSystemChangeHandler fileSystemChangeHandler,
+        IFileService fileService)
+    {
+        _logger = logger;
+        _loggerFactory = loggerFactory;
+        _fileSystemExplorerService = fileSystemExplorerService;
+        _fileSystemChangeHandler = fileSystemChangeHandler;
+        _fileService = fileService;
+
+        _fileSystemItemViewModelFactory = new FileSystemItemViewModelFactory(
+            _loggerFactory,
+            _fileSystemExplorerService,
+            onItemSelected: OnItemSelected,
+            onItemPreview: OnItemPreview);
+
+        _fileService.FileSystemChanged += DelegateFileSystemChangeEvent;
+    }
+
     public async Task InitializeAsync()
     {
-        logger.LogInformation("FileExplorerViewModel initialized");
+        _logger.LogInformation("FileExplorerViewModel initialized");
         await LoadFileStructureAsync();
     }
 
@@ -45,36 +74,33 @@ public class FileExplorerViewModel(ILogger<FileExplorerViewModel> logger, IFileS
         try
         {
             IsLoading = true;
-            logger.LogInformation("Loading file structure...");
-            
-            var fileStructure = await fileService.GetFileStructureAsync();
-            
+            _logger.LogInformation("Loading file structure...");
+
+            var fileStructure = await _fileService.GetFileStructureAsync();
+
             if (fileStructure != null)
             {
-                var rootViewModel = viewModelFactory.Create(
-                    fileStructure,
-                    isRoot: true,
-                    onFileSelected: OnFileSelected, // pass instance callback
-                    onFilePreview: OnFilePreview    // pass preview callback
+                var rootViewModel = _fileSystemItemViewModelFactory.CreateWithChildren(
+                    fileStructure
                 );
+
                 RootItem = rootViewModel;
-                
+
                 FileSystemItems.Clear();
                 FileSystemItems.Add(rootViewModel);
-                
-                // Start file system monitoring
-                fileService.StartFileSystemMonitoring();
-                
-                logger.LogInformation("File structure loaded successfully");
+
+                _fileService.StartFileSystemMonitoring();
+
+                _logger.LogInformation("File structure loaded successfully");
             }
             else
             {
-                logger.LogWarning("Failed to load file structure");
+                _logger.LogWarning("Failed to load file structure");
             }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error loading file structure");
+            _logger.LogError(ex, "Error loading file structure");
         }
         finally
         {
@@ -82,15 +108,27 @@ public class FileExplorerViewModel(ILogger<FileExplorerViewModel> logger, IFileS
         }
     }
 
-    private void OnFileSelected(string filePath)
+    private void DelegateFileSystemChangeEvent(object? sender, FileSystemChangedEventArgs eventArgs)
     {
-        logger.LogInformation("File selected: {FilePath}", filePath);
+        var root = _rootItem;
+        if (root is null)
+            return;
+
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            _fileSystemChangeHandler.HandleFileSystemChange(eventArgs, root, _fileSystemItemViewModelFactory);
+        });
+    }
+
+    private void OnItemSelected(string filePath)
+    {
+        _logger.LogInformation("File selected: {FilePath}", filePath);
         FileSelected?.Invoke(this, filePath);
     }
 
-    private void OnFilePreview(string filePath)
+    private void OnItemPreview(string filePath)
     {
-        logger.LogInformation("File preview requested: {FilePath}", filePath);
+        _logger.LogInformation("File preview requested: {FilePath}", filePath);
         FilePreview?.Invoke(this, filePath);
     }
 
@@ -100,13 +138,13 @@ public class FileExplorerViewModel(ILogger<FileExplorerViewModel> logger, IFileS
         GC.SuppressFinalize(this);
     }
 
-    private bool _disposed = false;
-
     protected virtual void Dispose(bool disposing)
     {
         if (!_disposed)
         {
-            // No static event to unsubscribe
+            _fileService.FileSystemChanged -= DelegateFileSystemChangeEvent;
+            _fileService.StopFileSystemMonitoring();
+
             _disposed = true;
         }
     }

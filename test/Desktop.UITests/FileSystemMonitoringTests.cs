@@ -8,7 +8,7 @@ using Desktop.Services;
 using Desktop.Models;
 using NSubstitute;
 using Business.Services;
-using System.Linq;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Desktop.UITests;
 
@@ -19,21 +19,21 @@ public class FileSystemMonitoringTests
         Name = "test-project",
         FullPath = "/test/path",
         IsDirectory = true,
-        Children = 
+        Children =
         [
-            new() 
-            { 
-                Name = "src", 
+            new()
+            {
+                Name = "src",
                 FullPath = "/test/path/src",
                 IsDirectory = true,
-                Children = 
+                Children =
                 [
-                    new() 
-                    { 
-                        Name = "controllers", 
+                    new()
+                    {
+                        Name = "controllers",
                         FullPath = "/test/path/src/controllers",
                         IsDirectory = true,
-                        Children = 
+                        Children =
                         [
                             new() { Name = "HomeController.cs", FullPath = "/test/path/src/controllers/HomeController.cs", IsDirectory = false }
                         ]
@@ -41,12 +41,12 @@ public class FileSystemMonitoringTests
                     new() { Name = "main.cs", FullPath = "/test/path/src/main.cs", IsDirectory = false }
                 ]
             },
-            new() 
-            { 
-                Name = "tests", 
+            new()
+            {
+                Name = "tests",
                 FullPath = "/test/path/tests",
                 IsDirectory = true,
-                Children = 
+                Children =
                 [
                     new() { Name = "unit", FullPath = "/test/path/tests/unit", IsDirectory = true, Children = [] },
                     new() { Name = "integration", FullPath = "/test/path/tests/integration", IsDirectory = true, Children = [] }
@@ -58,14 +58,14 @@ public class FileSystemMonitoringTests
 
     private static (MainWindow window, IFileService fileService, MainWindowViewModel viewModel, FileExplorerViewModel fileExplorerViewModel) CreateMainWindowWithMonitoring()
     {
-        var vmLogger = Substitute.For<ILogger<MainWindowViewModel>>();
-        var tabBarLogger = Substitute.For<ILogger<EditorTabBarViewModel>>();
-        var contentLogger = Substitute.For<ILogger<EditorContentViewModel>>();
-        var stateLogger = Substitute.For<ILogger<EditorStateService>>();
+        var vmLogger = NullLoggerFactory.Instance.CreateLogger<MainWindowViewModel>();
+        var tabBarLogger = NullLoggerFactory.Instance.CreateLogger<EditorTabBarViewModel>();
+        var contentLogger = NullLoggerFactory.Instance.CreateLogger<EditorContentViewModel>();
+        var stateLogger = NullLoggerFactory.Instance.CreateLogger<EditorStateService>();
         var options = Options.Create(new ApplicationOptions());
         var fileService = Substitute.For<IFileService>();
         var serviceProvider = Substitute.For<IServiceProvider>();
-        
+
         fileService.GetFileStructureAsync().Returns(Task.FromResult<FileSystemItem?>(CreateTestStructure()));
         fileService.GetFileStructureAsync(Arg.Any<string>()).Returns(Task.FromResult<FileSystemItem?>(CreateTestStructure()));
         fileService.IsValidFolder(Arg.Any<string>()).Returns(true);
@@ -85,25 +85,30 @@ public class FileSystemMonitoringTests
                 Size = isDirectory ? 0 : 100
             };
         });
-        
+
         var markdownCombinationService = Substitute.For<IMarkdownCombinationService>();
         var markdownFileCollectorService = Substitute.For<IMarkdownFileCollectorService>();
         var markdownRenderingService = Substitute.For<Desktop.Services.IMarkdownRenderingService>();
-        
+
         var editorStateService = new EditorStateService(stateLogger);
         var editorTabBarViewModel = new EditorTabBarViewModel(tabBarLogger, fileService, editorStateService);
         var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService, markdownRenderingService, Substitute.For<Desktop.Factories.ISettingsContentViewModelFactory>());
-        
+
         var logTransitionService = Substitute.For<Desktop.Logging.ILogTransitionService>();
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
-        var editorLogger = Substitute.For<ILogger<Desktop.ViewModels.EditorViewModel>>();
+        var editorLogger = NullLoggerFactory.Instance.CreateLogger<Desktop.ViewModels.EditorViewModel>();
         var editorViewModel = new Desktop.ViewModels.EditorViewModel(editorLogger, options, editorTabBarViewModel, editorContentViewModel, hotkeyService);
         var fileSystemExplorerService = Substitute.For<Desktop.Services.IFileSystemExplorerService>();
-        var viewModelFactory = new Desktop.Factories.FileSystemItemViewModelFactory(Substitute.For<ILoggerFactory>(), fileService, fileSystemExplorerService);
-        var fileExplorerViewModel = new FileExplorerViewModel(Substitute.For<ILogger<FileExplorerViewModel>>(), fileService, viewModelFactory);
+        var fileSystemChangeHandler = new Desktop.Services.FileSystemChangeHandler(NullLoggerFactory.Instance.CreateLogger<Desktop.Services.FileSystemChangeHandler>(), fileService);
+        var fileExplorerViewModel = new FileExplorerViewModel(
+            NullLoggerFactory.Instance.CreateLogger<FileExplorerViewModel>(),
+            NullLoggerFactory.Instance,
+            fileSystemExplorerService,
+            fileSystemChangeHandler,
+            fileService);
         var viewModel = new MainWindowViewModel(vmLogger, options, editorStateService, editorViewModel, logTransitionService, hotkeyService);
         var window = new MainWindow(viewModel, fileExplorerViewModel);
-        
+
         return (window, fileService, viewModel, fileExplorerViewModel);
     }
 
@@ -115,7 +120,7 @@ public class FileSystemMonitoringTests
 
         // Wait for file structure to load
         await Task.Delay(500);
-        
+
         var maxWait = 50;
         var waitCount = 0;
         while (fileExplorerViewModel.RootItem == null && waitCount < maxWait)
@@ -136,7 +141,7 @@ public class FileSystemMonitoringTests
 
         // Wait for file structure to load
         await Task.Delay(500);
-        
+
         var maxWait = 50;
         var waitCount = 0;
         while (fileExplorerViewModel.RootItem == null && waitCount < maxWait)
@@ -150,7 +155,7 @@ public class FileSystemMonitoringTests
         // Get the src folder and expand it
         var srcFolder = fileExplorerViewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
         Assert.That(srcFolder, Is.Not.Null, "src folder should exist");
-        
+
         srcFolder!.IsExpanded = true;
         await Task.Delay(1000);
 
@@ -191,7 +196,7 @@ public class FileSystemMonitoringTests
 
         // Wait for file structure to load
         await Task.Delay(500);
-        
+
         var maxWait = 50;
         var waitCount = 0;
         while (fileExplorerViewModel.RootItem == null && waitCount < maxWait)
@@ -226,7 +231,7 @@ public class FileSystemMonitoringTests
             Assert.That(newDir, Is.Not.Null, "docs directory should be added");
             Assert.That(newDir!.IsDirectory, Is.True, "docs should be a directory");
             Assert.That(newDir.FullPath, Is.EqualTo("/test/path/docs"), "docs should have correct path");
-            
+
             // Verify sorting: directories should come first
             var firstChild = fileExplorerViewModel.RootItem.Children.First();
             Assert.That(firstChild.Name, Is.EqualTo("docs"), "docs should be sorted first (directories first, alphabetical)");
@@ -241,7 +246,7 @@ public class FileSystemMonitoringTests
 
         // Wait for file structure to load
         await Task.Delay(500);
-        
+
         var maxWait = 50;
         var waitCount = 0;
         while (fileExplorerViewModel.RootItem == null && waitCount < maxWait)
@@ -276,7 +281,7 @@ public class FileSystemMonitoringTests
             Assert.That(fileExplorerViewModel.RootItem.Children.Count, Is.EqualTo(2), "root should now have 2 children");
             var remainingReadme = fileExplorerViewModel.RootItem.Children.FirstOrDefault(c => c.Name == "README.md");
             Assert.That(remainingReadme, Is.Null, "README.md should be removed");
-            
+
             // Verify src folder still exists
             var srcFolder = fileExplorerViewModel.RootItem.Children.FirstOrDefault(c => c.Name == "src");
             Assert.That(srcFolder, Is.Not.Null, "src folder should still exist");
@@ -291,7 +296,7 @@ public class FileSystemMonitoringTests
 
         // Wait for file structure to load
         await Task.Delay(500);
-        
+
         var maxWait = 50;
         var waitCount = 0;
         while (fileExplorerViewModel.RootItem == null && waitCount < maxWait)
@@ -325,10 +330,10 @@ public class FileSystemMonitoringTests
         Assert.Multiple(() =>
         {
             Assert.That(fileExplorerViewModel.RootItem.Children.Count, Is.EqualTo(3), "root should still have 3 children");
-            
+
             var oldFile = fileExplorerViewModel.RootItem.Children.FirstOrDefault(c => c.Name == "README.md");
             Assert.That(oldFile, Is.Null, "README.md should be removed");
-            
+
             var newFile = fileExplorerViewModel.RootItem.Children.FirstOrDefault(c => c.Name == "CHANGELOG.md");
             Assert.That(newFile, Is.Not.Null, "CHANGELOG.md should be added");
             Assert.That(newFile!.IsDirectory, Is.False, "CHANGELOG.md should be a file");
@@ -344,7 +349,7 @@ public class FileSystemMonitoringTests
 
         // Wait for file structure to load
         await Task.Delay(500);
-        
+
         var maxWait = 50;
         var waitCount = 0;
         while (fileExplorerViewModel.RootItem == null && waitCount < maxWait)
@@ -405,7 +410,7 @@ public class FileSystemMonitoringTests
 
         // Wait for file structure to load
         await Task.Delay(500);
-        
+
         var maxWait = 50;
         var waitCount = 0;
         while (fileExplorerViewModel.RootItem == null && waitCount < maxWait)
@@ -448,21 +453,21 @@ public class FileSystemMonitoringTests
         Assert.Multiple(() =>
         {
             Assert.That(fileExplorerViewModel.RootItem.Children.Count, Is.EqualTo(5), "root should have 5 children");
-            
+
             // Directories first, alphabetically
             Assert.That(fileExplorerViewModel.RootItem.Children[0].Name, Is.EqualTo("docs"), "docs should be first (dir, alphabetical)");
             Assert.That(fileExplorerViewModel.RootItem.Children[0].IsDirectory, Is.True, "first item should be directory");
-            
+
             Assert.That(fileExplorerViewModel.RootItem.Children[1].Name, Is.EqualTo("src"), "src should be second (dir, alphabetical)");
             Assert.That(fileExplorerViewModel.RootItem.Children[1].IsDirectory, Is.True, "second item should be directory");
-            
+
             Assert.That(fileExplorerViewModel.RootItem.Children[2].Name, Is.EqualTo("tests"), "tests should be third (dir, alphabetical)");
             Assert.That(fileExplorerViewModel.RootItem.Children[2].IsDirectory, Is.True, "third item should be directory");
-            
+
             // Files second, alphabetically
             Assert.That(fileExplorerViewModel.RootItem.Children[3].Name, Is.EqualTo("CHANGELOG.md"), "CHANGELOG.md should be fourth (file, alphabetical)");
             Assert.That(fileExplorerViewModel.RootItem.Children[3].IsDirectory, Is.False, "fourth item should be file");
-            
+
             Assert.That(fileExplorerViewModel.RootItem.Children[4].Name, Is.EqualTo("README.md"), "README.md should be fifth (file, alphabetical)");
             Assert.That(fileExplorerViewModel.RootItem.Children[4].IsDirectory, Is.False, "fifth item should be file");
         });
@@ -476,7 +481,7 @@ public class FileSystemMonitoringTests
 
         // Wait for file structure to load
         await Task.Delay(500);
-        
+
         var maxWait = 50;
         var waitCount = 0;
         while (fileExplorerViewModel.RootItem == null && waitCount < maxWait)
@@ -505,7 +510,7 @@ public class FileSystemMonitoringTests
         await Task.Delay(500);
 
         // Verify no changes occurred
-        Assert.That(fileExplorerViewModel.RootItem.Children.Count, Is.EqualTo(initialCount), 
+        Assert.That(fileExplorerViewModel.RootItem.Children.Count, Is.EqualTo(initialCount),
             "root should still have same number of children (change was outside monitored path)");
     }
 
@@ -517,7 +522,7 @@ public class FileSystemMonitoringTests
 
         // Wait for file structure to load
         await Task.Delay(500);
-        
+
         var maxWait = 50;
         var waitCount = 0;
         while (fileExplorerViewModel.RootItem == null && waitCount < maxWait)
@@ -531,7 +536,7 @@ public class FileSystemMonitoringTests
         // Get the src folder and expand it
         var srcFolder = fileExplorerViewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
         Assert.That(srcFolder, Is.Not.Null, "src folder should exist");
-        
+
         // Expand the src folder to trigger loading and preloading
         srcFolder!.IsExpanded = true;
         await Task.Delay(1500); // Give extra time for preloading to complete
@@ -540,11 +545,11 @@ public class FileSystemMonitoringTests
         Assert.Multiple(() =>
         {
             Assert.That(srcFolder.Children.Count, Is.EqualTo(2), "src should have 2 direct children");
-            
+
             var controllersFolder = srcFolder.Children.FirstOrDefault(c => c.Name == "controllers");
             Assert.That(controllersFolder, Is.Not.Null, "controllers folder should exist");
             Assert.That(controllersFolder!.IsDirectory, Is.True, "controllers should be a directory");
-            
+
             var mainFile = srcFolder.Children.FirstOrDefault(c => c.Name == "main.cs");
             Assert.That(mainFile, Is.Not.Null, "main.cs file should exist");
             Assert.That(mainFile!.IsDirectory, Is.False, "main.cs should be a file");
@@ -553,13 +558,13 @@ public class FileSystemMonitoringTests
         // Verify that controllers folder has been preloaded (next level)
         var controllersFolder = srcFolder.Children.FirstOrDefault(c => c.Name == "controllers");
         Assert.That(controllersFolder, Is.Not.Null, "controllers folder should exist");
-        
+
         // The controllers folder should have its children preloaded but not be expanded
         Assert.Multiple(() =>
         {
             Assert.That(controllersFolder!.IsExpanded, Is.False, "controllers folder should not be expanded yet");
             Assert.That(controllersFolder.Children.Count, Is.EqualTo(1), "controllers folder should have preloaded its children");
-            
+
             var homeController = controllersFolder.Children.FirstOrDefault(c => c.Name == "HomeController.cs");
             Assert.That(homeController, Is.Not.Null, "HomeController.cs should be preloaded");
             Assert.That(homeController!.IsDirectory, Is.False, "HomeController.cs should be a file");
@@ -568,7 +573,7 @@ public class FileSystemMonitoringTests
         // Also verify tests folder preloading
         var testsFolder = fileExplorerViewModel.RootItem.Children.FirstOrDefault(c => c.Name == "tests");
         Assert.That(testsFolder, Is.Not.Null, "tests folder should exist");
-        
+
         // Expand tests folder to verify preloading works there too
         testsFolder!.IsExpanded = true;
         await Task.Delay(1500); // Give time for preloading
@@ -576,13 +581,13 @@ public class FileSystemMonitoringTests
         Assert.Multiple(() =>
         {
             Assert.That(testsFolder.Children.Count, Is.EqualTo(2), "tests should have 2 direct children");
-            
+
             var unitFolder = testsFolder.Children.FirstOrDefault(c => c.Name == "unit");
             var integrationFolder = testsFolder.Children.FirstOrDefault(c => c.Name == "integration");
-            
+
             Assert.That(unitFolder, Is.Not.Null, "unit folder should exist");
             Assert.That(integrationFolder, Is.Not.Null, "integration folder should exist");
-            
+
             // Both should be preloaded (even though empty)
             Assert.That(unitFolder!.IsExpanded, Is.False, "unit folder should not be expanded yet");
             Assert.That(integrationFolder!.IsExpanded, Is.False, "integration folder should not be expanded yet");

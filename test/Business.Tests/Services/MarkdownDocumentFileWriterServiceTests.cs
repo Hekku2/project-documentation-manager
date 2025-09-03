@@ -1,6 +1,7 @@
 using Business.Models;
 using Business.Services;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -16,7 +17,7 @@ public class MarkdownDocumentFileWriterServiceTests
     [SetUp]
     public void SetUp()
     {
-        _mockLogger = Substitute.For<ILogger<MarkdownDocumentFileWriterService>>();
+        _mockLogger = NullLoggerFactory.Instance.CreateLogger<MarkdownDocumentFileWriterService>();
         _service = new MarkdownDocumentFileWriterService(_mockLogger);
         
         // Create a temporary directory for testing

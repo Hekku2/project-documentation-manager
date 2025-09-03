@@ -6,34 +6,39 @@ using Microsoft.Extensions.Logging;
 
 namespace Desktop.Factories;
 
-public interface IFileSystemItemViewModelFactory
-{
-    FileSystemItemViewModel Create(
-        FileSystemItem item,
-        bool isRoot = false,
-        Action<string>? onFileSelected = null,
-        Action<string>? onFilePreview = null);
-}
-
-public class FileSystemItemViewModelFactory(
+public sealed class FileSystemItemViewModelFactory(
     ILoggerFactory loggerFactory,
-    IFileService fileService,
-    IFileSystemExplorerService fileSystemExplorerService) : IFileSystemItemViewModelFactory
+    IFileSystemExplorerService fileSystemExplorerService,
+    Action<string> onItemSelected,
+    Action<string> onItemPreview) : IFileSystemItemViewModelFactory
 {
-    public FileSystemItemViewModel Create(
-        FileSystemItem item,
-        bool isRoot = false,
-        Action<string>? onFileSelected = null,
-        Action<string>? onFilePreview = null)
+    public FileSystemItemViewModel CreateWithChildren(FileSystemItem item)
     {
+        return Create(item, loadChildren: true);
+    }
+
+    public FileSystemItemViewModel Create(FileSystemItem item)
+    {
+        return Create(item, loadChildren: false);
+    }
+
+    private FileSystemItemViewModel Create(
+        FileSystemItem item,
+        bool loadChildren)
+    {
+        ArgumentNullException.ThrowIfNull(loggerFactory);
+        ArgumentNullException.ThrowIfNull(fileSystemExplorerService);
+        ArgumentNullException.ThrowIfNull(onItemSelected);
+        ArgumentNullException.ThrowIfNull(onItemPreview);
+        ArgumentNullException.ThrowIfNull(item);
+
         return new FileSystemItemViewModel(
             loggerFactory.CreateLogger<FileSystemItemViewModel>(),
             this,
             fileSystemExplorerService,
             item,
-            isRoot,
-            fileService,
-            onFileSelected,
-            onFilePreview);
+            loadChildren,
+            onItemSelected,
+            onItemPreview);
     }
 }

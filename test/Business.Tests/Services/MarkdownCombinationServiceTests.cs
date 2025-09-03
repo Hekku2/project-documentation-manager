@@ -1,7 +1,7 @@
 using Business.Models;
 using Business.Services;
 using Microsoft.Extensions.Logging;
-using NSubstitute;
+using Microsoft.Extensions.Logging.Abstractions;
 using NUnit.Framework;
 
 namespace Business.Tests.Services;
@@ -15,7 +15,7 @@ public class MarkdownCombinationServiceTests
     [SetUp]
     public void SetUp()
     {
-        _mockLogger = Substitute.For<ILogger<MarkdownCombinationService>>();
+        _mockLogger = NullLoggerFactory.Instance.CreateLogger<MarkdownCombinationService>();
         _service = new MarkdownCombinationService(_mockLogger);
     }
 
@@ -286,7 +286,7 @@ public class MarkdownCombinationServiceTests
     public void BuildDocumentation_Should_Log_Source_Documents_Without_Errors()
     {
         // Arrange
-        var logger = Substitute.For<ILogger<MarkdownCombinationService>>();
+        var logger = NullLoggerFactory.Instance.CreateLogger<MarkdownCombinationService>();
         var service = new MarkdownCombinationService(logger);
 
         var templateDocuments = new[]
@@ -318,9 +318,6 @@ public class MarkdownCombinationServiceTests
     public void BuildDocumentation_Should_Handle_Empty_Source_Documents_Without_Errors()
     {
         // Arrange
-        var logger = Substitute.For<ILogger<MarkdownCombinationService>>();
-        var service = new MarkdownCombinationService(logger);
-
         var templateDocuments = new[]
         {
             new MarkdownDocument { FileName = "template.md", FilePath = "/test/template.md", Content = "# Template with no inserts" }
@@ -331,7 +328,7 @@ public class MarkdownCombinationServiceTests
         // Act & Assert - Should not throw any exceptions
         Assert.DoesNotThrow(() =>
         {
-            var result = service.BuildDocumentation(templateDocuments, sourceDocuments);
+            var result = _service.BuildDocumentation(templateDocuments, sourceDocuments);
             var resultList = result.ToList(); // Force enumeration
             
             // Verify the functionality still works correctly
@@ -344,9 +341,6 @@ public class MarkdownCombinationServiceTests
     public void BuildDocumentation_Should_Change_Mdext_Extension_To_Md()
     {
         // Arrange
-        var logger = Substitute.For<ILogger<MarkdownCombinationService>>();
-        var service = new MarkdownCombinationService(logger);
-
         var templateDocuments = new[]
         {
             new MarkdownDocument { FileName = "template1.mdext", FilePath = "/test/template1.mdext", Content = "# Template 1" },
@@ -359,7 +353,7 @@ public class MarkdownCombinationServiceTests
         };
 
         // Act
-        var result = service.BuildDocumentation(templateDocuments, sourceDocuments);
+        var result = _service.BuildDocumentation(templateDocuments, sourceDocuments);
         var resultList = result.ToList();
 
         // Assert
@@ -381,9 +375,6 @@ public class MarkdownCombinationServiceTests
     public void BuildDocumentation_Should_Change_Extension_To_Md_Even_On_Processing_Error()
     {
         // Arrange
-        var logger = Substitute.For<ILogger<MarkdownCombinationService>>();
-        var service = new MarkdownCombinationService(logger);
-
         var templateDocuments = new[]
         {
             new MarkdownDocument { FileName = "error-template.mdext", FilePath = "/test/error-template.mdext", Content = "# Template\n<MarkDownExtension operation=\"insert\" file=\"missing.mdsrc\" />" }
@@ -392,7 +383,7 @@ public class MarkdownCombinationServiceTests
         var sourceDocuments = new MarkdownDocument[0]; // Empty - will cause missing source
 
         // Act
-        var result = service.BuildDocumentation(templateDocuments, sourceDocuments);
+        var result = _service.BuildDocumentation(templateDocuments, sourceDocuments);
         var resultList = result.ToList();
 
         // Assert

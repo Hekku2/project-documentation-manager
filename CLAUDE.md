@@ -10,9 +10,10 @@ This is a C# project for creating a tool to manage project documentation. The ma
 
 - **.NET 9.0** with C# and nullable reference types enabled
 - **Avalonia UI 11.3.3** for cross-platform desktop GUI
-- **NUnit** for testing with Avalonia.Headless for UI tests
+- **NUnit 4.3.1** for testing with Avalonia.Headless for UI tests
 - **NSubstitute 5.3.0** for mocking in tests
 - **Microsoft.Extensions.Hosting** for dependency injection and configuration
+- **Markdig 0.37.0** for markdown processing and rendering
 - Visual Studio solution structure
 
 ## Project Structure
@@ -107,7 +108,7 @@ The application features a file explorer with lazy loading:
 - `ApplicationOptions` class defines available settings
 - `appsettings.json` provides default configuration
 - Configuration bound to strongly-typed options via `IOptions<T>`
-- Current settings: `DefaultProjectFolder`, `DefaultOutputFolder`
+- Current settings: `DefaultProjectFolder`, `DefaultOutputFolder`, `DefaultTheme`, `Hotkeys`
 
 ### Dynamic Logging System
 The application implements a sophisticated logging architecture:
@@ -132,17 +133,18 @@ The application implements a sophisticated logging architecture:
 - Tests verify both UI state and underlying data model state
 
 ### Logger Testing Guidelines
-- **ALWAYS use NSubstitute for ILogger mocking**: Use `Substitute.For<ILogger<T>>()` instead of `LoggerFactory`
-- **Avoid LoggerFactory in tests**: LoggerFactory creates real logger instances which add unnecessary overhead and complexity
-- **Mock all logger dependencies**: Treat loggers like any other dependency - mock them consistently
+- **Use NullLoggerFactory**: Use `NullLoggerFactory.Instance.CreateLogger<T>()` for all test scenarios
+- **Don't test logging calls**: Logger calls should not be verified or tested - focus on business logic instead
+- **Treat loggers as infrastructure**: Loggers are infrastructure concerns, not business logic to be tested
 - **Example pattern**:
   ```csharp
-  // Preferred: NSubstitute mock
-  var logger = Substitute.For<ILogger<MyClass>>();
+  // Preferred: NullLogger (no overhead, no verification needed)
+  var logger = NullLoggerFactory.Instance.CreateLogger<MyClass>();
   var myClass = new MyClass(logger);
   
-  // Avoid: LoggerFactory (adds overhead and complexity)
-  var logger = new LoggerFactory().CreateLogger<MyClass>();
+  // Avoid: Mocking or verifying logger calls
+  var logger = Substitute.For<ILogger<MyClass>>();
+  logger.Received().LogInformation("message"); // Don't do this
   ```
 
 ## Key Implementation Details
