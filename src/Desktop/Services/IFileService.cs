@@ -84,4 +84,14 @@ public interface IFileService
     /// <param name="isDirectory">Whether the path represents a directory</param>
     /// <returns>FileSystemItem with populated metadata, or null if path is invalid</returns>
     FileSystemItem? CreateFileSystemItem(string itemPath, bool isDirectory);
+
+    /// <summary>
+    /// Deletes all files and subdirectories within the specified folder.
+    /// Returns true when the folder is already empty, or does not exist.
+    /// Returns false if any entry could not be deleted.
+    /// Does not delete the folder itself.
+    /// </summary>
+    /// <param name="folderPath">Path to the folder whose contents should be deleted</param>
+    /// <returns>True if successful, false otherwise</returns>
+    Task<bool> DeleteFolderContentsAsync(string folderPath);
 }
