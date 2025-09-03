@@ -26,6 +26,12 @@ public sealed class FileSystemItemViewModelFactory(
         FileSystemItem item,
         bool loadChildren)
     {
+        ArgumentNullException.ThrowIfNull(loggerFactory);
+        ArgumentNullException.ThrowIfNull(fileSystemExplorerService);
+        ArgumentNullException.ThrowIfNull(onItemSelected);
+        ArgumentNullException.ThrowIfNull(onItemPreview);
+        ArgumentNullException.ThrowIfNull(item);
+
         return new FileSystemItemViewModel(
             loggerFactory.CreateLogger<FileSystemItemViewModel>(),
             this,
