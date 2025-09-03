@@ -5,9 +5,9 @@ namespace Desktop.Factories;
 
 public interface IFileSystemItemViewModelFactory
 {
-    FileSystemItemViewModel CreateChild(
-        FileSystemItem item, bool loadChildren);
+    FileSystemItemViewModel CreateWithChildren(
+        FileSystemItem item);
 
-    FileSystemItemViewModel CreateRoot(
+    FileSystemItemViewModel Create(
         FileSystemItem item);
 }

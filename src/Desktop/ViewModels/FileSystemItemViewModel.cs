@@ -324,7 +324,7 @@ public class FileSystemItemViewModel : ViewModelBase
             });
             
             return sortedChildren
-                .Select(child => _viewModelFactory.CreateChild(child, false))
+                .Select(child => _viewModelFactory.Create(child))
                 .ToArray();
         });
     }

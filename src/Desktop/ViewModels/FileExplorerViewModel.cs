@@ -64,7 +64,7 @@ public class FileExplorerViewModel(
 
             if (fileStructure != null)
             {
-                var rootViewModel = factory.CreateRoot(
+                var rootViewModel = factory.CreateWithChildren(
                     fileStructure
                 );
                 RootItem = rootViewModel;

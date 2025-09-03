@@ -13,19 +13,19 @@ public sealed class FileSystemItemViewModelFactory(
     Action<string> onItemSelected,
     Action<string> onItemPreview) : IFileSystemItemViewModelFactory
 {
-    public FileSystemItemViewModel CreateChild(FileSystemItem item, bool loadChildren)
-    {
-        return Create(item, loadChildren: loadChildren);
-    }
-
-    public FileSystemItemViewModel CreateRoot(FileSystemItem item)
+    public FileSystemItemViewModel CreateWithChildren(FileSystemItem item)
     {
         return Create(item, loadChildren: true);
     }
 
+    public FileSystemItemViewModel Create(FileSystemItem item)
+    {
+        return Create(item, loadChildren: false);
+    }
+
     private FileSystemItemViewModel Create(
         FileSystemItem item,
-        bool loadChildren = false)
+        bool loadChildren)
     {
         return new FileSystemItemViewModel(
             loggerFactory.CreateLogger<FileSystemItemViewModel>(),

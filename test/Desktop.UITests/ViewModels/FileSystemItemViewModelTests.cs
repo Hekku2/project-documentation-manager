@@ -45,7 +45,7 @@ public class FileSystemItemViewModelTests
         };
 
         // Act
-        var viewModel = _fileSystemItemViewModelFactory.CreateChild(fileItem, false);
+        var viewModel = _fileSystemItemViewModelFactory.Create(fileItem);
 
         // Assert
         Assert.Multiple(() =>
@@ -68,7 +68,7 @@ public class FileSystemItemViewModelTests
             FullPath = "/test/path/test.txt",
             IsDirectory = false
         };
-        var viewModel = _fileSystemItemViewModelFactory.CreateChild(fileItem, false);
+        var viewModel = _fileSystemItemViewModelFactory.Create(fileItem);
 
         // Assert
         Assert.Multiple(() =>
@@ -90,7 +90,7 @@ public class FileSystemItemViewModelTests
             FullPath = "/test/path/TestFolder",
             IsDirectory = true
         };
-        var viewModel = _fileSystemItemViewModelFactory.CreateChild(directoryItem, false);
+        var viewModel = _fileSystemItemViewModelFactory.Create(directoryItem);
 
         // Assert
         Assert.Multiple(() =>
@@ -112,7 +112,7 @@ public class FileSystemItemViewModelTests
             FullPath = "/test/path/template.mdext",
             IsDirectory = false
         };
-        var mdextViewModel = _fileSystemItemViewModelFactory.CreateChild(mdextItem, false);
+        var mdextViewModel = _fileSystemItemViewModelFactory.Create(mdextItem);
 
         // Arrange - Test .mdsrc file
         var mdsrcItem = new FileSystemItem
@@ -121,7 +121,7 @@ public class FileSystemItemViewModelTests
             FullPath = "/test/path/source.mdsrc",
             IsDirectory = false
         };
-        var mdsrcViewModel = _fileSystemItemViewModelFactory.CreateChild(mdsrcItem, false);
+        var mdsrcViewModel = _fileSystemItemViewModelFactory.Create(mdsrcItem);
 
         // Arrange - Test .md file
         var mdItem = new FileSystemItem
@@ -130,7 +130,7 @@ public class FileSystemItemViewModelTests
             FullPath = "/test/path/readme.md",
             IsDirectory = false
         };
-        var mdViewModel = _fileSystemItemViewModelFactory.CreateChild(mdItem, false);
+        var mdViewModel = _fileSystemItemViewModelFactory.Create(mdItem);
 
         // Assert
         Assert.Multiple(() =>
