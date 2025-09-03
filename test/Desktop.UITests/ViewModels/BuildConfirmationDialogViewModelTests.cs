@@ -306,16 +306,17 @@ public class BuildConfirmationDialogViewModelTests
             DefaultProjectFolder = "/test/project",
             DefaultOutputFolder = "output"
         };
+        var expectedOutput = Path.Combine(customOptions.DefaultProjectFolder, customOptions.DefaultOutputFolder);
 
         var templateFiles = new[] { new MarkdownDocument { FileName = "t.mdext", FilePath = "/t.mdext", Content = "# T" } };
         var sourceFiles = new[] { new MarkdownDocument { FileName = "s.mdsrc", FilePath = "/s.mdsrc", Content = "S" } };
         var processedDocuments = new[] { new MarkdownDocument { FileName = "t.md", FilePath = "/t.md", Content = "# T" } };
 
-        _mockFileCollector.CollectAllMarkdownFilesAsync("/test/project").Returns((templateFiles, sourceFiles));
+        _mockFileCollector.CollectAllMarkdownFilesAsync(customOptions.DefaultProjectFolder).Returns((templateFiles, sourceFiles));
         _mockCombination.Validate(Arg.Any<IEnumerable<MarkdownDocument>>(), Arg.Any<IEnumerable<MarkdownDocument>>())
             .Returns(new ValidationResult());
         _mockCombination.BuildDocumentation(templateFiles, sourceFiles).Returns(processedDocuments);
-        _mockFileWriter.WriteDocumentsToFolderAsync(processedDocuments, "/test/project/output").Returns(Task.CompletedTask);
+        _mockFileWriter.WriteDocumentsToFolderAsync(processedDocuments, expectedOutput).Returns(Task.CompletedTask);
 
         var viewModel = CreateDialogViewModel(customOptions);
         viewModel.CleanOld = false; // explicit
@@ -326,7 +327,7 @@ public class BuildConfirmationDialogViewModelTests
         Assert.Multiple(() =>
         {
             _mockFileService.DidNotReceive().DeleteFolderContentsAsync(Arg.Any<string>());
-            _mockFileWriter.Received(1).WriteDocumentsToFolderAsync(processedDocuments, "/test/project/output");
+            _mockFileWriter.Received(1).WriteDocumentsToFolderAsync(processedDocuments, expectedOutput);
         });
     }
 
