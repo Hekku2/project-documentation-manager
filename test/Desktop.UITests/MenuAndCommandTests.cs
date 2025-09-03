@@ -21,17 +21,17 @@ public class MenuAndCommandTests : MainWindowTestBase
     {
         var window = CreateMainWindow();
         var viewModel = window.DataContext as MainWindowViewModel;
-        
+
         Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
         Assert.That(viewModel!.ExitCommand, Is.Not.Null, "ExitCommand should exist");
-        
+
         // Track if exit was requested
         bool exitRequested = false;
         viewModel.ExitRequested += (sender, e) => exitRequested = true;
-        
+
         // Execute the exit command
         viewModel.ExitCommand.Execute(null);
-        
+
         Assert.That(exitRequested, Is.True, "ExitRequested event should be triggered when ExitCommand is executed");
     }
 
@@ -40,16 +40,16 @@ public class MenuAndCommandTests : MainWindowTestBase
     {
         var window = CreateMainWindow();
         window.Show();
-        
+
         var viewModel = window.DataContext as MainWindowViewModel;
         Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
-        
+
         // Verify window is initially open
         Assert.That(window.IsVisible, Is.True, "Window should be visible initially");
-        
+
         // Trigger exit through the command (this will invoke the exit event)
         viewModel!.ExitCommand.Execute(null);
-        
+
         // The window should be closed after the exit command
         // Note: In headless mode, Close() might not change IsVisible immediately,
         // but the OnExitRequested method should have been called
@@ -72,18 +72,18 @@ public class MenuAndCommandTests : MainWindowTestBase
 
         // Test that the ExitCommand exists and works (bound to the Exit menu item)
         Assert.That(viewModel!.ExitCommand, Is.Not.Null, "ExitCommand should be available for menu binding");
-        
+
         // Test that the command can be executed
         bool canExecute = viewModel.ExitCommand.CanExecute(null);
         Assert.That(canExecute, Is.True, "ExitCommand should be executable");
-        
+
         // Track if exit was requested
         bool exitRequested = false;
         viewModel.ExitRequested += (sender, e) => exitRequested = true;
-        
+
         // Execute the command (simulating menu click)
         viewModel.ExitCommand.Execute(null);
-        
+
         Assert.That(exitRequested, Is.True, "Exit should be requested when command is executed");
     }
 
@@ -92,10 +92,10 @@ public class MenuAndCommandTests : MainWindowTestBase
     {
         var window = CreateMainWindow();
         var viewModel = window.DataContext as MainWindowViewModel;
-        
+
         Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
         Assert.That(viewModel!.EditorContent.BuildDocumentationCommand, Is.Not.Null, "BuildDocumentationCommand should exist");
-        
+
         // Test that the command exists and is enabled
         bool canExecute = viewModel.EditorContent.BuildDocumentationCommand.CanExecute(null);
         Assert.That(canExecute, Is.True, "BuildDocumentationCommand should be enabled");
@@ -117,7 +117,7 @@ public class MenuAndCommandTests : MainWindowTestBase
 
         // Test that the BuildDocumentationCommand exists and is bound to the Build menu item
         Assert.That(viewModel!.EditorContent.BuildDocumentationCommand, Is.Not.Null, "BuildDocumentationCommand should be available for menu binding");
-        
+
         // Test that the command is enabled
         bool canExecute = viewModel.EditorContent.BuildDocumentationCommand.CanExecute(null);
         Assert.That(canExecute, Is.True, "BuildDocumentationCommand should be enabled");
@@ -130,49 +130,50 @@ public class MenuAndCommandTests : MainWindowTestBase
         var options = Options.Create(new ApplicationOptions());
         var fileService = Substitute.For<IFileService>();
         var serviceProvider = Substitute.For<IServiceProvider>();
-        
+
         // Setup mock services for BuildConfirmationDialogViewModel
         var mockFileCollector = Substitute.For<IMarkdownFileCollectorService>();
         var mockCombination = Substitute.For<IMarkdownCombinationService>();
         var mockFileWriter = Substitute.For<IMarkdownDocumentFileWriterService>();
         var mockDialogFileService = Substitute.For<IFileService>();
         var mockLogger = NullLoggerFactory.Instance.CreateLogger<BuildConfirmationDialogViewModel>();
-        
+
         var mockDialogViewModel = new BuildConfirmationDialogViewModel(options, mockFileCollector, mockCombination, mockFileWriter, mockDialogFileService, mockLogger);
+        Assert.That(mockDialogViewModel.CleanOld, Is.False, "Default CleanOld should be false");
         serviceProvider.GetService(typeof(BuildConfirmationDialogViewModel)).Returns(mockDialogViewModel);
-        
+
         fileService.GetFileStructureAsync().Returns(Task.FromResult<FileSystemItem?>(CreateSimpleTestStructure()));
         fileService.GetFileStructureAsync(Arg.Any<string>()).Returns(Task.FromResult<FileSystemItem?>(CreateSimpleTestStructure()));
         fileService.IsValidFolder(Arg.Any<string>()).Returns(true);
         fileService.ReadFileContentAsync(Arg.Any<string>()).Returns("Mock file content");
-        
+
         var markdownCombinationService = Substitute.For<IMarkdownCombinationService>();
         var markdownFileCollectorService = Substitute.For<IMarkdownFileCollectorService>();
         var markdownRenderingService = Substitute.For<Desktop.Services.IMarkdownRenderingService>();
-        
+
         var stateLogger = NullLoggerFactory.Instance.CreateLogger<EditorStateService>();
         var tabBarLogger = NullLoggerFactory.Instance.CreateLogger<EditorTabBarViewModel>();
         var contentLogger = NullLoggerFactory.Instance.CreateLogger<EditorContentViewModel>();
-        
+
         var editorStateService = new EditorStateService(stateLogger);
         var editorTabBarViewModel = new EditorTabBarViewModel(tabBarLogger, fileService, editorStateService);
         var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService, markdownRenderingService, Substitute.For<Desktop.Factories.ISettingsContentViewModelFactory>());
-        
+
         var logTransitionService = Substitute.For<Desktop.Logging.ILogTransitionService>();
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
         var editorLogger = NullLoggerFactory.Instance.CreateLogger<Desktop.ViewModels.EditorViewModel>();
         var editorViewModel = new Desktop.ViewModels.EditorViewModel(editorLogger, options, editorTabBarViewModel, editorContentViewModel, hotkeyService);
         var viewModel = new MainWindowViewModel(vmLogger, options, editorStateService, editorViewModel, logTransitionService, hotkeyService);
-        
+
         Assert.That(viewModel.EditorContent.BuildDocumentationCommand, Is.Not.Null, "BuildDocumentationCommand should exist");
-        
+
         // Track if dialog event was triggered
         BuildConfirmationDialogViewModel? dialogViewModel = null;
         viewModel.ShowBuildConfirmationDialog += (sender, e) => dialogViewModel = e;
-        
+
         // Execute the build command
         viewModel.EditorContent.BuildDocumentationCommand.Execute(null);
-        
+
         Assert.Multiple(() =>
         {
             Assert.That(dialogViewModel, Is.Not.Null, "ShowBuildConfirmationDialog event should be triggered");
@@ -186,7 +187,7 @@ public class MenuAndCommandTests : MainWindowTestBase
     {
         var window = CreateMainWindow();
         var viewModel = window.DataContext as MainWindowViewModel;
-        
+
         Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
         Assert.Multiple(() =>
         {
@@ -249,7 +250,7 @@ public class MenuAndCommandTests : MainWindowTestBase
             // Verify that services were called
             _markdownFileCollectorService.Received(1).CollectAllMarkdownFilesAsync(Arg.Any<string>());
             _markdownCombinationService.Received(1).Validate(Arg.Any<IEnumerable<MarkdownDocument>>(), Arg.Any<IEnumerable<MarkdownDocument>>());
-            
+
             // Verify that error panel is shown with validation results
             Assert.That(viewModel.IsBottomPanelVisible, Is.True, "Bottom panel should be visible for errors");
             Assert.That(viewModel.ActiveBottomTab, Is.Not.Null, "Active bottom tab should exist");
@@ -263,10 +264,10 @@ public class MenuAndCommandTests : MainWindowTestBase
     {
         var window = CreateMainWindow();
         var viewModel = window.DataContext as MainWindowViewModel;
-        
+
         Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
         Assert.That(viewModel!.SaveCommand, Is.Not.Null, "SaveCommand should exist");
-        
+
         // Test that the command cannot be executed when no file is active
         bool canExecute = viewModel.SaveCommand.CanExecute(null);
         Assert.That(canExecute, Is.False, "SaveCommand should not be executable when no file is active");
@@ -284,10 +285,10 @@ public class MenuAndCommandTests : MainWindowTestBase
         // Find the main menu
         var menu = window.FindControl<Menu>("MainMenu");
         Assert.That(menu, Is.Not.Null, "Main menu should exist");
-        
+
         // Test that the SaveCommand exists and works (bound to the Save menu item)
         Assert.That(viewModel!.SaveCommand, Is.Not.Null, "SaveCommand should be available for menu binding");
-        
+
         // Test that the command cannot be executed when no file is active
         bool canExecute = viewModel.SaveCommand.CanExecute(null);
         Assert.That(canExecute, Is.False, "SaveCommand should not be executable when no file is active");
@@ -298,7 +299,7 @@ public class MenuAndCommandTests : MainWindowTestBase
     {
         var window = CreateMainWindow();
         var viewModel = window.DataContext as MainWindowViewModel;
-        
+
         Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
         Assert.That(viewModel!.SaveCommand, Is.Not.Null, "SaveCommand should exist");
 
@@ -344,10 +345,10 @@ public class MenuAndCommandTests : MainWindowTestBase
     {
         // Set up the file service to return success on write operations
         _fileService.WriteFileContentAsync(Arg.Any<string>(), Arg.Any<string>()).Returns(true);
-        
+
         var window = CreateMainWindow();
         var viewModel = window.DataContext as MainWindowViewModel;
-        
+
         Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
         Assert.That(viewModel!.SaveAllCommand, Is.Not.Null, "SaveAllCommand should exist");
 
@@ -359,7 +360,7 @@ public class MenuAndCommandTests : MainWindowTestBase
         var tempFile1 = Path.GetTempFileName();
         var tempFile2 = Path.GetTempFileName();
         var tempFile3 = Path.GetTempFileName();
-        
+
         try
         {
             await File.WriteAllTextAsync(tempFile1, "content1");
@@ -438,10 +439,10 @@ public class MenuAndCommandTests : MainWindowTestBase
         // Find the main menu
         var menu = window.FindControl<Menu>("MainMenu");
         Assert.That(menu, Is.Not.Null, "Main menu should exist");
-        
+
         // Test that the SaveAllCommand exists and is properly bound
         Assert.That(viewModel!.SaveAllCommand, Is.Not.Null, "SaveAllCommand should be available for menu binding");
-        
+
         // Test that the command cannot be executed when no files are modified
         bool canExecute = viewModel.SaveAllCommand.CanExecute(null);
         Assert.That(canExecute, Is.False, "SaveAllCommand should not be executable when no files are modified");

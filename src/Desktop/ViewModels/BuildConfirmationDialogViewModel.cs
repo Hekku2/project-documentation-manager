@@ -145,7 +145,6 @@ public class BuildConfirmationDialogViewModel : ViewModelBase
 
         await Task.Run(() =>
         {
-            // Use the new ValidateAll method for better efficiency
             combinedValidationResult = _combinationService.Validate(templateFiles, sourceFiles);
 
             // Create error list for build failure checking
@@ -153,7 +152,7 @@ public class BuildConfirmationDialogViewModel : ViewModelBase
             {
                 var errorMessage = $"{error.LineNumber} - {error.Message}";
                 validationErrors.Add(errorMessage);
-                _logger.LogError("Validation error: {ErrorMessage}", error.Message);
+                _logger.LogError("Validation error: {ErrorMessage}", errorMessage);
             }
 
             foreach (var warning in combinedValidationResult.Warnings)

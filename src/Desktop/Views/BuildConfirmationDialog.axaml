@@ -48,7 +48,7 @@
             </Border>
             
             <CheckBox Content="Clean old files before build"
-                      IsChecked="{Binding CleanOld}"
+                      IsChecked="{Binding CleanOld, Mode=TwoWay}"
                       Margin="0,5,0,0" />
         </StackPanel>
 
