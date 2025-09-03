@@ -55,15 +55,23 @@ public class FileSystemChangeHandler(ILogger<FileSystemChangeHandler> logger, IF
 
     private static FileSystemItemViewModel? FindViewModelByPath(string path, FileSystemItemViewModel rootViewModel)
     {
-        if (string.Equals(rootViewModel.Item.FullPath, path, PathComparison))
+        // Normalize both paths and trim any trailing separators
+        var rootFull = Path.GetFullPath(rootViewModel.Item.FullPath)
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        var targetFull = Path.GetFullPath(path);
+
+        // Exact match
+        if (string.Equals(rootFull, targetFull, PathComparison))
             return rootViewModel;
 
-        // Check if the requested path is a child of this item
-        if (!path.StartsWith(rootViewModel.Item.FullPath, PathComparison))
+        // Only treat as descendant if it begins with root + separator
+        var rootWithSep = rootFull + Path.DirectorySeparatorChar;
+        if (!targetFull.StartsWith(rootWithSep, PathComparison))
             return null;
 
         // If children are loaded, search through them
         if (rootViewModel.HasChildrenLoaded)
+            …
         {
             foreach (var child in rootViewModel.Children)
             {
