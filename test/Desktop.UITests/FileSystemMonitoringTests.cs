@@ -87,7 +87,11 @@ public class FileSystemMonitoringTests
         fileService.GetFileStructureAsync(Arg.Any<string>()).Returns(Task.FromResult<FileSystemItem?>(CreateTestStructure()));
         fileService.IsValidFolder(Arg.Any<string>()).Returns(true);
         fileService.ReadFileContentAsync(Arg.Any<string>()).Returns("Mock file content");
-        fileSystemMonitorService.IsMonitoring.Returns(false);
+        
+        // Configure mock to simulate real behavior: IsMonitoring starts false, becomes true after StartMonitoring
+        var isMonitoring = false;
+        fileSystemMonitorService.IsMonitoring.Returns(_ => isMonitoring);
+        fileSystemMonitorService.When(x => x.StartMonitoring(Arg.Any<string>())).Do(_ => isMonitoring = true);
         fileService.CreateFileSystemItem(Arg.Any<string>(), Arg.Any<bool>()).Returns(callInfo =>
         {
             var path = callInfo.Arg<string>();
@@ -145,8 +149,8 @@ public class FileSystemMonitoringTests
 
         await WaitForFileStructureLoadAsync(fileExplorerViewModel);
 
-        // Verify that StartMonitoring was called
-        fileSystemMonitorService.Received(1).StartMonitoring(Arg.Any<string>());
+        // Verify that StartMonitoring was called with exact path
+        fileSystemMonitorService.Received(1).StartMonitoring("/test/path");
         
         Cleanup(window, fileExplorerViewModel);
     }
