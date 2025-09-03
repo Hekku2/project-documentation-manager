@@ -19,7 +19,7 @@ public class MarkdownDocumentFileWriterServiceTests
     {
         _mockLogger = NullLoggerFactory.Instance.CreateLogger<MarkdownDocumentFileWriterService>();
         _service = new MarkdownDocumentFileWriterService(_mockLogger);
-        
+
         // Create a temporary directory for testing
         _testOutputFolder = Path.Combine(Path.GetTempPath(), "MarkdownDocumentFileWriterTests", Guid.NewGuid().ToString());
     }
@@ -40,7 +40,7 @@ public class MarkdownDocumentFileWriterServiceTests
         // Act & Assert
         var exception = Assert.ThrowsAsync<ArgumentNullException>(
             () => _service.WriteDocumentsToFolderAsync(null!, _testOutputFolder));
-        
+
         Assert.That(exception.ParamName, Is.EqualTo("documents"));
     }
 
@@ -53,7 +53,7 @@ public class MarkdownDocumentFileWriterServiceTests
         // Act & Assert
         var exception = Assert.ThrowsAsync<ArgumentNullException>(
             () => _service.WriteDocumentsToFolderAsync(documents, null!));
-        
+
         Assert.That(exception.ParamName, Is.EqualTo("outputFolder"));
     }
 
@@ -66,9 +66,12 @@ public class MarkdownDocumentFileWriterServiceTests
         // Act & Assert
         var exception = Assert.ThrowsAsync<ArgumentException>(
             () => _service.WriteDocumentsToFolderAsync(documents, ""));
-        
-        Assert.That(exception.ParamName, Is.EqualTo("outputFolder"));
-        Assert.That(exception.Message, Does.Contain("Output folder cannot be empty"));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(exception.ParamName, Is.EqualTo("outputFolder"));
+            Assert.That(exception.Message, Does.Contain("Output folder cannot be empty"));
+        });
     }
 
     [Test]
@@ -80,9 +83,12 @@ public class MarkdownDocumentFileWriterServiceTests
         // Act & Assert
         var exception = Assert.ThrowsAsync<ArgumentException>(
             () => _service.WriteDocumentsToFolderAsync(documents, "   "));
-        
-        Assert.That(exception.ParamName, Is.EqualTo("outputFolder"));
-        Assert.That(exception.Message, Does.Contain("Output folder cannot be empty"));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(exception.ParamName, Is.EqualTo("outputFolder"));
+            Assert.That(exception.Message, Does.Contain("Output folder cannot be empty"));
+        });
     }
 
     [Test]
@@ -96,9 +102,9 @@ public class MarkdownDocumentFileWriterServiceTests
 
         // Assert
         Assert.That(Directory.Exists(_testOutputFolder), Is.True, "Output directory should be created");
-        
+
         var files = Directory.GetFiles(_testOutputFolder);
-        Assert.That(files.Length, Is.EqualTo(0), "No files should be written");
+        Assert.That(files, Is.Empty, "No files should be written");
     }
 
     [Test]
@@ -116,7 +122,7 @@ public class MarkdownDocumentFileWriterServiceTests
         // Assert
         var filePath = Path.Combine(_testOutputFolder, "test.md");
         Assert.That(File.Exists(filePath), Is.True, "File should be created");
-        
+
         var content = await File.ReadAllTextAsync(filePath);
         Assert.That(content, Is.EqualTo("# Test Content\n\nThis is a test document."));
     }
@@ -137,9 +143,9 @@ public class MarkdownDocumentFileWriterServiceTests
 
         // Assert
         Assert.That(Directory.Exists(_testOutputFolder), Is.True, "Output directory should exist");
-        
+
         var files = Directory.GetFiles(_testOutputFolder).OrderBy(f => f).ToArray();
-        Assert.That(files.Length, Is.EqualTo(3), "Three files should be written");
+        Assert.That(files, Has.Length.EqualTo(3), "Three files should be written");
 
         // Verify each file content
         var doc1Content = await File.ReadAllTextAsync(Path.Combine(_testOutputFolder, "doc1.md"));
@@ -167,7 +173,7 @@ public class MarkdownDocumentFileWriterServiceTests
         // Assert
         var filePath = Path.Combine(_testOutputFolder, "empty.md");
         Assert.That(File.Exists(filePath), Is.True, "File should be created");
-        
+
         var content = await File.ReadAllTextAsync(filePath);
         Assert.That(content, Is.EqualTo(string.Empty), "File should be empty");
     }
@@ -187,7 +193,7 @@ public class MarkdownDocumentFileWriterServiceTests
         // Assert
         var filePath = Path.Combine(_testOutputFolder, "empty.md");
         Assert.That(File.Exists(filePath), Is.True, "File should be created");
-        
+
         var content = await File.ReadAllTextAsync(filePath);
         Assert.That(content, Is.EqualTo(string.Empty), "File should be empty");
     }
@@ -209,7 +215,7 @@ public class MarkdownDocumentFileWriterServiceTests
 
         // Assert
         var files = Directory.GetFiles(_testOutputFolder).OrderBy(f => f).ToArray();
-        Assert.That(files.Length, Is.EqualTo(2), "Only files with valid names should be written");
+        Assert.That(files, Has.Length.EqualTo(2), "Only files with valid names should be written");
 
         var validFileContent = await File.ReadAllTextAsync(Path.Combine(_testOutputFolder, "valid.md"));
         Assert.That(validFileContent, Is.EqualTo("Valid content"));
@@ -233,10 +239,10 @@ public class MarkdownDocumentFileWriterServiceTests
 
         // Assert
         Assert.That(Directory.Exists(nestedPath), Is.True, "Nested directory should be created");
-        
+
         var filePath = Path.Combine(nestedPath, "test.md");
         Assert.That(File.Exists(filePath), Is.True, "File should be created in nested directory");
-        
+
         var content = await File.ReadAllTextAsync(filePath);
         Assert.That(content, Is.EqualTo("Test content in nested folder"));
     }
@@ -271,7 +277,7 @@ public class MarkdownDocumentFileWriterServiceTests
                            "Accents: café résumé naïve\n" +
                            "Symbols: @#$%^&*()[]{}|\\:;\"'<>?/\n" +
                            "Line breaks and tabs:\tTabbed\n\nNew paragraph";
-        
+
         var documents = new List<MarkdownDocument>
         {
             new MarkdownDocument { FileName = "special.md", FilePath = "/test/special.md", Content = specialContent }

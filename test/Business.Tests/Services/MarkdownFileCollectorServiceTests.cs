@@ -52,11 +52,11 @@ public class MarkdownFileCollectorServiceTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(templateFiles.Count, Is.EqualTo(2), "Should collect only .mdext files");
-            
+            Assert.That(templateFiles, Has.Count.EqualTo(2), "Should collect only .mdext files");
+
             var template1 = templateFiles.FirstOrDefault(t => t.FileName == "template1.mdext");
             var template2 = templateFiles.FirstOrDefault(t => t.FileName == "template2.mdext");
-            
+
             Assert.That(template1, Is.Not.Null, "Should find template1.mdext");
             Assert.That(template2, Is.Not.Null, "Should find template2.mdext");
             Assert.That(template1!.Content, Does.Contain("Template 1"), "Should contain template content");
@@ -86,11 +86,11 @@ public class MarkdownFileCollectorServiceTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(sourceFiles.Count, Is.EqualTo(2), "Should collect only .mdsrc files");
-            
+            Assert.That(sourceFiles, Has.Count.EqualTo(2), "Should collect only .mdsrc files");
+
             var source1 = sourceFiles.FirstOrDefault(s => s.FileName == "source1.mdsrc");
             var source2 = sourceFiles.FirstOrDefault(s => s.FileName == "source2.mdsrc");
-            
+
             Assert.That(source1, Is.Not.Null, "Should find source1.mdsrc");
             Assert.That(source2, Is.Not.Null, "Should find source2.mdsrc");
             Assert.That(source1!.Content, Is.EqualTo("Source 1 content"), "Should contain source content");
@@ -118,10 +118,10 @@ public class MarkdownFileCollectorServiceTests
         {
             Assert.That(templateFiles.Count(), Is.EqualTo(1), "Should collect 1 template file");
             Assert.That(sourceFiles.Count(), Is.EqualTo(1), "Should collect 1 source file");
-            
+
             var template = templateFiles.First();
             var source = sourceFiles.First();
-            
+
             Assert.That(template.FileName, Is.EqualTo("template.mdext"), "Template should have correct filename");
             Assert.That(source.FileName, Is.EqualTo("source.mdsrc"), "Source should have correct filename");
             Assert.That(template.Content, Does.Contain("Template"), "Template should have correct content");
@@ -135,7 +135,7 @@ public class MarkdownFileCollectorServiceTests
         // Arrange
         var subDirectory = Path.Combine(_testDirectory, "subdirectory");
         Directory.CreateDirectory(subDirectory);
-        
+
         var templateFile1 = Path.Combine(_testDirectory, "template1.mdext");
         var templateFile2 = Path.Combine(subDirectory, "template2.mdext");
 
@@ -149,8 +149,8 @@ public class MarkdownFileCollectorServiceTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(templateFiles.Count, Is.EqualTo(2), "Should collect files from subdirectories");
-            
+            Assert.That(templateFiles, Has.Count.EqualTo(2), "Should collect files from subdirectories");
+
             var fileNames = templateFiles.Select(t => t.FileName).ToList();
             Assert.That(fileNames, Contains.Item("template1.mdext"), "Should contain root level file");
             Assert.That(fileNames, Contains.Item("subdirectory/template2.mdext"), "Should contain subdirectory file with relative path");
@@ -161,7 +161,7 @@ public class MarkdownFileCollectorServiceTests
     public void CollectTemplateFilesAsync_Should_Throw_ArgumentException_For_Null_Directory()
     {
         // Act & Assert
-        Assert.ThrowsAsync<ArgumentException>(async () => 
+        Assert.ThrowsAsync<ArgumentException>(async () =>
             await _service.CollectTemplateFilesAsync(null!));
     }
 
@@ -169,7 +169,7 @@ public class MarkdownFileCollectorServiceTests
     public void CollectTemplateFilesAsync_Should_Throw_ArgumentException_For_Empty_Directory()
     {
         // Act & Assert
-        Assert.ThrowsAsync<ArgumentException>(async () => 
+        Assert.ThrowsAsync<ArgumentException>(async () =>
             await _service.CollectTemplateFilesAsync(string.Empty));
     }
 
@@ -180,7 +180,7 @@ public class MarkdownFileCollectorServiceTests
         var nonexistentDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
 
         // Act & Assert
-        Assert.ThrowsAsync<DirectoryNotFoundException>(async () => 
+        Assert.ThrowsAsync<DirectoryNotFoundException>(async () =>
             await _service.CollectTemplateFilesAsync(nonexistentDirectory));
     }
 
@@ -200,7 +200,7 @@ public class MarkdownFileCollectorServiceTests
         // Arrange
         var templateFile = Path.Combine(_testDirectory, "template.mdext");
         await File.WriteAllTextAsync(templateFile, "Template content");
-        
+
         // Make file unreadable (this test might not work on all platforms)
         File.SetAttributes(templateFile, FileAttributes.ReadOnly);
 
@@ -209,7 +209,7 @@ public class MarkdownFileCollectorServiceTests
         var templateFiles = result.ToList();
 
         // Assert - Should still collect the file, but with error handling
-        Assert.That(templateFiles.Count, Is.EqualTo(1), "Should still collect files even if read errors occur");
+        Assert.That(templateFiles, Has.Count.EqualTo(1), "Should still collect files even if read errors occur");
     }
 
     [Test]
@@ -235,10 +235,10 @@ public class MarkdownFileCollectorServiceTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(sourceFiles.Count, Is.EqualTo(3), "Should collect all source files");
+            Assert.That(sourceFiles, Has.Count.EqualTo(3), "Should collect all source files");
 
             var fileNames = sourceFiles.Select(s => s.FileName).OrderBy(name => name).ToList();
-            
+
             Assert.That(fileNames[0], Is.EqualTo("level1/level1.mdsrc"), "Should preserve level1 relative path");
             Assert.That(fileNames[1], Is.EqualTo("level1/level2/level2.mdsrc"), "Should preserve level2 relative path");
             Assert.That(fileNames[2], Is.EqualTo("root.mdsrc"), "Should have simple name for root level file");

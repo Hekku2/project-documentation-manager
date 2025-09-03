@@ -153,9 +153,14 @@ public class FileExplorerViewModel : ViewModelBase, IDisposable
     {
         if (!_disposed)
         {
-            _fileSystemMonitor.FileSystemChanged -= DelegateFileSystemChangeEvent;
-            _fileSystemMonitor.StopMonitoring();
-            _fileSystemMonitor.Dispose();
+            if (disposing)
+            {
+                // Only unsubscribe from events when disposing (not from finalizer)
+                if (_fileSystemMonitor != null)
+                {
+                    _fileSystemMonitor.FileSystemChanged -= DelegateFileSystemChangeEvent;
+                }
+            }
 
             _disposed = true;
         }

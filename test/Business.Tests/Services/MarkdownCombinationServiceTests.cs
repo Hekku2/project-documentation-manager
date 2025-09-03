@@ -26,7 +26,7 @@ public class MarkdownCombinationServiceTests
         var sourceDocuments = new List<MarkdownDocument>();
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => 
+        Assert.Throws<ArgumentNullException>(() =>
             _service.BuildDocumentation(null!, sourceDocuments));
     }
 
@@ -37,7 +37,7 @@ public class MarkdownCombinationServiceTests
         var templateDocuments = new List<MarkdownDocument>();
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => 
+        Assert.Throws<ArgumentNullException>(() =>
             _service.BuildDocumentation(templateDocuments, null!));
     }
 
@@ -71,8 +71,11 @@ public class MarkdownCombinationServiceTests
 
         // Assert
         Assert.That(result, Has.Count.EqualTo(1));
-        Assert.That(result[0].FileName, Is.EqualTo("template.md"));
-        Assert.That(result[0].Content, Is.EqualTo("# Title\n\nThis is regular content without inserts."));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result[0].FileName, Is.EqualTo("template.md"));
+            Assert.That(result[0].Content, Is.EqualTo("# Title\n\nThis is regular content without inserts."));
+        });
     }
 
     [Test]
@@ -93,8 +96,11 @@ public class MarkdownCombinationServiceTests
 
         // Assert
         Assert.That(result, Has.Count.EqualTo(1));
-        Assert.That(result[0].FileName, Is.EqualTo("windows-features.md"));
-        Assert.That(result[0].Content, Is.EqualTo(" * windows feature\n  * common feature"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result[0].FileName, Is.EqualTo("windows-features.md"));
+            Assert.That(result[0].Content, Is.EqualTo(" * windows feature\n  * common feature"));
+        });
     }
 
     [Test]
@@ -143,10 +149,10 @@ public class MarkdownCombinationServiceTests
 
         // Assert
         Assert.That(result, Has.Count.EqualTo(2));
-        
+
         var windowsResult = result.First(r => r.FileName == "windows-features.md");
         Assert.That(windowsResult.Content, Is.EqualTo(" * windows feature\n  * common feature"));
-        
+
         var ubuntuResult = result.First(r => r.FileName == "ubuntu-features.md");
         Assert.That(ubuntuResult.Content, Is.EqualTo(" * linux feature\n  * common feature"));
     }
@@ -306,7 +312,7 @@ public class MarkdownCombinationServiceTests
         {
             var result = service.BuildDocumentation(templateDocuments, sourceDocuments);
             var resultList = result.ToList(); // Force enumeration
-            
+
             // Verify the functionality still works correctly
             Assert.That(resultList, Has.Count.EqualTo(1));
             Assert.That(resultList[0].Content, Does.Contain("Source 1 content"));
@@ -330,7 +336,7 @@ public class MarkdownCombinationServiceTests
         {
             var result = _service.BuildDocumentation(templateDocuments, sourceDocuments);
             var resultList = result.ToList(); // Force enumeration
-            
+
             // Verify the functionality still works correctly
             Assert.That(resultList, Has.Count.EqualTo(1));
             Assert.That(resultList[0].Content, Is.EqualTo("# Template with no inserts"));
@@ -359,12 +365,12 @@ public class MarkdownCombinationServiceTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(resultList.Count, Is.EqualTo(2), "Should process both templates");
-            
+            Assert.That(resultList, Has.Count.EqualTo(2), "Should process both templates");
+
             // Verify file extensions are changed to .md
             Assert.That(resultList[0].FileName, Is.EqualTo("template1.md"), "First template should have .md extension");
             Assert.That(resultList[1].FileName, Is.EqualTo("subfolder/template2.md"), "Second template should have .md extension with preserved path");
-            
+
             // Verify content is processed correctly
             Assert.That(resultList[0].Content, Is.EqualTo("# Template 1"), "First template content should be unchanged");
             Assert.That(resultList[1].Content, Is.EqualTo("# Template 2\nSource content"), "Second template should have processed content");
@@ -389,7 +395,7 @@ public class MarkdownCombinationServiceTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(resultList.Count, Is.EqualTo(1), "Should still process template despite missing source");
+            Assert.That(resultList, Has.Count.EqualTo(1), "Should still process template despite missing source");
             Assert.That(resultList[0].FileName, Is.EqualTo("error-template.md"), "Should change extension to .md even when processing encounters missing sources");
             Assert.That(resultList[0].Content, Does.Contain("<!-- Missing source: missing.mdsrc -->"), "Should contain missing source comment");
         });
@@ -626,10 +632,10 @@ public class MarkdownCombinationServiceTests
     public void Validate_WithAllErrorCasesFromBasicErrors_ReturnsAppropriateErrors()
     {
         // Arrange - This matches the content from example-projects/errors/basic-errors.mdext
-        var templateDocument = new MarkdownDocument 
-        { 
-            FileName = "basic-errors.mdext", 
-            FilePath = "/test/basic-errors.mdext", 
+        var templateDocument = new MarkdownDocument
+        {
+            FileName = "basic-errors.mdext",
+            FilePath = "/test/basic-errors.mdext",
             Content = @"# Error showcase
 
 This file is meant to be used as a testcase for showing errors
@@ -659,19 +665,19 @@ Missing file
         {
             Assert.That(result.IsValid, Is.False);
             Assert.That(result.Errors, Has.Count.EqualTo(4));
-            
+
             // Check for missing operation attribute error
             Assert.That(result.Errors.Any(e => e.Message.Contains("MarkDownExtension directive is missing 'operation' attribute")), Is.True);
-            
+
             // Check for invalid operation error
             Assert.That(result.Errors.Any(e => e.Message.Contains("MarkDownExtension directive has invalid operation. Only 'insert' is supported")), Is.True);
-            
+
             // Check for missing file attribute error
             Assert.That(result.Errors.Any(e => e.Message.Contains("MarkDownExtension directive is missing 'file' attribute")), Is.True);
-            
+
             // Check for missing source file error
             Assert.That(result.Errors.Any(e => e.Message.Contains("Source document not found: 'im-not-found.mdsrc'")), Is.True);
-            
+
             Assert.That(result.Warnings, Is.Empty);
         });
     }
@@ -694,13 +700,13 @@ Missing file
         {
             Assert.That(result.IsValid, Is.False);
             Assert.That(result.Errors, Has.Count.EqualTo(2));
-            
+
             // Check for missing file error
             Assert.That(result.Errors.Any(e => e.Message.Contains("Source document not found: 'missing.mdsrc'")), Is.True);
-            
+
             // Check for empty filename error
             Assert.That(result.Errors.Any(e => e.Message.Contains("MarkDownExtension directive is missing filename")), Is.True);
-            
+
             // Check for duplicate warning
             Assert.That(result.Warnings, Has.Count.EqualTo(1));
             Assert.That(result.Warnings[0].Message, Is.EqualTo("[template.mdext] Duplicate MarkDownExtension directive found: '<MarkDownExtension operation=\"insert\" file=\"valid.mdsrc\" />'"));
