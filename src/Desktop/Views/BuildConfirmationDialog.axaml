@@ -33,19 +33,24 @@
                    FontWeight="SemiBold" 
                    Margin="0,0,0,10" />
 
-        <!-- Output location path -->
-        <Border Grid.Row="2" 
-                Background="#F5F5F5" 
-                BorderBrush="#CCCCCC" 
-                BorderThickness="1" 
-                CornerRadius="4" 
-                Padding="10" 
-                Margin="0,0,0,20">
-            <TextBlock Text="{Binding OutputLocation}" 
-                       FontFamily="Consolas, 'Courier New', monospace" 
-                       TextWrapping="Wrap" 
-                       VerticalAlignment="Center" />
-        </Border>
+        <!-- Output location path and options -->
+        <StackPanel Grid.Row="2" Margin="0,0,0,20">
+            <Border Background="#F5F5F5" 
+                    BorderBrush="#CCCCCC" 
+                    BorderThickness="1" 
+                    CornerRadius="4" 
+                    Padding="10" 
+                    Margin="0,0,0,10">
+                <TextBlock Text="{Binding OutputLocation}" 
+                           FontFamily="Consolas, 'Courier New', monospace" 
+                           TextWrapping="Wrap" 
+                           VerticalAlignment="Center" />
+            </Border>
+            
+            <CheckBox Content="Clean old files before build"
+                      IsChecked="{Binding CleanOld}"
+                      Margin="0,5,0,0" />
+        </StackPanel>
 
         <!-- Buttons -->
         <StackPanel Grid.Row="3" 

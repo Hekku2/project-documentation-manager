@@ -21,6 +21,7 @@ public class BuildConfirmationDialogViewModel : ViewModelBase
     private readonly ILogger<BuildConfirmationDialogViewModel> _logger;
     private bool _isBuildInProgress;
     private string _buildStatus = string.Empty;
+    private bool _cleanOld = false;
 
     public BuildConfirmationDialogViewModel(
         IOptions<ApplicationOptions> applicationOptions,
@@ -34,7 +35,7 @@ public class BuildConfirmationDialogViewModel : ViewModelBase
         _combinationService = combinationService;
         _fileWriterService = fileWriterService;
         _logger = logger;
-        
+
         CancelCommand = new RelayCommand(OnCancel);
         SaveCommand = new RelayCommand(OnSave, CanSave);
     }
@@ -65,6 +66,12 @@ public class BuildConfirmationDialogViewModel : ViewModelBase
 
     public bool CanBuild => !IsBuildInProgress;
 
+    public bool CleanOld
+    {
+        get => _cleanOld;
+        set => SetProperty(ref _cleanOld, value);
+    }
+
     public event EventHandler? DialogClosed;
     public event EventHandler<ValidationResult>? ValidationResultsAvailable;
 
@@ -90,31 +97,31 @@ public class BuildConfirmationDialogViewModel : ViewModelBase
         {
             IsBuildInProgress = true;
             BuildStatus = "Starting compile...";
-            
+
             _logger.LogInformation("Starting documentation build from: {ProjectFolder}", _applicationOptions.DefaultProjectFolder);
-            
+
             BuildStatus = "Collecting markdown files...";
             var (templateFiles, sourceFiles) = await _fileCollectorService.CollectAllMarkdownFilesAsync(_applicationOptions.DefaultProjectFolder);
-            
-            _logger.LogInformation("Found {TemplateCount} template files and {SourceCount} source files", 
+
+            _logger.LogInformation("Found {TemplateCount} template files and {SourceCount} source files",
                 templateFiles.Count(), sourceFiles.Count());
-            
+
             BuildStatus = "Validating templates...";
             var validationErrors = await ValidateTemplatesAsync(templateFiles, sourceFiles);
-            
+
             if (validationErrors.Any())
             {
                 BuildStatus = $"Compile failed: {validationErrors.Count} validation errors found.";
                 _logger.LogError("Build aborted due to validation errors. Fix the errors and try again.");
                 return;
             }
-            
+
             BuildStatus = "Processing templates...";
             var processedDocuments = _combinationService.BuildDocumentation(templateFiles, sourceFiles);
-            
+
             BuildStatus = "Writing output files...";
             await _fileWriterService.WriteDocumentsToFolderAsync(processedDocuments, OutputLocation);
-            
+
             BuildStatus = "Compile completed successfully!";
             _logger.LogInformation("Documentation build completed successfully. Output written to: {OutputLocation}", OutputLocation);
         }
@@ -132,14 +139,14 @@ public class BuildConfirmationDialogViewModel : ViewModelBase
     private async Task<List<string>> ValidateTemplatesAsync(IEnumerable<MarkdownDocument> templateFiles, IEnumerable<MarkdownDocument> sourceFiles)
     {
         var validationErrors = new List<string>();
-        
+
         ValidationResult combinedValidationResult = null!;
-        
+
         await Task.Run(() =>
         {
             // Use the new ValidateAll method for better efficiency
             combinedValidationResult = _combinationService.Validate(templateFiles, sourceFiles);
-            
+
             // Create error list for build failure checking
             foreach (var error in combinedValidationResult.Errors)
             {
@@ -147,16 +154,16 @@ public class BuildConfirmationDialogViewModel : ViewModelBase
                 validationErrors.Add(errorMessage);
                 _logger.LogError("Validation error: {ErrorMessage}", error.Message);
             }
-            
+
             foreach (var warning in combinedValidationResult.Warnings)
             {
                 _logger.LogWarning("Validation warning: {WarningMessage}", warning.Message);
             }
         });
-        
+
         // Emit validation results for the error view
         ValidationResultsAvailable?.Invoke(this, combinedValidationResult);
-        
+
         if (validationErrors.Any())
         {
             _logger.LogError("Validation completed with {ErrorCount} errors", validationErrors.Count);
@@ -165,7 +172,7 @@ public class BuildConfirmationDialogViewModel : ViewModelBase
         {
             _logger.LogInformation("Validation completed successfully with no errors");
         }
-        
+
         return validationErrors;
     }
 }
