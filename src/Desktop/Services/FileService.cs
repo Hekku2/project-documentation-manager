@@ -350,6 +350,67 @@ public class FileService(ILogger<FileService> logger, IOptions<ApplicationOption
         }
     }
 
+    public async Task<bool> DeleteFolderContentsAsync(string folderPath)
+    {
+        if (string.IsNullOrWhiteSpace(folderPath))
+        {
+            logger.LogWarning("Folder path is null or empty");
+            return false;
+        }
+
+        if (!IsValidFolder(folderPath))
+        {
+            logger.LogWarning("Folder does not exist or is not accessible: {FolderPath}", folderPath);
+            return false;
+        }
+
+        try
+        {
+            logger.LogInformation("Deleting contents of folder: {FolderPath}", folderPath);
+            
+            await Task.Run(() =>
+            {
+                var directoryInfo = new DirectoryInfo(folderPath);
+                
+                // Delete all files
+                foreach (var file in directoryInfo.GetFiles())
+                {
+                    try
+                    {
+                        file.Delete();
+                        logger.LogDebug("Deleted file: {FilePath}", file.FullName);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogWarning(ex, "Failed to delete file: {FilePath}", file.FullName);
+                    }
+                }
+                
+                // Delete all subdirectories
+                foreach (var directory in directoryInfo.GetDirectories())
+                {
+                    try
+                    {
+                        directory.Delete(true);
+                        logger.LogDebug("Deleted directory: {DirectoryPath}", directory.FullName);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogWarning(ex, "Failed to delete directory: {DirectoryPath}", directory.FullName);
+                    }
+                }
+            });
+
+            logger.LogInformation("Successfully deleted contents of folder: {FolderPath}", folderPath);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error deleting folder contents: {FolderPath}", folderPath);
+            return false;
+        }
+    }
+
     public void Dispose()
     {
         if (!_disposed)
