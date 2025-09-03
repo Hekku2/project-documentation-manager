@@ -19,8 +19,8 @@ public class FileSystemItemViewModel : ViewModelBase
     private bool _childrenLoaded;
     private bool _isVisible;
 
-    private readonly Action<string> _onFileSelected;
-    private readonly Action<string> _onFilePreview;
+    private readonly Action<string> _onItemSelected;
+    private readonly Action<string> _onItemPreview;
 
     private readonly ILogger<FileSystemItemViewModel> _logger;
     private readonly IFileSystemExplorerService _fileSystemExplorerService;
@@ -32,15 +32,15 @@ public class FileSystemItemViewModel : ViewModelBase
         IFileSystemExplorerService fileSystemExplorerService,
         FileSystemItem item,
         bool loadChildren,
-        Action<string> onFileSelected,
-        Action<string> onFilePreview
+        Action<string> onItemSelected,
+        Action<string> onItemPreview
         )
     {
         _logger = logger;
         Item = item;
         Children = [];
-        _onFileSelected = onFileSelected;
-        _onFilePreview = onFilePreview;
+        _onItemSelected = onItemSelected;
+        _onItemPreview = onItemPreview;
         _fileSystemExplorerService = fileSystemExplorerService;
         _viewModelFactory = viewModelFactory;
         
@@ -133,7 +133,7 @@ public class FileSystemItemViewModel : ViewModelBase
             if (SetProperty(ref _isSelected, value) && value && !IsDirectory)
             {
                 // File was selected, notify via callback
-                _onFileSelected?.Invoke(FullPath);
+                _onItemSelected?.Invoke(FullPath);
             }
         }
     }
@@ -163,7 +163,7 @@ public class FileSystemItemViewModel : ViewModelBase
         else
         {
             // For files, open them in the editor
-            _onFileSelected?.Invoke(FullPath);
+            _onItemSelected?.Invoke(FullPath);
         }
     }
 
@@ -212,7 +212,7 @@ public class FileSystemItemViewModel : ViewModelBase
     private void ExecuteShowInPreview()
     {
         // Open the file in preview mode using the callback
-        _onFilePreview?.Invoke(FullPath);
+        _onItemPreview?.Invoke(FullPath);
     }
 
     private async Task LoadChildrenAsync(bool enableDeepPreloading = false)

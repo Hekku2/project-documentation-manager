@@ -58,8 +58,8 @@ public class FileExplorerViewModel(
             var factory = new FileSystemItemViewModelFactory(
                 loggerFactory,
                 fileSystemExplorerService,
-                onItemSelected: OnFileSelected,
-                onItemPreview: OnFilePreview);
+                onItemSelected: OnItemSelected,
+                onItemPreview: OnItemPreview);
 
             if (fileStructure != null)
             {
@@ -101,13 +101,13 @@ public class FileExplorerViewModel(
         }
     }
 
-    private void OnFileSelected(string filePath)
+    private void OnItemSelected(string filePath)
     {
         logger.LogInformation("File selected: {FilePath}", filePath);
         FileSelected?.Invoke(this, filePath);
     }
 
-    private void OnFilePreview(string filePath)
+    private void OnItemPreview(string filePath)
     {
         logger.LogInformation("File preview requested: {FilePath}", filePath);
         FilePreview?.Invoke(this, filePath);
