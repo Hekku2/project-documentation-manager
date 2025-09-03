@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using Desktop.Configuration;
 using Business.Services;
 using Business.Models;
+using Desktop.Services;
 using NSubstitute;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -17,6 +18,7 @@ public class BuildConfirmationDialogViewModelTests
     private IMarkdownFileCollectorService _mockFileCollector = null!;
     private IMarkdownCombinationService _mockCombination = null!;
     private IMarkdownDocumentFileWriterService _mockFileWriter = null!;
+    private IFileService _mockFileService = null!;
     private ILogger<BuildConfirmationDialogViewModel> _mockLogger = null!;
 
     [SetUp]
@@ -26,13 +28,14 @@ public class BuildConfirmationDialogViewModelTests
         _mockFileCollector = Substitute.For<IMarkdownFileCollectorService>();
         _mockCombination = Substitute.For<IMarkdownCombinationService>();
         _mockFileWriter = Substitute.For<IMarkdownDocumentFileWriterService>();
+        _mockFileService = Substitute.For<IFileService>();
         _mockLogger = NullLoggerFactory.Instance.CreateLogger<BuildConfirmationDialogViewModel>();
     }
 
     private BuildConfirmationDialogViewModel CreateDialogViewModel(ApplicationOptions? customOptions = null)
     {
         var optionsToUse = customOptions != null ? Options.Create(customOptions) : _options;
-        return new BuildConfirmationDialogViewModel(optionsToUse, _mockFileCollector, _mockCombination, _mockFileWriter, _mockLogger);
+        return new BuildConfirmationDialogViewModel(optionsToUse, _mockFileCollector, _mockCombination, _mockFileWriter, _mockFileService, _mockLogger);
     }
 
     private static async Task WaitForConditionAsync(System.Func<bool> condition, int timeoutMs = 2000, int intervalMs = 10)

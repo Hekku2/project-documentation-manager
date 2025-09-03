@@ -135,9 +135,10 @@ public class MenuAndCommandTests : MainWindowTestBase
         var mockFileCollector = Substitute.For<IMarkdownFileCollectorService>();
         var mockCombination = Substitute.For<IMarkdownCombinationService>();
         var mockFileWriter = Substitute.For<IMarkdownDocumentFileWriterService>();
+        var mockDialogFileService = Substitute.For<IFileService>();
         var mockLogger = NullLoggerFactory.Instance.CreateLogger<BuildConfirmationDialogViewModel>();
         
-        var mockDialogViewModel = new BuildConfirmationDialogViewModel(options, mockFileCollector, mockCombination, mockFileWriter, mockLogger);
+        var mockDialogViewModel = new BuildConfirmationDialogViewModel(options, mockFileCollector, mockCombination, mockFileWriter, mockDialogFileService, mockLogger);
         serviceProvider.GetService(typeof(BuildConfirmationDialogViewModel)).Returns(mockDialogViewModel);
         
         fileService.GetFileStructureAsync().Returns(Task.FromResult<FileSystemItem?>(CreateSimpleTestStructure()));

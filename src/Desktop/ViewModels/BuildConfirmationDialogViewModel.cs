@@ -7,6 +7,7 @@ using System.Windows.Input;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 using Desktop.Configuration;
+using Desktop.Services;
 using Business.Services;
 using Business.Models;
 
@@ -18,6 +19,7 @@ public class BuildConfirmationDialogViewModel : ViewModelBase
     private readonly IMarkdownFileCollectorService _fileCollectorService;
     private readonly IMarkdownCombinationService _combinationService;
     private readonly IMarkdownDocumentFileWriterService _fileWriterService;
+    private readonly IFileService _fileService;
     private readonly ILogger<BuildConfirmationDialogViewModel> _logger;
     private bool _isBuildInProgress;
     private string _buildStatus = string.Empty;
@@ -28,12 +30,14 @@ public class BuildConfirmationDialogViewModel : ViewModelBase
         IMarkdownFileCollectorService fileCollectorService,
         IMarkdownCombinationService combinationService,
         IMarkdownDocumentFileWriterService fileWriterService,
+        IFileService fileService,
         ILogger<BuildConfirmationDialogViewModel> logger)
     {
         _applicationOptions = applicationOptions.Value;
         _fileCollectorService = fileCollectorService;
         _combinationService = combinationService;
         _fileWriterService = fileWriterService;
+        _fileService = fileService;
         _logger = logger;
 
         CancelCommand = new RelayCommand(OnCancel);
@@ -118,6 +122,18 @@ public class BuildConfirmationDialogViewModel : ViewModelBase
 
             BuildStatus = "Processing templates...";
             var processedDocuments = _combinationService.BuildDocumentation(templateFiles, sourceFiles);
+
+            if (CleanOld)
+            {
+                BuildStatus = "Cleaning output folder...";
+                _logger.LogInformation("Cleaning output folder: {OutputLocation}", OutputLocation);
+
+                var cleanSuccess = await _fileService.DeleteFolderContentsAsync(OutputLocation);
+                if (!cleanSuccess)
+                {
+                    _logger.LogWarning("Failed to clean output folder, continuing with build");
+                }
+            }
 
             BuildStatus = "Writing output files...";
             await _fileWriterService.WriteDocumentsToFolderAsync(processedDocuments, OutputLocation);
