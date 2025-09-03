@@ -16,7 +16,7 @@ public class FileService(ILogger<FileService> logger, IOptions<ApplicationOption
     private bool _disposed = false;
 
     public event EventHandler<FileSystemChangedEventArgs>? FileSystemChanged;
-    
+
     public bool IsMonitoringFileSystem => _fileSystemWatcher?.EnableRaisingEvents == true;
 
     public async Task<FileSystemItem?> GetFileStructureAsync()
@@ -82,7 +82,7 @@ public class FileService(ILogger<FileService> logger, IOptions<ApplicationOption
         {
             // Get subdirectories
             var directories = directoryInfo.GetDirectories()
-                .Where(d => !IsHiddenOrSystem(d.Attributes))
+                .Where(d => !IsHiddenOrSystem(d.Attributes) && (d.Attributes & FileAttributes.ReparsePoint) == 0)
                 .OrderBy(d => d.Name);
 
             foreach (var directory in directories)
@@ -93,7 +93,7 @@ public class FileService(ILogger<FileService> logger, IOptions<ApplicationOption
 
             // Get files
             var files = directoryInfo.GetFiles()
-                .Where(f => !IsHiddenOrSystem(f.Attributes))
+                .Where(f => !IsHiddenOrSystem(f.Attributes) && (f.Attributes & FileAttributes.ReparsePoint) == 0)
                 .OrderBy(f => f.Name);
 
             foreach (var file in files)
@@ -109,7 +109,7 @@ public class FileService(ILogger<FileService> logger, IOptions<ApplicationOption
                 item.Children.Add(fileItem);
             }
 
-            logger.LogDebug("Built structure for {Path}: {DirectoryCount} directories, {FileCount} files", 
+            logger.LogDebug("Built structure for {Path}: {DirectoryCount} directories, {FileCount} files",
                 path, directories.Count(), files.Count());
         }
         catch (UnauthorizedAccessException ex)
@@ -238,7 +238,7 @@ public class FileService(ILogger<FileService> logger, IOptions<ApplicationOption
         {
             // Resolve full path for FileSystemWatcher
             var fullPath = Path.GetFullPath(_options.DefaultProjectFolder);
-            
+
             _fileSystemWatcher?.Dispose();
             _fileSystemWatcher = new FileSystemWatcher(fullPath)
             {
@@ -252,8 +252,8 @@ public class FileService(ILogger<FileService> logger, IOptions<ApplicationOption
             _fileSystemWatcher.Renamed += OnFileSystemRenamed;
 
             _fileSystemWatcher.EnableRaisingEvents = true;
-            
-            logger.LogInformation("Started file system monitoring for: {ProjectFolder} (resolved to: {FullPath})", 
+
+            logger.LogInformation("Started file system monitoring for: {ProjectFolder} (resolved to: {FullPath})",
                 _options.DefaultProjectFolder, fullPath);
         }
         catch (Exception ex)
@@ -288,7 +288,7 @@ public class FileService(ILogger<FileService> logger, IOptions<ApplicationOption
             _ => FileSystemChangeType.Changed
         };
 
-        var isDirectory = Directory.Exists(e.FullPath) || 
+        var isDirectory = Directory.Exists(e.FullPath) ||
                          (e.ChangeType == WatcherChangeTypes.Deleted && !Path.HasExtension(e.Name));
 
         var args = new FileSystemChangedEventArgs
@@ -298,7 +298,7 @@ public class FileService(ILogger<FileService> logger, IOptions<ApplicationOption
             IsDirectory = isDirectory
         };
 
-        logger.LogDebug("File system change detected: {ChangeType} {Path} (IsDirectory: {IsDirectory})", 
+        logger.LogDebug("File system change detected: {ChangeType} {Path} (IsDirectory: {IsDirectory})",
             changeType, e.FullPath, isDirectory);
 
         FileSystemChanged?.Invoke(this, args);
@@ -319,7 +319,7 @@ public class FileService(ILogger<FileService> logger, IOptions<ApplicationOption
             IsDirectory = isDirectory
         };
 
-        logger.LogDebug("File system rename detected: {OldPath} -> {NewPath} (IsDirectory: {IsDirectory})", 
+        logger.LogDebug("File system rename detected: {OldPath} -> {NewPath} (IsDirectory: {IsDirectory})",
             e.OldFullPath, e.FullPath, isDirectory);
 
         FileSystemChanged?.Invoke(this, args);
@@ -339,7 +339,7 @@ public class FileService(ILogger<FileService> logger, IOptions<ApplicationOption
                 var dirInfo = new DirectoryInfo(path);
                 return IsHiddenOrSystem(dirInfo.Attributes);
             }
-            
+
             // For deleted items, check if the name suggests it's a system/hidden file
             var fileName = Path.GetFileName(path);
             return fileName.StartsWith('.') || fileName.StartsWith('~');

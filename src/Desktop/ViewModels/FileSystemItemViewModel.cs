@@ -43,7 +43,7 @@ public class FileSystemItemViewModel : ViewModelBase
         _onItemPreview = onItemPreview;
         _fileSystemExplorerService = fileSystemExplorerService;
         _viewModelFactory = viewModelFactory;
-        
+
         // Initialize context menu commands
         OpenCommand = new RelayCommand(ExecuteOpen, CanExecuteOpen);
         NewCommand = new RelayCommand(() => { }, () => false); // Disabled command for directories
@@ -51,14 +51,14 @@ public class FileSystemItemViewModel : ViewModelBase
         CopyPathCommand = new RelayCommand(ExecuteCopyPath, CanExecutePathCommand);
         RefreshCommand = new RelayCommand(ExecuteRefresh, CanExecuteRefresh);
         ShowInPreviewCommand = new RelayCommand(ExecuteShowInPreview, CanExecuteShowInPreview);
-        
+
         // For files, mark as loaded since they don't have children
         if (!item.IsDirectory)
         {
             // For files, mark as loaded since they don't have children
             _childrenLoaded = true;
         }
-        
+
         // Auto-expand root directory for better UX
         if (item.IsDirectory && loadChildren)
         {
@@ -74,7 +74,7 @@ public class FileSystemItemViewModel : ViewModelBase
     }
 
     public FileSystemItem Item { get; }
-    
+
     public ObservableCollection<FileSystemItemViewModel> Children { get; }
 
     public string Name => Item.DisplayName;
@@ -82,14 +82,14 @@ public class FileSystemItemViewModel : ViewModelBase
     public bool IsDirectory => Item.IsDirectory;
     public bool HasChildren => IsDirectory && (!_childrenLoaded || Children.Count > 0);
     public bool HasChildrenLoaded => _childrenLoaded;
-    public bool IsMarkdownTemplate => !IsDirectory && (FullPath.EndsWith(".mdext", StringComparison.OrdinalIgnoreCase) || 
+    public bool IsMarkdownTemplate => !IsDirectory && (FullPath.EndsWith(".mdext", StringComparison.OrdinalIgnoreCase) ||
                                                          FullPath.EndsWith(".mdsrc", StringComparison.OrdinalIgnoreCase) ||
                                                          FullPath.EndsWith(".md", StringComparison.OrdinalIgnoreCase));
 
     public bool IsExpanded
     {
         get => _isExpanded;
-        set 
+        set
         {
             if (SetProperty(ref _isExpanded, value))
             {
@@ -109,7 +109,7 @@ public class FileSystemItemViewModel : ViewModelBase
     public bool IsVisible
     {
         get => _isVisible;
-        set 
+        set
         {
             if (SetProperty(ref _isVisible, value) && value && !_childrenLoaded && IsDirectory)
             {
@@ -128,7 +128,7 @@ public class FileSystemItemViewModel : ViewModelBase
     public bool IsSelected
     {
         get => _isSelected;
-        set 
+        set
         {
             if (SetProperty(ref _isSelected, value) && value && !IsDirectory)
             {
@@ -187,7 +187,7 @@ public class FileSystemItemViewModel : ViewModelBase
                 }
             }
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to copy path to clipboard: {Path}", FullPath);
         }
@@ -200,7 +200,7 @@ public class FileSystemItemViewModel : ViewModelBase
             // Clear children and reload
             _childrenLoaded = false;
             Children.Clear();
-            
+
             if (IsVisible)
             {
                 // If folder is visible, reload with appropriate preloading based on expansion state
@@ -255,7 +255,7 @@ public class FileSystemItemViewModel : ViewModelBase
     {
         // Get all directory children that aren't already loaded
         var directoryChildren = Children
-            .Where(child => child.IsDirectory && !child._childrenLoaded)
+            .Where(child => child.IsDirectory && !child.HasChildrenLoaded)
             .ToList();
 
         if (directoryChildren.Count == 0)
@@ -291,7 +291,7 @@ public class FileSystemItemViewModel : ViewModelBase
             await UpdateUIWithChildrenAsync(childViewModels);
 
             _childrenLoaded = true;
-            
+
             // Mark all child folders as visible since they are now in the TreeView
             foreach (var child in childViewModels.Where(c => c.IsDirectory))
             {
@@ -315,11 +315,11 @@ public class FileSystemItemViewModel : ViewModelBase
                 // Directories first, then files
                 var directoryComparison = y.IsDirectory.CompareTo(x.IsDirectory);
                 if (directoryComparison != 0) return directoryComparison;
-                
+
                 // Then alphabetical by name
                 return string.Compare(x.Name, y.Name, StringComparison.OrdinalIgnoreCase);
             });
-            
+
             return sortedChildren
                 .Select(child => _viewModelFactory.Create(child))
                 .ToArray();
@@ -332,7 +332,7 @@ public class FileSystemItemViewModel : ViewModelBase
         await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
         {
             Children.Clear();
-            
+
             // Batch add all children at once to reduce UI notification overhead
             foreach (var childViewModel in childViewModels)
             {

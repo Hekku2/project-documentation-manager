@@ -5,5 +5,5 @@ namespace Desktop.Services;
 
 public interface IFileSystemChangeHandler
 {
-    void HandleFileSystemChange(FileSystemChangedEventArgs e, FileSystemItemViewModel rootViewModel, IFileSystemItemViewModelFactory viewModelFactory);
+    void HandleFileSystemChange(FileSystemChangedEventArgs eventArguments, FileSystemItemViewModel rootViewModel, IFileSystemItemViewModelFactory viewModelFactory);
 }

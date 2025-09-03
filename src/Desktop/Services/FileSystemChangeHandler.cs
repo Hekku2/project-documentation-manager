@@ -2,18 +2,26 @@ using System;
 using System.IO;
 using System.Linq;
 using Desktop.Factories;
-using Desktop.Models;
 using Desktop.ViewModels;
+using Microsoft.Extensions.Logging;
 
 namespace Desktop.Services;
 
-public class FileSystemChangeHandler(IFileService fileService) : IFileSystemChangeHandler
+public class FileSystemChangeHandler(ILogger<FileSystemChangeHandler> logger, IFileService fileService) : IFileSystemChangeHandler
 {
+    private static readonly StringComparison PathComparison =
+        OperatingSystem.IsWindows() || OperatingSystem.IsMacOS()
+            ? StringComparison.OrdinalIgnoreCase
+            : StringComparison.Ordinal;
+
     public void HandleFileSystemChange(FileSystemChangedEventArgs eventArguments, FileSystemItemViewModel rootViewModel, IFileSystemItemViewModelFactory viewModelFactory)
     {
         var parentViewModel = FindParentForPath(eventArguments.Path, rootViewModel);
         if (parentViewModel == null)
+        {
+            logger.LogWarning("Parent view model not found for path: {Path}", eventArguments.Path);
             return;
+        }
 
         switch (eventArguments.ChangeType)
         {
@@ -47,11 +55,11 @@ public class FileSystemChangeHandler(IFileService fileService) : IFileSystemChan
 
     private static FileSystemItemViewModel? FindViewModelByPath(string path, FileSystemItemViewModel rootViewModel)
     {
-        if (string.Equals(rootViewModel.Item.FullPath, path, StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(rootViewModel.Item.FullPath, path, PathComparison))
             return rootViewModel;
 
         // Check if the requested path is a child of this item
-        if (!path.StartsWith(rootViewModel.Item.FullPath, StringComparison.OrdinalIgnoreCase))
+        if (!path.StartsWith(rootViewModel.Item.FullPath, PathComparison))
             return null;
 
         // If children are loaded, search through them
@@ -65,31 +73,23 @@ public class FileSystemChangeHandler(IFileService fileService) : IFileSystemChan
             }
         }
 
-        // If this is a directory and the path could be a child, return this as potential parent
-        if (rootViewModel.Item.IsDirectory && path.StartsWith(rootViewModel.Item.FullPath + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
-        {
-            return rootViewModel; // Return this directory as the closest parent found
-        }
-
         return null;
     }
 
     private void HandleItemCreated(FileSystemItemViewModel parentViewModel, string itemPath, bool isDirectory, IFileSystemItemViewModelFactory viewModelFactory)
     {
+        var fileSystemItem = fileService.CreateFileSystemItem(itemPath, isDirectory);
+
         // Always update the underlying data structure first
         if (parentViewModel.Item.IsDirectory)
         {
             var childFileName = Path.GetFileName(itemPath);
-            var existingItem = parentViewModel.Item.Children.FirstOrDefault(c => 
-                string.Equals(c.Name, childFileName, StringComparison.OrdinalIgnoreCase));
-            
-            if (existingItem == null)
+            var existingItem = parentViewModel.Item.Children.FirstOrDefault(c =>
+                string.Equals(c.Name, childFileName, PathComparison));
+
+            if (existingItem == null && fileSystemItem != null)
             {
-                var childItem = fileService.CreateFileSystemItem(itemPath, isDirectory);
-                if (childItem != null)
-                {
-                    parentViewModel.Item.Children.Add(childItem);
-                }
+                parentViewModel.Item.Children.Add(fileSystemItem);
             }
         }
 
@@ -101,18 +101,17 @@ public class FileSystemChangeHandler(IFileService fileService) : IFileSystemChan
 
         // Check if item already exists
         var fileName = Path.GetFileName(itemPath);
-        if (parentViewModel.Children.Any(c => string.Equals(c.Name, fileName, StringComparison.OrdinalIgnoreCase)))
+        if (parentViewModel.Children.Any(c => string.Equals(c.Name, fileName, PathComparison)))
             return;
 
         // Create the new file system item
-        var newItem = fileService.CreateFileSystemItem(itemPath, isDirectory);
-        if (newItem == null)
+        if (fileSystemItem == null)
             return;
 
-        var newViewModel = viewModelFactory.CreateWithChildren(newItem);
+        var newViewModel = viewModelFactory.CreateWithChildren(fileSystemItem);
 
         // Mark the new item as visible since its parent is expanded and loaded
-        if (newItem.IsDirectory)
+        if (fileSystemItem.IsDirectory)
         {
             newViewModel.IsVisible = true;
         }
@@ -122,7 +121,7 @@ public class FileSystemChangeHandler(IFileService fileService) : IFileSystemChan
         for (var i = 0; i < parentViewModel.Children.Count; i++)
         {
             var existingChild = parentViewModel.Children[i];
-            
+
             // Directories come before files
             if (isDirectory && !existingChild.IsDirectory)
                 break;
@@ -133,7 +132,7 @@ public class FileSystemChangeHandler(IFileService fileService) : IFileSystemChan
             }
 
             // Within the same type, sort alphabetically
-            if (string.Compare(fileName, existingChild.Name, StringComparison.OrdinalIgnoreCase) < 0)
+            if (string.Compare(fileName, existingChild.Name, PathComparison) < 0)
                 break;
 
             insertIndex = i + 1;
@@ -145,25 +144,25 @@ public class FileSystemChangeHandler(IFileService fileService) : IFileSystemChan
     private static void HandleItemDeleted(FileSystemItemViewModel parentViewModel, string itemPath)
     {
         var fileName = Path.GetFileName(itemPath);
-        
+
         // Remove from UI children if loaded
         if (parentViewModel.HasChildrenLoaded)
         {
-            var itemToRemove = parentViewModel.Children.FirstOrDefault(c => 
-                string.Equals(c.Name, fileName, StringComparison.OrdinalIgnoreCase));
-            
+            var itemToRemove = parentViewModel.Children.FirstOrDefault(c =>
+                string.Equals(c.Name, fileName, PathComparison));
+
             if (itemToRemove != null)
             {
                 parentViewModel.Children.Remove(itemToRemove);
             }
         }
-        
+
         // Also remove from underlying data structure
         if (parentViewModel.Item.IsDirectory)
         {
-            var dataItemToRemove = parentViewModel.Item.Children.FirstOrDefault(c => 
-                string.Equals(c.Name, fileName, StringComparison.OrdinalIgnoreCase));
-            
+            var dataItemToRemove = parentViewModel.Item.Children.FirstOrDefault(c =>
+                string.Equals(c.Name, fileName, PathComparison));
+
             if (dataItemToRemove != null)
             {
                 parentViewModel.Item.Children.Remove(dataItemToRemove);
