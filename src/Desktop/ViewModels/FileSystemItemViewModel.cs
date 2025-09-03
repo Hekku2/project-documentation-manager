@@ -13,6 +13,11 @@ namespace Desktop.ViewModels;
 
 public class FileSystemItemViewModel : ViewModelBase
 {
+    private static readonly StringComparison PathComparison =
+        OperatingSystem.IsWindows() || OperatingSystem.IsMacOS()
+            ? StringComparison.OrdinalIgnoreCase
+            : StringComparison.Ordinal;
+
     private bool _isExpanded;
     private bool _isSelected;
     private bool _isLoading;
@@ -317,7 +322,7 @@ public class FileSystemItemViewModel : ViewModelBase
                 if (directoryComparison != 0) return directoryComparison;
 
                 // Then alphabetical by name
-                return string.Compare(x.Name, y.Name, StringComparison.OrdinalIgnoreCase);
+                return string.Compare(x.Name, y.Name, PathComparison);
             });
 
             return sortedChildren

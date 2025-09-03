@@ -75,7 +75,7 @@ public class FileExplorerViewModel : ViewModelBase, IDisposable
         {
             IsLoading = true;
             _logger.LogInformation("Loading file structure...");
-            
+
             var fileStructure = await _fileService.GetFileStructureAsync();
 
             if (fileStructure != null)
@@ -110,12 +110,13 @@ public class FileExplorerViewModel : ViewModelBase, IDisposable
 
     private void DelegateFileSystemChangeEvent(object? sender, FileSystemChangedEventArgs eventArgs)
     {
-        if (_rootItem == null)
+        var root = _rootItem;
+        if (root is null)
             return;
 
         Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
-            _fileSystemChangeHandler.HandleFileSystemChange(eventArgs, _rootItem, _fileSystemItemViewModelFactory);
+            _fileSystemChangeHandler.HandleFileSystemChange(eventArgs, root, _fileSystemItemViewModelFactory);
         });
     }
 
