@@ -71,7 +71,6 @@ public class FileSystemChangeHandler(ILogger<FileSystemChangeHandler> logger, IF
 
         // If children are loaded, search through them
         if (rootViewModel.HasChildrenLoaded)
-            …
         {
             foreach (var child in rootViewModel.Children)
             {
