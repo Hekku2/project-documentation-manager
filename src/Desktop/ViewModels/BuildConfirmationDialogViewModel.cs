@@ -141,25 +141,19 @@ public class BuildConfirmationDialogViewModel : ViewModelBase
     {
         var validationErrors = new List<string>();
 
-        ValidationResult combinedValidationResult = null!;
+        var combinedValidationResult = await Task.Run(
+            () => _combinationService.Validate(templateFiles, sourceFiles));
 
-        await Task.Run(() =>
+        foreach (var error in combinedValidationResult.Errors)
         {
-            combinedValidationResult = _combinationService.Validate(templateFiles, sourceFiles);
-
-            // Create error list for build failure checking
-            foreach (var error in combinedValidationResult.Errors)
-            {
-                var errorMessage = $"{error.LineNumber} - {error.Message}";
-                validationErrors.Add(errorMessage);
-                _logger.LogError("Validation error: {ErrorMessage}", errorMessage);
-            }
-
-            foreach (var warning in combinedValidationResult.Warnings)
-            {
-                _logger.LogWarning("Validation warning: {WarningMessage}", warning.Message);
-            }
-        });
+            var errorMessage = $"{error.LineNumber} - {error.Message}";
+            validationErrors.Add(errorMessage);
+            _logger.LogError("Validation error: {ErrorMessage}", errorMessage);
+        }
+        foreach (var warning in combinedValidationResult.Warnings)
+        {
+            _logger.LogWarning("Validation warning: {WarningMessage}", warning.Message);
+        }
 
         // Emit validation results for the error view
         ValidationResultsAvailable?.Invoke(this, combinedValidationResult);
