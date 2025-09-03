@@ -364,8 +364,8 @@ public class FileService(ILogger<FileService> logger, IOptions<ApplicationOption
 
         // Refuse to operate on a drive or filesystem root
         if (string.Equals(
-                fullPath.TrimEnd(Path.DirectorySeparatorChar),
-                rootPath?.TrimEnd(Path.DirectorySeparatorChar),
+                Path.TrimEndingDirectorySeparator(fullPath),
+                Path.TrimEndingDirectorySeparator(rootPath ?? string.Empty),
                 StringComparison.OrdinalIgnoreCase))
         {
             logger.LogError(
@@ -386,11 +386,11 @@ public class FileService(ILogger<FileService> logger, IOptions<ApplicationOption
         try
         {
             logger.LogInformation("Deleting contents of folder: {FolderPath}", folderPath);
-            
+
             await Task.Run(() =>
             {
                 var directoryInfo = new DirectoryInfo(folderPath);
-                
+
                 // Delete all files
                 foreach (var file in directoryInfo.GetFiles())
                 {
@@ -404,7 +404,7 @@ public class FileService(ILogger<FileService> logger, IOptions<ApplicationOption
                         logger.LogWarning(ex, "Failed to delete file: {FilePath}", file.FullName);
                     }
                 }
-                
+
                 // Delete all subdirectories
                 foreach (var directory in directoryInfo.GetDirectories())
                 {
