@@ -133,7 +133,7 @@ public class FileSystemItemViewModel : ViewModelBase
             if (SetProperty(ref _isSelected, value) && value && !IsDirectory)
             {
                 // File was selected, notify via callback
-                _onItemSelected?.Invoke(FullPath);
+                _onItemSelected.Invoke(FullPath);
             }
         }
     }
@@ -163,14 +163,14 @@ public class FileSystemItemViewModel : ViewModelBase
         else
         {
             // For files, open them in the editor
-            _onItemSelected?.Invoke(FullPath);
+            _onItemSelected.Invoke(FullPath);
         }
     }
 
 
     private void ExecuteShowInExplorer()
     {
-        _fileSystemExplorerService?.ShowInExplorer(FullPath);
+        _fileSystemExplorerService.ShowInExplorer(FullPath);
     }
 
     private async void ExecuteCopyPath()
@@ -212,7 +212,7 @@ public class FileSystemItemViewModel : ViewModelBase
     private void ExecuteShowInPreview()
     {
         // Open the file in preview mode using the callback
-        _onItemPreview?.Invoke(FullPath);
+        _onItemPreview.Invoke(FullPath);
     }
 
     private async Task LoadChildrenAsync(bool enableDeepPreloading = false)
