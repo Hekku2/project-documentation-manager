@@ -26,7 +26,7 @@ public class MenuAndCommandTests : MainWindowTestBase
         Assert.That(viewModel!.ExitCommand, Is.Not.Null, "ExitCommand should exist");
 
         // Track if exit was requested
-        bool exitRequested = false;
+        var exitRequested = false;
         viewModel.ExitRequested += (sender, e) => exitRequested = true;
 
         // Execute the exit command
@@ -42,10 +42,14 @@ public class MenuAndCommandTests : MainWindowTestBase
         window.Show();
 
         var viewModel = window.DataContext as MainWindowViewModel;
-        Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
 
-        // Verify window is initially open
-        Assert.That(window.IsVisible, Is.True, "Window should be visible initially");
+        Assert.Multiple(() =>
+        {
+            Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
+
+            // Verify window is initially open
+            Assert.That(window.IsVisible, Is.True, "Window should be visible initially");
+        });
 
         // Trigger exit through the command (this will invoke the exit event)
         viewModel!.ExitCommand.Execute(null);
@@ -74,11 +78,11 @@ public class MenuAndCommandTests : MainWindowTestBase
         Assert.That(viewModel!.ExitCommand, Is.Not.Null, "ExitCommand should be available for menu binding");
 
         // Test that the command can be executed
-        bool canExecute = viewModel.ExitCommand.CanExecute(null);
+        var canExecute = viewModel.ExitCommand.CanExecute(null);
         Assert.That(canExecute, Is.True, "ExitCommand should be executable");
 
         // Track if exit was requested
-        bool exitRequested = false;
+        var exitRequested = false;
         viewModel.ExitRequested += (sender, e) => exitRequested = true;
 
         // Execute the command (simulating menu click)
@@ -97,7 +101,7 @@ public class MenuAndCommandTests : MainWindowTestBase
         Assert.That(viewModel!.EditorContent.BuildDocumentationCommand, Is.Not.Null, "BuildDocumentationCommand should exist");
 
         // Test that the command exists and is enabled
-        bool canExecute = viewModel.EditorContent.BuildDocumentationCommand.CanExecute(null);
+        var canExecute = viewModel.EditorContent.BuildDocumentationCommand.CanExecute(null);
         Assert.That(canExecute, Is.True, "BuildDocumentationCommand should be enabled");
     }
 
@@ -108,19 +112,23 @@ public class MenuAndCommandTests : MainWindowTestBase
         window.Show();
 
         var viewModel = window.DataContext as MainWindowViewModel;
-        Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
 
         // Find the main menu and verify it has Build menu
         var menu = window.FindControl<Menu>("MainMenu");
-        Assert.That(menu, Is.Not.Null, "Main menu should exist");
-        Assert.That(menu.Items.Count, Is.EqualTo(3), "Menu should have File, View, and Build menus");
 
-        // Test that the BuildDocumentationCommand exists and is bound to the Build menu item
-        Assert.That(viewModel!.EditorContent.BuildDocumentationCommand, Is.Not.Null, "BuildDocumentationCommand should be available for menu binding");
+        Assert.Multiple(() =>
+        {
+            Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
+            Assert.That(menu, Is.Not.Null, "Main menu should exist");
+            Assert.That(menu?.Items, Has.Count.EqualTo(3), "Menu should have File, View, and Build menus");
 
-        // Test that the command is enabled
-        bool canExecute = viewModel.EditorContent.BuildDocumentationCommand.CanExecute(null);
-        Assert.That(canExecute, Is.True, "BuildDocumentationCommand should be enabled");
+            // Test that the BuildDocumentationCommand exists and is bound to the Build menu item
+            Assert.That(viewModel!.EditorContent.BuildDocumentationCommand, Is.Not.Null, "BuildDocumentationCommand should be available for menu binding");
+
+            // Test that the command is enabled
+            var canExecute = viewModel.EditorContent.BuildDocumentationCommand.CanExecute(null);
+            Assert.That(canExecute, Is.True, "BuildDocumentationCommand should be enabled");
+        });
     }
 
     [AvaloniaTest]
@@ -149,7 +157,7 @@ public class MenuAndCommandTests : MainWindowTestBase
 
         var markdownCombinationService = Substitute.For<IMarkdownCombinationService>();
         var markdownFileCollectorService = Substitute.For<IMarkdownFileCollectorService>();
-        var markdownRenderingService = Substitute.For<Desktop.Services.IMarkdownRenderingService>();
+        var markdownRenderingService = Substitute.For<IMarkdownRenderingService>();
 
         var stateLogger = NullLoggerFactory.Instance.CreateLogger<EditorStateService>();
         var tabBarLogger = NullLoggerFactory.Instance.CreateLogger<EditorTabBarViewModel>();
@@ -157,12 +165,12 @@ public class MenuAndCommandTests : MainWindowTestBase
 
         var editorStateService = new EditorStateService(stateLogger);
         var editorTabBarViewModel = new EditorTabBarViewModel(tabBarLogger, fileService, editorStateService);
-        var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService, markdownRenderingService, Substitute.For<Desktop.Factories.ISettingsContentViewModelFactory>());
+        var editorContentViewModel = new EditorContentViewModel(contentLogger, editorStateService, options, serviceProvider, markdownCombinationService, markdownFileCollectorService, markdownRenderingService, Substitute.For<Factories.ISettingsContentViewModelFactory>());
 
-        var logTransitionService = Substitute.For<Desktop.Logging.ILogTransitionService>();
-        var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
-        var editorLogger = NullLoggerFactory.Instance.CreateLogger<Desktop.ViewModels.EditorViewModel>();
-        var editorViewModel = new Desktop.ViewModels.EditorViewModel(editorLogger, options, editorTabBarViewModel, editorContentViewModel, hotkeyService);
+        var logTransitionService = Substitute.For<Logging.ILogTransitionService>();
+        var hotkeyService = Substitute.For<IHotkeyService>();
+        var editorLogger = NullLoggerFactory.Instance.CreateLogger<EditorViewModel>();
+        var editorViewModel = new EditorViewModel(editorLogger, options, editorTabBarViewModel, editorContentViewModel, hotkeyService);
         var viewModel = new MainWindowViewModel(vmLogger, options, editorStateService, editorViewModel, logTransitionService, hotkeyService);
 
         Assert.That(viewModel.EditorContent.BuildDocumentationCommand, Is.Not.Null, "BuildDocumentationCommand should exist");
@@ -266,10 +274,10 @@ public class MenuAndCommandTests : MainWindowTestBase
         var viewModel = window.DataContext as MainWindowViewModel;
 
         Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
-        Assert.That(viewModel!.SaveCommand, Is.Not.Null, "SaveCommand should exist");
+        Assert.That(viewModel.SaveCommand, Is.Not.Null, "SaveCommand should exist");
 
         // Test that the command cannot be executed when no file is active
-        bool canExecute = viewModel.SaveCommand.CanExecute(null);
+        var canExecute = viewModel.SaveCommand.CanExecute(null);
         Assert.That(canExecute, Is.False, "SaveCommand should not be executable when no file is active");
     }
 
@@ -280,18 +288,22 @@ public class MenuAndCommandTests : MainWindowTestBase
         window.Show();
 
         var viewModel = window.DataContext as MainWindowViewModel;
-        Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
 
         // Find the main menu
         var menu = window.FindControl<Menu>("MainMenu");
-        Assert.That(menu, Is.Not.Null, "Main menu should exist");
 
-        // Test that the SaveCommand exists and works (bound to the Save menu item)
-        Assert.That(viewModel!.SaveCommand, Is.Not.Null, "SaveCommand should be available for menu binding");
+        Assert.Multiple(() =>
+        {
+            Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
+            Assert.That(menu, Is.Not.Null, "Main menu should exist");
 
-        // Test that the command cannot be executed when no file is active
-        bool canExecute = viewModel.SaveCommand.CanExecute(null);
-        Assert.That(canExecute, Is.False, "SaveCommand should not be executable when no file is active");
+            // Test that the SaveCommand exists and works (bound to the Save menu item)
+            Assert.That(viewModel!.SaveCommand, Is.Not.Null, "SaveCommand should be available for menu binding");
+
+            // Test that the command cannot be executed when no file is active
+            var canExecute = viewModel.SaveCommand.CanExecute(null);
+            Assert.That(canExecute, Is.False, "SaveCommand should not be executable when no file is active");
+        });
     }
 
     [AvaloniaTest]
@@ -301,42 +313,42 @@ public class MenuAndCommandTests : MainWindowTestBase
         var viewModel = window.DataContext as MainWindowViewModel;
 
         Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
-        Assert.That(viewModel!.SaveCommand, Is.Not.Null, "SaveCommand should exist");
+        Assert.That(viewModel.SaveCommand, Is.Not.Null, "SaveCommand should exist");
 
         // SaveCommand should not be executable when no file is active
-        bool canExecuteWithoutFile = viewModel.SaveCommand.CanExecute(null);
+        var canExecuteWithoutFile = viewModel.SaveCommand.CanExecute(null);
         Assert.That(canExecuteWithoutFile, Is.False, "SaveCommand should not be executable when no file is active");
 
         // Simulate having an open file by directly setting up the editor state
-        var editorTab = new Desktop.Models.EditorTab
+        var editorTab = new EditorTab
         {
             Id = Guid.NewGuid().ToString(),
             Title = "test.txt",
             FilePath = "/tmp/test.txt",
             Content = "Test file content",
             IsModified = false,
-            TabType = Desktop.Models.TabType.File
+            TabType = TabType.File
         };
         var mockTabViewModel = new EditorTabViewModel(editorTab);
         viewModel.EditorTabBar.EditorTabs.Add(mockTabViewModel);
         viewModel.EditorTabBar.SetActiveTab(mockTabViewModel);
 
         // SaveCommand should not be executable when file is open but not modified
-        bool canExecuteUnmodifiedFile = viewModel.SaveCommand.CanExecute(null);
+        var canExecuteUnmodifiedFile = viewModel.SaveCommand.CanExecute(null);
         Assert.That(canExecuteUnmodifiedFile, Is.False, "SaveCommand should not be executable when file is unmodified");
 
         // Modify the file content
         mockTabViewModel.Content = "modified content";
 
         // Now SaveCommand should be executable
-        bool canExecuteModifiedFile = viewModel.SaveCommand.CanExecute(null);
+        var canExecuteModifiedFile = viewModel.SaveCommand.CanExecute(null);
         Assert.That(canExecuteModifiedFile, Is.True, "SaveCommand should be executable when file is modified");
 
         // Simulate save completion by resetting the modified flag
         mockTabViewModel.IsModified = false;
 
         // After saving, SaveCommand should not be executable again (file no longer modified)
-        bool canExecuteAfterSave = viewModel.SaveCommand.CanExecute(null);
+        var canExecuteAfterSave = viewModel.SaveCommand.CanExecute(null);
         Assert.That(canExecuteAfterSave, Is.False, "SaveCommand should not be executable after file is saved");
     }
 
@@ -349,12 +361,15 @@ public class MenuAndCommandTests : MainWindowTestBase
         var window = CreateMainWindow();
         var viewModel = window.DataContext as MainWindowViewModel;
 
-        Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
-        Assert.That(viewModel!.SaveAllCommand, Is.Not.Null, "SaveAllCommand should exist");
+        Assert.Multiple(() =>
+        {
+            Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
+            Assert.That(viewModel!.SaveAllCommand, Is.Not.Null, "SaveAllCommand should exist");
 
-        // SaveAllCommand should not be executable when no files are open
-        bool canExecuteWithoutFiles = viewModel.SaveAllCommand.CanExecute(null);
-        Assert.That(canExecuteWithoutFiles, Is.False, "SaveAllCommand should not be executable when no files are open");
+            // SaveAllCommand should not be executable when no files are open
+            var canExecuteWithoutFiles = viewModel.SaveAllCommand.CanExecute(null);
+            Assert.That(canExecuteWithoutFiles, Is.False, "SaveAllCommand should not be executable when no files are open");
+        });
 
         // Create multiple temporary files
         var tempFile1 = Path.GetTempFileName();
@@ -375,7 +390,7 @@ public class MenuAndCommandTests : MainWindowTestBase
             Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(3), "Should have 3 tabs open");
 
             // SaveAllCommand should not be executable when files are open but not modified
-            bool canExecuteUnmodified = viewModel.SaveAllCommand.CanExecute(null);
+            var canExecuteUnmodified = viewModel.SaveAllCommand.CanExecute(null);
             Assert.That(canExecuteUnmodified, Is.False, "SaveAllCommand should not be executable when no files are modified");
 
             // Modify some files
@@ -388,12 +403,15 @@ public class MenuAndCommandTests : MainWindowTestBase
             // Leave tab2 unmodified
 
             // Verify modification states
-            Assert.That(tab1.IsModified, Is.True, "Tab1 should be modified");
-            Assert.That(tab2.IsModified, Is.False, "Tab2 should not be modified");
-            Assert.That(tab3.IsModified, Is.True, "Tab3 should be modified");
+            Assert.Multiple(() =>
+            {
+                Assert.That(tab1.IsModified, Is.True, "Tab1 should be modified");
+                Assert.That(tab2.IsModified, Is.False, "Tab2 should not be modified");
+                Assert.That(tab3.IsModified, Is.True, "Tab3 should be modified");
+            });
 
             // SaveAllCommand should now be executable
-            bool canExecuteModified = viewModel.SaveAllCommand.CanExecute(null);
+            var canExecuteModified = viewModel.SaveAllCommand.CanExecute(null);
             Assert.That(canExecuteModified, Is.True, "SaveAllCommand should be executable when some files are modified");
 
             // Execute SaveAll command
@@ -406,13 +424,16 @@ public class MenuAndCommandTests : MainWindowTestBase
             await WaitForConditionAsync(() => !tab1.IsModified && !tab3.IsModified, timeoutMs: 5000, intervalMs: 100);
 
             // Verify all modified files were saved
-            Assert.That(tab1.IsModified, Is.False, "Tab1 should no longer be modified after save all");
-            Assert.That(tab2.IsModified, Is.False, "Tab2 should still not be modified (was not modified)");
-            Assert.That(tab3.IsModified, Is.False, "Tab3 should no longer be modified after save all");
+            Assert.Multiple(() =>
+            {
+                Assert.That(tab1.IsModified, Is.False, "Tab1 should no longer be modified after save all");
+                Assert.That(tab2.IsModified, Is.False, "Tab2 should still not be modified (was not modified)");
+                Assert.That(tab3.IsModified, Is.False, "Tab3 should no longer be modified after save all");
 
-            // SaveAllCommand should not be executable again (no modified files)
-            bool canExecuteAfterSave = viewModel.SaveAllCommand.CanExecute(null);
-            Assert.That(canExecuteAfterSave, Is.False, "SaveAllCommand should not be executable after all files are saved");
+                // SaveAllCommand should not be executable again (no modified files)
+                var canExecuteAfterSave = viewModel.SaveAllCommand.CanExecute(null);
+                Assert.That(canExecuteAfterSave, Is.False, "SaveAllCommand should not be executable after all files are saved");
+            });
 
             // Verify that WriteFileContentAsync was called for modified files only
             await _fileService.Received(1).WriteFileContentAsync(tempFile1, "modified content1");
@@ -434,17 +455,21 @@ public class MenuAndCommandTests : MainWindowTestBase
         window.Show();
 
         var viewModel = window.DataContext as MainWindowViewModel;
-        Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
 
         // Find the main menu
         var menu = window.FindControl<Menu>("MainMenu");
-        Assert.That(menu, Is.Not.Null, "Main menu should exist");
 
-        // Test that the SaveAllCommand exists and is properly bound
-        Assert.That(viewModel!.SaveAllCommand, Is.Not.Null, "SaveAllCommand should be available for menu binding");
+        Assert.Multiple(() =>
+        {
+            Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
+            Assert.That(menu, Is.Not.Null, "Main menu should exist");
 
-        // Test that the command cannot be executed when no files are modified
-        bool canExecute = viewModel.SaveAllCommand.CanExecute(null);
-        Assert.That(canExecute, Is.False, "SaveAllCommand should not be executable when no files are modified");
+            // Test that the SaveAllCommand exists and is properly bound
+            Assert.That(viewModel!.SaveAllCommand, Is.Not.Null, "SaveAllCommand should be available for menu binding");
+
+            // Test that the command cannot be executed when no files are modified
+            var canExecute = viewModel.SaveAllCommand.CanExecute(null);
+            Assert.That(canExecute, Is.False, "SaveAllCommand should not be executable when no files are modified");
+        });
     }
 }

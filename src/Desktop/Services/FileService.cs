@@ -377,7 +377,7 @@ public class FileService(ILogger<FileService> logger, IOptions<ApplicationOption
         // If the folder genuinely doesn’t exist, treat it as “already clean”
         if (!Directory.Exists(fullPath))
         {
-            logger.LogInformation(
+            logger.LogDebug(
                 "Folder does not exist; treating as already clean: {FolderPath}",
                 folderPath);
             return true;
