@@ -134,7 +134,7 @@ public class FileSystemMonitoringTests
     [AvaloniaTest]
     public async Task FileSystemMonitor_Should_Start_Monitoring_When_File_Structure_Loads()
     {
-        var (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
+        var (window, _, fileSystemMonitorService, _, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
 
         await WaitForFileStructureLoadAsync(fileExplorerViewModel);
@@ -441,7 +441,7 @@ public class FileSystemMonitoringTests
     [AvaloniaTest]
     public async Task FileExplorerViewModel_Should_Ignore_Changes_Outside_Monitored_Path()
     {
-        var (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
+        var (window, _, fileSystemMonitorService, _, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
 
         await WaitForFileStructureLoadAsync(fileExplorerViewModel);
