@@ -7,16 +7,17 @@ using Desktop.Factories;
 
 namespace Desktop.ViewModels;
 
-public class FileExplorerViewModel(
-    ILogger<FileExplorerViewModel> logger,
-    ILoggerFactory loggerFactory,
-    IFileSystemExplorerService fileSystemExplorerService,
-    IFileSystemChangeHandler fileSystemChangeHandler,
-    IFileService fileService) : ViewModelBase, IDisposable
+public class FileExplorerViewModel : ViewModelBase, IDisposable
 {
     private bool _isLoading;
     private FileSystemItemViewModel? _rootItem;
-    private EventHandler<FileSystemChangedEventArgs>? _eventHandler;
+    private bool _disposed = false;
+    private readonly ILogger<FileExplorerViewModel> _logger;
+    private readonly ILoggerFactory _loggerFactory;
+    private readonly IFileSystemExplorerService _fileSystemExplorerService;
+    private readonly IFileSystemChangeHandler _fileSystemChangeHandler;
+    private readonly IFileService _fileService;
+    private readonly FileSystemItemViewModelFactory _fileSystemItemViewModelFactory;
 
     public ObservableCollection<FileSystemItemViewModel> FileSystemItems { get; } = [];
 
@@ -35,9 +36,31 @@ public class FileExplorerViewModel(
     public event EventHandler<string>? FileSelected;
     public event EventHandler<string>? FilePreview;
 
+    public FileExplorerViewModel(
+        ILogger<FileExplorerViewModel> logger,
+        ILoggerFactory loggerFactory,
+        IFileSystemExplorerService fileSystemExplorerService,
+        IFileSystemChangeHandler fileSystemChangeHandler,
+        IFileService fileService)
+    {
+        _logger = logger;
+        _loggerFactory = loggerFactory;
+        _fileSystemExplorerService = fileSystemExplorerService;
+        _fileSystemChangeHandler = fileSystemChangeHandler;
+        _fileService = fileService;
+
+        _fileSystemItemViewModelFactory = new FileSystemItemViewModelFactory(
+            _loggerFactory,
+            _fileSystemExplorerService,
+            onItemSelected: OnItemSelected,
+            onItemPreview: OnItemPreview);
+
+        _fileService.FileSystemChanged += DelegateFileSystemChangeEvent;
+    }
+
     public async Task InitializeAsync()
     {
-        logger.LogInformation("FileExplorerViewModel initialized");
+        _logger.LogInformation("FileExplorerViewModel initialized");
         await LoadFileStructureAsync();
     }
 
@@ -51,19 +74,13 @@ public class FileExplorerViewModel(
         try
         {
             IsLoading = true;
-            logger.LogInformation("Loading file structure...");
+            _logger.LogInformation("Loading file structure...");
             
-            var fileStructure = await fileService.GetFileStructureAsync();
-            
-            var factory = new FileSystemItemViewModelFactory(
-                loggerFactory,
-                fileSystemExplorerService,
-                onItemSelected: OnItemSelected,
-                onItemPreview: OnItemPreview);
+            var fileStructure = await _fileService.GetFileStructureAsync();
 
             if (fileStructure != null)
             {
-                var rootViewModel = factory.CreateWithChildren(
+                var rootViewModel = _fileSystemItemViewModelFactory.CreateWithChildren(
                     fileStructure
                 );
 
@@ -72,29 +89,18 @@ public class FileExplorerViewModel(
                 FileSystemItems.Clear();
                 FileSystemItems.Add(rootViewModel);
 
-                // Start file system monitoring 
-                _eventHandler = (sender, e) =>
-                {
-                    Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-                    {
-                        fileSystemChangeHandler.HandleFileSystemChange(e, rootViewModel, factory);
-                    });
-                };
+                _fileService.StartFileSystemMonitoring();
 
-                fileService.FileSystemChanged += _eventHandler;
-
-                fileService.StartFileSystemMonitoring();
-
-                logger.LogInformation("File structure loaded successfully");
+                _logger.LogInformation("File structure loaded successfully");
             }
             else
             {
-                logger.LogWarning("Failed to load file structure");
+                _logger.LogWarning("Failed to load file structure");
             }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error loading file structure");
+            _logger.LogError(ex, "Error loading file structure");
         }
         finally
         {
@@ -102,15 +108,26 @@ public class FileExplorerViewModel(
         }
     }
 
+    private void DelegateFileSystemChangeEvent(object? sender, FileSystemChangedEventArgs eventArgs)
+    {
+        if (_rootItem == null)
+            return;
+
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            _fileSystemChangeHandler.HandleFileSystemChange(eventArgs, _rootItem, _fileSystemItemViewModelFactory);
+        });
+    }
+
     private void OnItemSelected(string filePath)
     {
-        logger.LogInformation("File selected: {FilePath}", filePath);
+        _logger.LogInformation("File selected: {FilePath}", filePath);
         FileSelected?.Invoke(this, filePath);
     }
 
     private void OnItemPreview(string filePath)
     {
-        logger.LogInformation("File preview requested: {FilePath}", filePath);
+        _logger.LogInformation("File preview requested: {FilePath}", filePath);
         FilePreview?.Invoke(this, filePath);
     }
 
@@ -120,18 +137,12 @@ public class FileExplorerViewModel(
         GC.SuppressFinalize(this);
     }
 
-    private bool _disposed = false;
-
     protected virtual void Dispose(bool disposing)
     {
         if (!_disposed)
         {
-            if (_eventHandler != null && fileService != null)
-            {
-                fileService.FileSystemChanged -= _eventHandler;
-                _eventHandler = null;
-            }
-            fileService?.StopFileSystemMonitoring();
+            _fileService.FileSystemChanged -= DelegateFileSystemChangeEvent;
+            _fileService.StopFileSystemMonitoring();
 
             _disposed = true;
         }

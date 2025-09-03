@@ -5,7 +5,7 @@ using Microsoft.Extensions.Options;
 
 namespace Desktop.Factories;
 
-public class SettingsContentViewModelFactory(ILoggerFactory loggerFactory, IOptions<ApplicationOptions> applicationOptions) : ISettingsContentViewModelFactory
+public sealed class SettingsContentViewModelFactory(ILoggerFactory loggerFactory, IOptions<ApplicationOptions> applicationOptions) : ISettingsContentViewModelFactory
 {
     public SettingsContentViewModel Create()
     {

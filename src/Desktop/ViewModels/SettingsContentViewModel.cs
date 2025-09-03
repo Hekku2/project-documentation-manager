@@ -2,7 +2,6 @@ using System;
 using System.Windows.Input;
 using Microsoft.Extensions.Logging;
 using Desktop.Configuration;
-using Desktop.Models;
 
 namespace Desktop.ViewModels;
 
