@@ -22,7 +22,6 @@ public class BuildConfirmationDialogViewModel : ViewModelBase
     private readonly IFileService _fileService;
     private readonly ILogger<BuildConfirmationDialogViewModel> _logger;
     private bool _isBuildInProgress;
-    private string _buildStatus = string.Empty;
     private bool _cleanOld = false;
 
     public BuildConfirmationDialogViewModel(
@@ -62,11 +61,6 @@ public class BuildConfirmationDialogViewModel : ViewModelBase
         }
     }
 
-    public string BuildStatus
-    {
-        get => _buildStatus;
-        set => SetProperty(ref _buildStatus, value);
-    }
 
     public bool CanBuild => !IsBuildInProgress;
 
@@ -100,32 +94,26 @@ public class BuildConfirmationDialogViewModel : ViewModelBase
         try
         {
             IsBuildInProgress = true;
-            BuildStatus = "Starting compile...";
 
             _logger.LogInformation("Starting documentation build from: {ProjectFolder}", _applicationOptions.DefaultProjectFolder);
 
-            BuildStatus = "Collecting markdown files...";
             var (templateFiles, sourceFiles) = await _fileCollectorService.CollectAllMarkdownFilesAsync(_applicationOptions.DefaultProjectFolder);
 
             _logger.LogInformation("Found {TemplateCount} template files and {SourceCount} source files",
                 templateFiles.Count(), sourceFiles.Count());
 
-            BuildStatus = "Validating templates...";
             var validationErrors = await ValidateTemplatesAsync(templateFiles, sourceFiles);
 
             if (validationErrors.Any())
             {
-                BuildStatus = $"Compile failed: {validationErrors.Count} validation errors found.";
                 _logger.LogError("Build aborted due to validation errors. Fix the errors and try again.");
                 return;
             }
 
-            BuildStatus = "Processing templates...";
             var processedDocuments = _combinationService.BuildDocumentation(templateFiles, sourceFiles);
 
             if (CleanOld)
             {
-                BuildStatus = "Cleaning output folder...";
                 _logger.LogInformation("Cleaning output folder: {OutputLocation}", OutputLocation);
 
                 var cleanSuccess = await _fileService.DeleteFolderContentsAsync(OutputLocation);
@@ -135,15 +123,12 @@ public class BuildConfirmationDialogViewModel : ViewModelBase
                 }
             }
 
-            BuildStatus = "Writing output files...";
             await _fileWriterService.WriteDocumentsToFolderAsync(processedDocuments, OutputLocation);
 
-            BuildStatus = "Compile completed successfully!";
             _logger.LogInformation("Documentation build completed successfully. Output written to: {OutputLocation}", OutputLocation);
         }
         catch (Exception ex)
         {
-            BuildStatus = $"Compile failed: {ex.Message}";
             _logger.LogError(ex, "Error during documentation build");
         }
         finally

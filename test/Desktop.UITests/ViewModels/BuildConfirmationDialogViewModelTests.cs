@@ -176,7 +176,6 @@ public class BuildConfirmationDialogViewModelTests
         Assert.Multiple(() =>
         {
             Assert.That(dialogViewModel.CanBuild, Is.True, "Should be able to build again after completion");
-            Assert.That(dialogViewModel.BuildStatus, Does.Contain("completed"), "Should show completion status");
             Assert.That(receivedValidationResult, Is.Not.Null, "ValidationResultsAvailable event should be triggered");
             Assert.That(receivedValidationResult!.IsValid, Is.True, "Validation should pass with no errors");
 
@@ -215,8 +214,6 @@ public class BuildConfirmationDialogViewModelTests
         Assert.Multiple(() =>
         {
             Assert.That(dialogViewModel.CanBuild, Is.True, "Should be able to build again after error");
-            Assert.That(dialogViewModel.BuildStatus, Does.Contain("failed"), "Should show failure status");
-            Assert.That(dialogViewModel.BuildStatus, Does.Contain("Test directory not found"), "Should show error message");
 
             // Verify only file collector was called
             _mockFileCollector.Received(1).CollectAllMarkdownFilesAsync("/test/project");
@@ -242,32 +239,6 @@ public class BuildConfirmationDialogViewModelTests
         });
     }
 
-    [AvaloniaTest]
-    public void BuildConfirmationDialog_Should_Update_Build_Status_Property()
-    {
-        // Arrange
-        var dialogViewModel = CreateDialogViewModel();
-
-        // Track property changes
-        string? capturedStatus = null;
-        dialogViewModel.PropertyChanged += (sender, args) =>
-        {
-            if (args.PropertyName == nameof(dialogViewModel.BuildStatus))
-            {
-                capturedStatus = dialogViewModel.BuildStatus;
-            }
-        };
-
-        // Act
-        dialogViewModel.BuildStatus = "Test status message";
-
-        // Assert
-        Assert.Multiple(() =>
-        {
-            Assert.That(dialogViewModel.BuildStatus, Is.EqualTo("Test status message"), "BuildStatus property should be updated");
-            Assert.That(capturedStatus, Is.EqualTo("Test status message"), "PropertyChanged should be raised for BuildStatus");
-        });
-    }
 
     [AvaloniaTest]
     public void BuildConfirmationDialog_Save_Button_Should_Be_Enabled_When_Build_Not_In_Progress()
