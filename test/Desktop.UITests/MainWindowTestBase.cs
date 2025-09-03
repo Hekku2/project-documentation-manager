@@ -23,6 +23,7 @@ public abstract class MainWindowTestBase
     protected ILogger<EditorStateService> _stateLogger = null!;
     protected IOptions<ApplicationOptions> _options = null!;
     protected IFileService _fileService = null!;
+    protected IFileSystemMonitorService _fileSystemMonitorService = null!;
     protected IServiceProvider _serviceProvider = null!;
     protected IMarkdownCombinationService _markdownCombinationService = null!;
     protected IMarkdownFileCollectorService _markdownFileCollectorService = null!;
@@ -40,6 +41,7 @@ public abstract class MainWindowTestBase
         _stateLogger = NullLoggerFactory.Instance.CreateLogger<EditorStateService>();
         _options = Options.Create(new ApplicationOptions());
         _fileService = Substitute.For<IFileService>();
+        _fileSystemMonitorService = Substitute.For<IFileSystemMonitorService>();
         _serviceProvider = Substitute.For<IServiceProvider>();
         
         // Setup service provider to return mock loggers for all needed types  
@@ -54,6 +56,13 @@ public abstract class MainWindowTestBase
         // Set up common fileService behavior
         _fileService.IsValidFolder(Arg.Any<string>()).Returns(true);
         _fileService.ReadFileContentAsync(Arg.Any<string>()).Returns("Mock file content");
+    }
+
+    [TearDown]
+    public void TearDown()
+    {
+        // Dispose mock service to satisfy NUnit analyzer
+        _fileSystemMonitorService?.Dispose();
     }
 
     protected static async Task WaitForConditionAsync(Func<bool> condition, int timeoutMs = 2000, int intervalMs = 10)
@@ -193,7 +202,9 @@ public abstract class MainWindowTestBase
                 NullLoggerFactory.Instance,
                 _fileSystemExplorerService,
                 Substitute.For<Desktop.Services.IFileSystemChangeHandler>(),
-                _fileService);
+                _fileService,
+                _fileSystemMonitorService,
+                _options);
         var viewModel = new MainWindowViewModel(_vmLogger, _options, _editorStateService, editorViewModel, _logTransitionService, hotkeyService);
         return new MainWindow(viewModel, fileExplorerViewModel);
     }
@@ -212,7 +223,9 @@ public abstract class MainWindowTestBase
                 NullLoggerFactory.Instance,
                 _fileSystemExplorerService,
                 Substitute.For<Desktop.Services.IFileSystemChangeHandler>(),
-                _fileService);
+                _fileService,
+                _fileSystemMonitorService,
+                _options);
         var viewModel = new MainWindowViewModel(_vmLogger, _options, editorStateService, editorViewModel, _logTransitionService, hotkeyService);
         return new MainWindow(viewModel, fileExplorerViewModel);
     }
@@ -227,7 +240,9 @@ public abstract class MainWindowTestBase
                 NullLoggerFactory.Instance,
                 _fileSystemExplorerService,
                 Substitute.For<Desktop.Services.IFileSystemChangeHandler>(),
-                _fileService);
+                _fileService,
+                _fileSystemMonitorService,
+                _options);
         return new FileExplorerUserControl(fileExplorerViewModel);
     }
     
@@ -241,7 +256,9 @@ public abstract class MainWindowTestBase
                 NullLoggerFactory.Instance,
                 _fileSystemExplorerService,
                 Substitute.For<Desktop.Services.IFileSystemChangeHandler>(),
-                _fileService);
+                _fileService,
+                _fileSystemMonitorService,
+                _options);
         return new FileExplorerUserControl(fileExplorerViewModel);
     }
     

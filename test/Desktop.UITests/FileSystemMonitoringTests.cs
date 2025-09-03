@@ -56,21 +56,25 @@ public class FileSystemMonitoringTests
         ]
     };
 
-    private static (MainWindow window, IFileService fileService, MainWindowViewModel viewModel, FileExplorerViewModel fileExplorerViewModel) CreateMainWindowWithMonitoring()
+    private static (MainWindow window, IFileService fileService, IFileSystemMonitorService fileSystemMonitorService, MainWindowViewModel viewModel, FileExplorerViewModel fileExplorerViewModel) CreateMainWindowWithMonitoring()
     {
         var vmLogger = NullLoggerFactory.Instance.CreateLogger<MainWindowViewModel>();
         var tabBarLogger = NullLoggerFactory.Instance.CreateLogger<EditorTabBarViewModel>();
         var contentLogger = NullLoggerFactory.Instance.CreateLogger<EditorContentViewModel>();
         var stateLogger = NullLoggerFactory.Instance.CreateLogger<EditorStateService>();
-        var options = Options.Create(new ApplicationOptions());
+        var options = Options.Create(new ApplicationOptions 
+        { 
+            DefaultProjectFolder = "/test/path" 
+        });
         var fileService = Substitute.For<IFileService>();
+        var fileSystemMonitorService = Substitute.For<IFileSystemMonitorService>();
         var serviceProvider = Substitute.For<IServiceProvider>();
 
         fileService.GetFileStructureAsync().Returns(Task.FromResult<FileSystemItem?>(CreateTestStructure()));
         fileService.GetFileStructureAsync(Arg.Any<string>()).Returns(Task.FromResult<FileSystemItem?>(CreateTestStructure()));
         fileService.IsValidFolder(Arg.Any<string>()).Returns(true);
         fileService.ReadFileContentAsync(Arg.Any<string>()).Returns("Mock file content");
-        fileService.IsMonitoringFileSystem.Returns(false);
+        fileSystemMonitorService.IsMonitoring.Returns(false);
         fileService.CreateFileSystemItem(Arg.Any<string>(), Arg.Any<bool>()).Returns(callInfo =>
         {
             var path = callInfo.Arg<string>();
@@ -105,17 +109,19 @@ public class FileSystemMonitoringTests
             NullLoggerFactory.Instance,
             fileSystemExplorerService,
             fileSystemChangeHandler,
-            fileService);
+            fileService,
+            fileSystemMonitorService,
+            options);
         var viewModel = new MainWindowViewModel(vmLogger, options, editorStateService, editorViewModel, logTransitionService, hotkeyService);
         var window = new MainWindow(viewModel, fileExplorerViewModel);
 
-        return (window, fileService, viewModel, fileExplorerViewModel);
+        return (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel);
     }
 
     [AvaloniaTest]
-    public async Task FileService_Should_Start_Monitoring_When_File_Structure_Loads()
+    public async Task FileSystemMonitor_Should_Start_Monitoring_When_File_Structure_Loads()
     {
-        var (window, fileService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
+        var (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
 
         // Wait for file structure to load
@@ -129,14 +135,14 @@ public class FileSystemMonitoringTests
             waitCount++;
         }
 
-        // Verify that StartFileSystemMonitoring was called
-        fileService.Received(1).StartFileSystemMonitoring();
+        // Verify that StartMonitoring was called
+        fileSystemMonitorService.Received(1).StartMonitoring(Arg.Any<string>());
     }
 
     [AvaloniaTest]
     public async Task FileSystemItemViewModel_Should_Handle_File_Created_Event()
     {
-        var (window, fileService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
+        var (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
 
         // Wait for file structure to load
@@ -172,7 +178,7 @@ public class FileSystemMonitoringTests
             IsDirectory = false
         };
 
-        fileService.FileSystemChanged += Raise.EventWith(fileService, eventArgs);
+        fileSystemMonitorService.FileSystemChanged += Raise.EventWith(fileSystemMonitorService, eventArgs);
 
         // Wait for UI to update
         await Task.Delay(500);
@@ -191,7 +197,7 @@ public class FileSystemMonitoringTests
     [AvaloniaTest]
     public async Task FileSystemItemViewModel_Should_Handle_Directory_Created_Event()
     {
-        var (window, fileService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
+        var (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
 
         // Wait for file structure to load
@@ -218,7 +224,7 @@ public class FileSystemMonitoringTests
             IsDirectory = true
         };
 
-        fileService.FileSystemChanged += Raise.EventWith(fileService, eventArgs);
+        fileSystemMonitorService.FileSystemChanged += Raise.EventWith(fileSystemMonitorService, eventArgs);
 
         // Wait for UI to update
         await Task.Delay(500);
@@ -241,7 +247,7 @@ public class FileSystemMonitoringTests
     [AvaloniaTest]
     public async Task FileSystemItemViewModel_Should_Handle_File_Deleted_Event()
     {
-        var (window, fileService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
+        var (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
 
         // Wait for file structure to load
@@ -270,7 +276,7 @@ public class FileSystemMonitoringTests
             IsDirectory = false
         };
 
-        fileService.FileSystemChanged += Raise.EventWith(fileService, eventArgs);
+        fileSystemMonitorService.FileSystemChanged += Raise.EventWith(fileSystemMonitorService, eventArgs);
 
         // Wait for UI to update
         await Task.Delay(500);
@@ -291,7 +297,7 @@ public class FileSystemMonitoringTests
     [AvaloniaTest]
     public async Task FileSystemItemViewModel_Should_Handle_File_Renamed_Event()
     {
-        var (window, fileService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
+        var (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
 
         // Wait for file structure to load
@@ -321,7 +327,7 @@ public class FileSystemMonitoringTests
             IsDirectory = false
         };
 
-        fileService.FileSystemChanged += Raise.EventWith(fileService, eventArgs);
+        fileSystemMonitorService.FileSystemChanged += Raise.EventWith(fileSystemMonitorService, eventArgs);
 
         // Wait for UI to update
         await Task.Delay(500);
@@ -344,7 +350,7 @@ public class FileSystemMonitoringTests
     [AvaloniaTest]
     public async Task FileSystemItemViewModel_Should_Only_Update_Expanded_Folders()
     {
-        var (window, fileService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
+        var (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
 
         // Wait for file structure to load
@@ -373,7 +379,7 @@ public class FileSystemMonitoringTests
             IsDirectory = false
         };
 
-        fileService.FileSystemChanged += Raise.EventWith(fileService, eventArgs);
+        fileSystemMonitorService.FileSystemChanged += Raise.EventWith(fileSystemMonitorService, eventArgs);
 
         // Wait for UI to update
         await Task.Delay(500);
@@ -405,7 +411,7 @@ public class FileSystemMonitoringTests
     [AvaloniaTest]
     public async Task FileSystemItemViewModel_Should_Sort_New_Items_Correctly()
     {
-        var (window, fileService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
+        var (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
 
         // Wait for file structure to load
@@ -435,7 +441,7 @@ public class FileSystemMonitoringTests
             IsDirectory = true
         };
 
-        fileService.FileSystemChanged += Raise.EventWith(fileService, newDirEvent);
+        fileSystemMonitorService.FileSystemChanged += Raise.EventWith(fileSystemMonitorService, newDirEvent);
         await Task.Delay(500);
 
         // Add a new file that should be sorted among files
@@ -446,7 +452,7 @@ public class FileSystemMonitoringTests
             IsDirectory = false
         };
 
-        fileService.FileSystemChanged += Raise.EventWith(fileService, newFileEvent);
+        fileSystemMonitorService.FileSystemChanged += Raise.EventWith(fileSystemMonitorService, newFileEvent);
         await Task.Delay(500);
 
         // Verify sorting: directories first (alphabetical), then files (alphabetical)
@@ -476,7 +482,7 @@ public class FileSystemMonitoringTests
     [AvaloniaTest]
     public async Task FileSystemItemViewModel_Should_Ignore_Changes_Outside_Monitored_Path()
     {
-        var (window, fileService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
+        var (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
 
         // Wait for file structure to load
@@ -504,7 +510,7 @@ public class FileSystemMonitoringTests
             IsDirectory = false
         };
 
-        fileService.FileSystemChanged += Raise.EventWith(fileService, eventArgs);
+        fileSystemMonitorService.FileSystemChanged += Raise.EventWith(fileSystemMonitorService, eventArgs);
 
         // Wait for potential UI update
         await Task.Delay(500);
@@ -517,7 +523,7 @@ public class FileSystemMonitoringTests
     [AvaloniaTest]
     public async Task FileSystemItemViewModel_Should_Preload_Next_Level_When_Expanded()
     {
-        var (window, fileService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
+        var (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
 
         // Wait for file structure to load
