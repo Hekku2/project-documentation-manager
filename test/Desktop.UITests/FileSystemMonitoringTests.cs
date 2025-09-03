@@ -56,6 +56,19 @@ public class FileSystemMonitoringTests
         ]
     };
 
+    private static async Task WaitForFileStructureLoadAsync(FileExplorerViewModel fileExplorerViewModel)
+    {
+        await Task.Delay(500);
+
+        var maxWait = 50;
+        var waitCount = 0;
+        while (fileExplorerViewModel.RootItem == null && waitCount < maxWait)
+        {
+            await Task.Delay(100);
+            waitCount++;
+        }
+    }
+
     private static (MainWindow window, IFileService fileService, IFileSystemMonitorService fileSystemMonitorService, MainWindowViewModel viewModel, FileExplorerViewModel fileExplorerViewModel) CreateMainWindowWithMonitoring()
     {
         var vmLogger = NullLoggerFactory.Instance.CreateLogger<MainWindowViewModel>();
@@ -124,16 +137,7 @@ public class FileSystemMonitoringTests
         var (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
 
-        // Wait for file structure to load
-        await Task.Delay(500);
-
-        var maxWait = 50;
-        var waitCount = 0;
-        while (fileExplorerViewModel.RootItem == null && waitCount < maxWait)
-        {
-            await Task.Delay(100);
-            waitCount++;
-        }
+        await WaitForFileStructureLoadAsync(fileExplorerViewModel);
 
         // Verify that StartMonitoring was called
         fileSystemMonitorService.Received(1).StartMonitoring(Arg.Any<string>());
@@ -145,16 +149,7 @@ public class FileSystemMonitoringTests
         var (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
 
-        // Wait for file structure to load
-        await Task.Delay(500);
-
-        var maxWait = 50;
-        var waitCount = 0;
-        while (fileExplorerViewModel.RootItem == null && waitCount < maxWait)
-        {
-            await Task.Delay(100);
-            waitCount++;
-        }
+        await WaitForFileStructureLoadAsync(fileExplorerViewModel);
 
         Assert.That(fileExplorerViewModel.RootItem, Is.Not.Null, "Root item should be loaded");
 
@@ -200,16 +195,7 @@ public class FileSystemMonitoringTests
         var (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
 
-        // Wait for file structure to load
-        await Task.Delay(500);
-
-        var maxWait = 50;
-        var waitCount = 0;
-        while (fileExplorerViewModel.RootItem == null && waitCount < maxWait)
-        {
-            await Task.Delay(100);
-            waitCount++;
-        }
+        await WaitForFileStructureLoadAsync(fileExplorerViewModel);
 
         Assert.That(fileExplorerViewModel.RootItem, Is.Not.Null, "Root item should be loaded");
 
@@ -250,16 +236,7 @@ public class FileSystemMonitoringTests
         var (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
 
-        // Wait for file structure to load
-        await Task.Delay(500);
-
-        var maxWait = 50;
-        var waitCount = 0;
-        while (fileExplorerViewModel.RootItem == null && waitCount < maxWait)
-        {
-            await Task.Delay(100);
-            waitCount++;
-        }
+        await WaitForFileStructureLoadAsync(fileExplorerViewModel);
 
         Assert.That(fileExplorerViewModel.RootItem, Is.Not.Null, "Root item should be loaded");
 
@@ -300,16 +277,7 @@ public class FileSystemMonitoringTests
         var (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
 
-        // Wait for file structure to load
-        await Task.Delay(500);
-
-        var maxWait = 50;
-        var waitCount = 0;
-        while (fileExplorerViewModel.RootItem == null && waitCount < maxWait)
-        {
-            await Task.Delay(100);
-            waitCount++;
-        }
+        await WaitForFileStructureLoadAsync(fileExplorerViewModel);
 
         Assert.That(fileExplorerViewModel.RootItem, Is.Not.Null, "Root item should be loaded");
 
@@ -353,16 +321,7 @@ public class FileSystemMonitoringTests
         var (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
 
-        // Wait for file structure to load
-        await Task.Delay(500);
-
-        var maxWait = 50;
-        var waitCount = 0;
-        while (fileExplorerViewModel.RootItem == null && waitCount < maxWait)
-        {
-            await Task.Delay(100);
-            waitCount++;
-        }
+        await WaitForFileStructureLoadAsync(fileExplorerViewModel);
 
         Assert.That(fileExplorerViewModel.RootItem, Is.Not.Null, "Root item should be loaded");
 
@@ -414,16 +373,7 @@ public class FileSystemMonitoringTests
         var (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
 
-        // Wait for file structure to load
-        await Task.Delay(500);
-
-        var maxWait = 50;
-        var waitCount = 0;
-        while (fileExplorerViewModel.RootItem == null && waitCount < maxWait)
-        {
-            await Task.Delay(100);
-            waitCount++;
-        }
+        await WaitForFileStructureLoadAsync(fileExplorerViewModel);
 
         Assert.That(fileExplorerViewModel.RootItem, Is.Not.Null, "Root item should be loaded");
 
@@ -485,16 +435,7 @@ public class FileSystemMonitoringTests
         var (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
 
-        // Wait for file structure to load
-        await Task.Delay(500);
-
-        var maxWait = 50;
-        var waitCount = 0;
-        while (fileExplorerViewModel.RootItem == null && waitCount < maxWait)
-        {
-            await Task.Delay(100);
-            waitCount++;
-        }
+        await WaitForFileStructureLoadAsync(fileExplorerViewModel);
 
         Assert.That(fileExplorerViewModel.RootItem, Is.Not.Null, "Root item should be loaded");
 
@@ -526,16 +467,7 @@ public class FileSystemMonitoringTests
         var (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
 
-        // Wait for file structure to load
-        await Task.Delay(500);
-
-        var maxWait = 50;
-        var waitCount = 0;
-        while (fileExplorerViewModel.RootItem == null && waitCount < maxWait)
-        {
-            await Task.Delay(100);
-            waitCount++;
-        }
+        await WaitForFileStructureLoadAsync(fileExplorerViewModel);
 
         Assert.That(fileExplorerViewModel.RootItem, Is.Not.Null, "Root item should be loaded");
 
