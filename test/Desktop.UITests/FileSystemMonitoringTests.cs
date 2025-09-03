@@ -144,7 +144,7 @@ public class FileSystemMonitoringTests
     }
 
     [AvaloniaTest]
-    public async Task FileSystemItemViewModel_Should_Handle_File_Created_Event()
+    public async Task FileExplorerViewModel_Should_Handle_File_Created_Event()
     {
         var (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
@@ -190,7 +190,7 @@ public class FileSystemMonitoringTests
     }
 
     [AvaloniaTest]
-    public async Task FileSystemItemViewModel_Should_Handle_Directory_Created_Event()
+    public async Task FileExplorerViewModel_Should_Handle_Directory_Created_Event()
     {
         var (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
@@ -231,7 +231,7 @@ public class FileSystemMonitoringTests
     }
 
     [AvaloniaTest]
-    public async Task FileSystemItemViewModel_Should_Handle_File_Deleted_Event()
+    public async Task FileExplorerViewModel_Should_Handle_File_Deleted_Event()
     {
         var (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
@@ -275,7 +275,7 @@ public class FileSystemMonitoringTests
     }
 
     [AvaloniaTest]
-    public async Task FileSystemItemViewModel_Should_Handle_File_Renamed_Event()
+    public async Task FileExplorerViewModel_Should_Handle_File_Renamed_Event()
     {
         var (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
@@ -322,7 +322,7 @@ public class FileSystemMonitoringTests
     }
 
     [AvaloniaTest]
-    public async Task FileSystemItemViewModel_Should_Only_Update_Expanded_Folders()
+    public async Task FileExplorerViewModel_Should_Only_Update_Expanded_Folders()
     {
         var (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
@@ -374,7 +374,7 @@ public class FileSystemMonitoringTests
     }
 
     [AvaloniaTest]
-    public async Task FileSystemItemViewModel_Should_Sort_New_Items_Correctly()
+    public async Task FileExplorerViewModel_Should_Sort_New_Items_Correctly()
     {
         var (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
@@ -439,7 +439,7 @@ public class FileSystemMonitoringTests
     }
 
     [AvaloniaTest]
-    public async Task FileSystemItemViewModel_Should_Ignore_Changes_Outside_Monitored_Path()
+    public async Task FileExplorerViewModel_Should_Ignore_Changes_Outside_Monitored_Path()
     {
         var (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
@@ -471,7 +471,7 @@ public class FileSystemMonitoringTests
     }
 
     [AvaloniaTest]
-    public async Task FileSystemItemViewModel_Should_Preload_Next_Level_When_Expanded()
+    public async Task FileExplorerViewModel_Should_Preload_Next_Level_When_Expanded()
     {
         var (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
