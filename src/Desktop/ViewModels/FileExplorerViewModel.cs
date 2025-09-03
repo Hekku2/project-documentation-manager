@@ -58,7 +58,6 @@ public class FileExplorerViewModel(
             var factory = new FileSystemItemViewModelFactory(
                 loggerFactory,
                 fileSystemExplorerService,
-                fileSystemChangeHandler,
                 onItemSelected: OnFileSelected,
                 onItemPreview: OnFilePreview);
 

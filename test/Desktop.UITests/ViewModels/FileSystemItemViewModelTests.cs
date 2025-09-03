@@ -13,7 +13,6 @@ public class FileSystemItemViewModelTests
 {
     private IFileSystemItemViewModelFactory _fileSystemItemViewModelFactory = null!;
     private IFileSystemExplorerService _fileSystemExplorerService = null!;
-    private IFileSystemChangeHandler _fileSystemChangeHandler = null!;
 
     [SetUp]
     public void Setup()
@@ -22,12 +21,10 @@ public class FileSystemItemViewModelTests
         loggerFactory.CreateLogger<FileSystemItemViewModel>().Returns(Substitute.For<ILogger<FileSystemItemViewModel>>());
         
         _fileSystemExplorerService = Substitute.For<IFileSystemExplorerService>();
-        _fileSystemChangeHandler = Substitute.For<IFileSystemChangeHandler>();
         
         _fileSystemItemViewModelFactory = new FileSystemItemViewModelFactory(
             loggerFactory,
             _fileSystemExplorerService,
-            _fileSystemChangeHandler,
             _ => { }, // onItemSelected
             _ => { }  // onItemPreview
         );

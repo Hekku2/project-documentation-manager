@@ -25,13 +25,11 @@ public class FileSystemItemViewModel : ViewModelBase
     private readonly ILogger<FileSystemItemViewModel> _logger;
     private readonly IFileSystemExplorerService _fileSystemExplorerService;
     private readonly IFileSystemItemViewModelFactory _viewModelFactory;
-    private readonly IFileSystemChangeHandler _fileSystemChangeHandler;
 
     public FileSystemItemViewModel(
         ILogger<FileSystemItemViewModel> logger,
         IFileSystemItemViewModelFactory viewModelFactory,
         IFileSystemExplorerService fileSystemExplorerService,
-        IFileSystemChangeHandler fileSystemChangeHandler,
         FileSystemItem item,
         bool loadChildren,
         Action<string> onFileSelected,
@@ -45,7 +43,6 @@ public class FileSystemItemViewModel : ViewModelBase
         _onFilePreview = onFilePreview;
         _fileSystemExplorerService = fileSystemExplorerService;
         _viewModelFactory = viewModelFactory;
-        _fileSystemChangeHandler = fileSystemChangeHandler;
         
         // Initialize context menu commands
         OpenCommand = new RelayCommand(ExecuteOpen, CanExecuteOpen);
