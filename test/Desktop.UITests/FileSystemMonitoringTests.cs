@@ -131,6 +131,12 @@ public class FileSystemMonitoringTests
         return (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel);
     }
 
+    private static void Cleanup(MainWindow window, FileExplorerViewModel fileExplorerViewModel)
+    {
+        window.Close();
+        fileExplorerViewModel.Dispose();
+    }
+
     [AvaloniaTest]
     public async Task FileSystemMonitor_Should_Start_Monitoring_When_File_Structure_Loads()
     {
@@ -141,6 +147,8 @@ public class FileSystemMonitoringTests
 
         // Verify that StartMonitoring was called
         fileSystemMonitorService.Received(1).StartMonitoring(Arg.Any<string>());
+        
+        Cleanup(window, fileExplorerViewModel);
     }
 
     [AvaloniaTest]
@@ -187,6 +195,8 @@ public class FileSystemMonitoringTests
             Assert.That(newFile!.IsDirectory, Is.False, "newfile.cs should be a file");
             Assert.That(newFile.FullPath, Is.EqualTo("/test/path/src/newfile.cs"), "newfile.cs should have correct path");
         });
+        
+        Cleanup(window, fileExplorerViewModel);
     }
 
     [AvaloniaTest]
@@ -228,6 +238,8 @@ public class FileSystemMonitoringTests
             var firstChild = fileExplorerViewModel.RootItem.Children.First();
             Assert.That(firstChild.Name, Is.EqualTo("docs"), "docs should be sorted first (directories first, alphabetical)");
         });
+        
+        Cleanup(window, fileExplorerViewModel);
     }
 
     [AvaloniaTest]
@@ -272,6 +284,8 @@ public class FileSystemMonitoringTests
             var srcFolder = fileExplorerViewModel.RootItem.Children.FirstOrDefault(c => c.Name == "src");
             Assert.That(srcFolder, Is.Not.Null, "src folder should still exist");
         });
+        
+        Cleanup(window, fileExplorerViewModel);
     }
 
     [AvaloniaTest]
@@ -319,6 +333,8 @@ public class FileSystemMonitoringTests
             Assert.That(newFile!.IsDirectory, Is.False, "CHANGELOG.md should be a file");
             Assert.That(newFile.FullPath, Is.EqualTo("/test/path/CHANGELOG.md"), "CHANGELOG.md should have correct path");
         });
+        
+        Cleanup(window, fileExplorerViewModel);
     }
 
     [AvaloniaTest]
@@ -371,6 +387,8 @@ public class FileSystemMonitoringTests
             var childrenNames = srcFolder.Children.Select(c => c.Name).OrderBy(n => n).ToArray();
             Assert.That(childrenNames, Is.EqualTo(new[] { "controllers", "main.cs", "newfile.cs" }), "src should have controllers, main.cs and newfile.cs");
         });
+        
+        Cleanup(window, fileExplorerViewModel);
     }
 
     [AvaloniaTest]
@@ -436,6 +454,8 @@ public class FileSystemMonitoringTests
             Assert.That(fileExplorerViewModel.RootItem.Children[4].Name, Is.EqualTo("README.md"), "README.md should be fifth (file, alphabetical)");
             Assert.That(fileExplorerViewModel.RootItem.Children[4].IsDirectory, Is.False, "fifth item should be file");
         });
+        
+        Cleanup(window, fileExplorerViewModel);
     }
 
     [AvaloniaTest]
@@ -468,6 +488,8 @@ public class FileSystemMonitoringTests
         // Verify no changes occurred
         Assert.That(fileExplorerViewModel.RootItem.Children, Has.Count.EqualTo(initialCount),
             "root should still have same number of children (change was outside monitored path)");
+        
+        Cleanup(window, fileExplorerViewModel);
     }
 
     [AvaloniaTest]
@@ -541,5 +563,7 @@ public class FileSystemMonitoringTests
             Assert.That(unitFolder.Children, Is.Empty, "unit folder should be preloaded (empty)");
             Assert.That(integrationFolder.Children, Is.Empty, "integration folder should be preloaded (empty)");
         });
+        
+        Cleanup(window, fileExplorerViewModel);
     }
 }
