@@ -22,10 +22,13 @@ public class FileExplorerTests : MainWindowTestBase
 
         // Get the TreeView
         var treeView = fileExplorer.GetVisualDescendants().OfType<TreeView>().FirstOrDefault();
-        Assert.That(treeView, Is.Not.Null, "TreeView not found");
+        Assert.Multiple(() =>
+        {
+            Assert.That(treeView, Is.Not.Null, "TreeView not found");
 
-        Assert.That(viewModel.RootItem, Is.Not.Null, "Root item should be loaded");
-        
+            Assert.That(viewModel.RootItem, Is.Not.Null, "Root item should be loaded");
+        });
+
         // Root should be expanded (auto-expanded)
         Assert.That(viewModel.RootItem!.IsExpanded, Is.True, "Root folder should be expanded by default");
 
@@ -57,12 +60,15 @@ public class FileExplorerTests : MainWindowTestBase
         // Get the src folder (should not be expanded initially)
         var srcFolder = viewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "src");
         Assert.That(srcFolder, Is.Not.Null, "src folder should exist");
-        Assert.That(srcFolder!.IsExpanded, Is.False, "src folder should not be expanded initially");
+        Assert.Multiple(() =>
+        {
+            Assert.That(srcFolder!.IsExpanded, Is.False, "src folder should not be expanded initially");
 
-        // With the new loading behavior, visible folders load their children immediately
-        // So src folder should now have children loaded since it's visible in the tree
-        Assert.That(srcFolder.Children.Count, Is.GreaterThan(0), "src folder should have children loaded when visible");
-        Assert.That(srcFolder.HasChildren, Is.True, "src folder should indicate it has children");
+            // With the new loading behavior, visible folders load their children immediately
+            // So src folder should now have children loaded since it's visible in the tree
+            Assert.That(srcFolder.Children, Is.Not.Empty, "src folder should have children loaded when visible");
+            Assert.That(srcFolder.HasChildren, Is.True, "src folder should indicate it has children");
+        });
 
         // Expand the src folder and wait for children to load
         await ExpandFolderAndWaitAsync(srcFolder);
@@ -71,8 +77,8 @@ public class FileExplorerTests : MainWindowTestBase
         Assert.Multiple(() =>
         {
             Assert.That(srcFolder.IsExpanded, Is.True, "src folder should be expanded");
-            Assert.That(srcFolder.Children.Count, Is.EqualTo(3), "src folder should have 3 actual children");
-            
+            Assert.That(srcFolder.Children, Has.Count.EqualTo(3), "src folder should have 3 actual children");
+
             // Verify the actual children are loaded
             var componentsFolder = srcFolder.Children.FirstOrDefault(c => c.Name == "components");
             var utilsFolder = srcFolder.Children.FirstOrDefault(c => c.Name == "utils");
@@ -114,8 +120,8 @@ public class FileExplorerTests : MainWindowTestBase
         testFolder!.IsExpanded = true;
 
         // Wait for lazy loading to complete
-        await WaitForConditionAsync(() => 
-            srcFolder.Children.Any(c => c.Name != "Loading...") && 
+        await WaitForConditionAsync(() =>
+            srcFolder.Children.Any(c => c.Name != "Loading...") &&
             testFolder.Children.Any(c => c.Name != "Loading..."), 2000);
 
         Assert.Multiple(() =>
@@ -123,9 +129,9 @@ public class FileExplorerTests : MainWindowTestBase
             // Both should be expanded with proper children
             Assert.That(srcFolder.IsExpanded, Is.True, "src folder should be expanded");
             Assert.That(testFolder.IsExpanded, Is.True, "test folder should be expanded");
-            
-            Assert.That(srcFolder.Children.Count, Is.EqualTo(3), "src should have 3 children");
-            Assert.That(testFolder.Children.Count, Is.EqualTo(2), "test should have 2 children");
+
+            Assert.That(srcFolder.Children, Has.Count.EqualTo(3), "src should have 3 children");
+            Assert.That(testFolder.Children, Has.Count.EqualTo(2), "test should have 2 children");
 
             // Verify test folder contents
             var unitFolder = testFolder.Children.FirstOrDefault(c => c.Name == "unit");

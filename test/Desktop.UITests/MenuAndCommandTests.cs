@@ -72,10 +72,13 @@ public class MenuAndCommandTests : MainWindowTestBase
         // Find the main menu and verify it has the updated structure
         var menu = window.FindControl<Menu>("MainMenu");
         Assert.That(menu, Is.Not.Null, "Main menu should exist");
-        Assert.That(menu.Items.Count, Is.EqualTo(3), "Menu should have File, View, and Build menus");
+        Assert.Multiple(() =>
+        {
+            Assert.That(menu.Items, Has.Count.EqualTo(3), "Menu should have File, View, and Build menus");
 
-        // Test that the ExitCommand exists and works (bound to the Exit menu item)
-        Assert.That(viewModel!.ExitCommand, Is.Not.Null, "ExitCommand should be available for menu binding");
+            // Test that the ExitCommand exists and works (bound to the Exit menu item)
+            Assert.That(viewModel!.ExitCommand, Is.Not.Null, "ExitCommand should be available for menu binding");
+        });
 
         // Test that the command can be executed
         var canExecute = viewModel.ExitCommand.CanExecute(null);
@@ -387,7 +390,7 @@ public class MenuAndCommandTests : MainWindowTestBase
             await viewModel.EditorTabBar.OpenFileAsync(tempFile2);
             await viewModel.EditorTabBar.OpenFileAsync(tempFile3);
 
-            Assert.That(viewModel.EditorTabBar.EditorTabs.Count, Is.EqualTo(3), "Should have 3 tabs open");
+            Assert.That(viewModel.EditorTabBar.EditorTabs, Has.Count.EqualTo(3), "Should have 3 tabs open");
 
             // SaveAllCommand should not be executable when files are open but not modified
             var canExecuteUnmodified = viewModel.SaveAllCommand.CanExecute(null);

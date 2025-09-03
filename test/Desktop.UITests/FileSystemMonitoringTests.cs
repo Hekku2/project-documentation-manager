@@ -75,9 +75,9 @@ public class FileSystemMonitoringTests
         var tabBarLogger = NullLoggerFactory.Instance.CreateLogger<EditorTabBarViewModel>();
         var contentLogger = NullLoggerFactory.Instance.CreateLogger<EditorContentViewModel>();
         var stateLogger = NullLoggerFactory.Instance.CreateLogger<EditorStateService>();
-        var options = Options.Create(new ApplicationOptions 
-        { 
-            DefaultProjectFolder = "/test/path" 
+        var options = Options.Create(new ApplicationOptions
+        {
+            DefaultProjectFolder = "/test/path"
         });
         var fileService = Substitute.For<IFileService>();
         var fileSystemMonitorService = Substitute.For<IFileSystemMonitorService>();
@@ -161,7 +161,7 @@ public class FileSystemMonitoringTests
         await Task.Delay(1000);
 
         // Initial state: src folder should have 2 children (controllers, main.cs)
-        Assert.That(srcFolder.Children.Count, Is.EqualTo(2), "src should initially have 2 children");
+        Assert.That(srcFolder.Children, Has.Count.EqualTo(2), "src should initially have 2 children");
         var mainCs = srcFolder.Children.FirstOrDefault(c => c.Name == "main.cs");
         Assert.That(mainCs, Is.Not.Null, "src should contain main.cs");
 
@@ -181,7 +181,7 @@ public class FileSystemMonitoringTests
         // Verify new file was added
         Assert.Multiple(() =>
         {
-            Assert.That(srcFolder.Children.Count, Is.EqualTo(3), "src should now have 3 children");
+            Assert.That(srcFolder.Children, Has.Count.EqualTo(3), "src should now have 3 children");
             var newFile = srcFolder.Children.FirstOrDefault(c => c.Name == "newfile.cs");
             Assert.That(newFile, Is.Not.Null, "newfile.cs should be added");
             Assert.That(newFile!.IsDirectory, Is.False, "newfile.cs should be a file");
@@ -200,7 +200,7 @@ public class FileSystemMonitoringTests
         Assert.That(fileExplorerViewModel.RootItem, Is.Not.Null, "Root item should be loaded");
 
         // Initial state: root should have 3 children (src, tests, README.md)
-        Assert.That(fileExplorerViewModel.RootItem!.Children.Count, Is.EqualTo(3), "root should initially have 3 children");
+        Assert.That(fileExplorerViewModel.RootItem!.Children, Has.Count.EqualTo(3), "root should initially have 3 children");
 
         // Simulate directory created event
         var eventArgs = new FileSystemChangedEventArgs
@@ -218,7 +218,7 @@ public class FileSystemMonitoringTests
         // Verify new directory was added
         Assert.Multiple(() =>
         {
-            Assert.That(fileExplorerViewModel.RootItem.Children.Count, Is.EqualTo(4), "root should now have 4 children");
+            Assert.That(fileExplorerViewModel.RootItem.Children, Has.Count.EqualTo(4), "root should now have 4 children");
             var newDir = fileExplorerViewModel.RootItem.Children.FirstOrDefault(c => c.Name == "docs");
             Assert.That(newDir, Is.Not.Null, "docs directory should be added");
             Assert.That(newDir!.IsDirectory, Is.True, "docs should be a directory");
@@ -242,8 +242,11 @@ public class FileSystemMonitoringTests
 
         // Initial state: root should have README.md
         var readmeFile = fileExplorerViewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "README.md");
-        Assert.That(readmeFile, Is.Not.Null, "README.md should exist initially");
-        Assert.That(fileExplorerViewModel.RootItem.Children.Count, Is.EqualTo(3), "root should initially have 3 children");
+        Assert.Multiple(() =>
+        {
+            Assert.That(readmeFile, Is.Not.Null, "README.md should exist initially");
+            Assert.That(fileExplorerViewModel.RootItem.Children, Has.Count.EqualTo(3), "root should initially have 3 children");
+        });
 
         // Simulate file deleted event
         var eventArgs = new FileSystemChangedEventArgs
@@ -261,7 +264,7 @@ public class FileSystemMonitoringTests
         // Verify file was removed
         Assert.Multiple(() =>
         {
-            Assert.That(fileExplorerViewModel.RootItem.Children.Count, Is.EqualTo(2), "root should now have 2 children");
+            Assert.That(fileExplorerViewModel.RootItem.Children, Has.Count.EqualTo(2), "root should now have 2 children");
             var remainingReadme = fileExplorerViewModel.RootItem.Children.FirstOrDefault(c => c.Name == "README.md");
             Assert.That(remainingReadme, Is.Null, "README.md should be removed");
 
@@ -283,8 +286,11 @@ public class FileSystemMonitoringTests
 
         // Initial state: root should have README.md
         var readmeFile = fileExplorerViewModel.RootItem!.Children.FirstOrDefault(c => c.Name == "README.md");
-        Assert.That(readmeFile, Is.Not.Null, "README.md should exist initially");
-        Assert.That(fileExplorerViewModel.RootItem.Children.Count, Is.EqualTo(3), "root should initially have 3 children");
+        Assert.Multiple(() =>
+        {
+            Assert.That(readmeFile, Is.Not.Null, "README.md should exist initially");
+            Assert.That(fileExplorerViewModel.RootItem.Children, Has.Count.EqualTo(3), "root should initially have 3 children");
+        });
 
         // Simulate file renamed event
         var eventArgs = new FileSystemChangedEventArgs
@@ -303,7 +309,7 @@ public class FileSystemMonitoringTests
         // Verify file was renamed (old removed, new added)
         Assert.Multiple(() =>
         {
-            Assert.That(fileExplorerViewModel.RootItem.Children.Count, Is.EqualTo(3), "root should still have 3 children");
+            Assert.That(fileExplorerViewModel.RootItem.Children, Has.Count.EqualTo(3), "root should still have 3 children");
 
             var oldFile = fileExplorerViewModel.RootItem.Children.FirstOrDefault(c => c.Name == "README.md");
             Assert.That(oldFile, Is.Null, "README.md should be removed");
@@ -348,7 +354,7 @@ public class FileSystemMonitoringTests
         Assert.Multiple(() =>
         {
             Assert.That(srcFolder.IsExpanded, Is.False, "src folder should still not be expanded");
-            Assert.That(srcFolder.Children.Count, Is.GreaterThan(0), "src should have children loaded when visible");
+            Assert.That(srcFolder.Children, Is.Not.Empty, "src should have children loaded when visible");
             Assert.That(srcFolder.HasChildren, Is.True, "src should indicate it has children");
         });
 
@@ -361,7 +367,7 @@ public class FileSystemMonitoringTests
         Assert.Multiple(() =>
         {
             Assert.That(srcFolder.IsExpanded, Is.True, "src folder should be expanded");
-            Assert.That(srcFolder.Children.Count, Is.EqualTo(3), "src should have actual children loaded including the new file");
+            Assert.That(srcFolder.Children, Has.Count.EqualTo(3), "src should have actual children loaded including the new file");
             var childrenNames = srcFolder.Children.Select(c => c.Name).OrderBy(n => n).ToArray();
             Assert.That(childrenNames, Is.EqualTo(new[] { "controllers", "main.cs", "newfile.cs" }), "src should have controllers, main.cs and newfile.cs");
         });
@@ -377,11 +383,14 @@ public class FileSystemMonitoringTests
 
         Assert.That(fileExplorerViewModel.RootItem, Is.Not.Null, "Root item should be loaded");
 
-        // Initial state: root has [src (dir), tests (dir), README.md (file)]
-        Assert.That(fileExplorerViewModel.RootItem!.Children.Count, Is.EqualTo(3), "root should initially have 3 children");
-        Assert.That(fileExplorerViewModel.RootItem.Children[0].Name, Is.EqualTo("src"), "src should be first (directory, alphabetical)");
-        Assert.That(fileExplorerViewModel.RootItem.Children[1].Name, Is.EqualTo("tests"), "tests should be second (directory, alphabetical)");
-        Assert.That(fileExplorerViewModel.RootItem.Children[2].Name, Is.EqualTo("README.md"), "README.md should be third (file)");
+        Assert.Multiple(() =>
+        {
+            // Initial state: root has [src (dir), tests (dir), README.md (file)]
+            Assert.That(fileExplorerViewModel.RootItem!.Children, Has.Count.EqualTo(3), "root should initially have 3 children");
+            Assert.That(fileExplorerViewModel.RootItem.Children[0].Name, Is.EqualTo("src"), "src should be first (directory, alphabetical)");
+            Assert.That(fileExplorerViewModel.RootItem.Children[1].Name, Is.EqualTo("tests"), "tests should be second (directory, alphabetical)");
+            Assert.That(fileExplorerViewModel.RootItem.Children[2].Name, Is.EqualTo("README.md"), "README.md should be third (file)");
+        });
 
         // Add a new directory that should be sorted first alphabetically among directories
         var newDirEvent = new FileSystemChangedEventArgs
@@ -408,7 +417,7 @@ public class FileSystemMonitoringTests
         // Verify sorting: directories first (alphabetical), then files (alphabetical)
         Assert.Multiple(() =>
         {
-            Assert.That(fileExplorerViewModel.RootItem.Children.Count, Is.EqualTo(5), "root should have 5 children");
+            Assert.That(fileExplorerViewModel.RootItem.Children, Has.Count.EqualTo(5), "root should have 5 children");
 
             // Directories first, alphabetically
             Assert.That(fileExplorerViewModel.RootItem.Children[0].Name, Is.EqualTo("docs"), "docs should be first (dir, alphabetical)");
@@ -457,7 +466,7 @@ public class FileSystemMonitoringTests
         await Task.Delay(500);
 
         // Verify no changes occurred
-        Assert.That(fileExplorerViewModel.RootItem.Children.Count, Is.EqualTo(initialCount),
+        Assert.That(fileExplorerViewModel.RootItem.Children, Has.Count.EqualTo(initialCount),
             "root should still have same number of children (change was outside monitored path)");
     }
 
@@ -482,7 +491,7 @@ public class FileSystemMonitoringTests
         // Verify src folder has loaded its direct children
         Assert.Multiple(() =>
         {
-            Assert.That(srcFolder.Children.Count, Is.EqualTo(2), "src should have 2 direct children");
+            Assert.That(srcFolder.Children, Has.Count.EqualTo(2), "src should have 2 direct children");
 
             var controllersFolder = srcFolder.Children.FirstOrDefault(c => c.Name == "controllers");
             Assert.That(controllersFolder, Is.Not.Null, "controllers folder should exist");
@@ -501,7 +510,7 @@ public class FileSystemMonitoringTests
         Assert.Multiple(() =>
         {
             Assert.That(controllersFolder!.IsExpanded, Is.False, "controllers folder should not be expanded yet");
-            Assert.That(controllersFolder.Children.Count, Is.EqualTo(1), "controllers folder should have preloaded its children");
+            Assert.That(controllersFolder.Children, Has.Count.EqualTo(1), "controllers folder should have preloaded its children");
 
             var homeController = controllersFolder.Children.FirstOrDefault(c => c.Name == "HomeController.cs");
             Assert.That(homeController, Is.Not.Null, "HomeController.cs should be preloaded");
@@ -518,7 +527,7 @@ public class FileSystemMonitoringTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(testsFolder.Children.Count, Is.EqualTo(2), "tests should have 2 direct children");
+            Assert.That(testsFolder.Children, Has.Count.EqualTo(2), "tests should have 2 direct children");
 
             var unitFolder = testsFolder.Children.FirstOrDefault(c => c.Name == "unit");
             var integrationFolder = testsFolder.Children.FirstOrDefault(c => c.Name == "integration");
@@ -529,8 +538,8 @@ public class FileSystemMonitoringTests
             // Both should be preloaded (even though empty)
             Assert.That(unitFolder!.IsExpanded, Is.False, "unit folder should not be expanded yet");
             Assert.That(integrationFolder!.IsExpanded, Is.False, "integration folder should not be expanded yet");
-            Assert.That(unitFolder.Children.Count, Is.EqualTo(0), "unit folder should be preloaded (empty)");
-            Assert.That(integrationFolder.Children.Count, Is.EqualTo(0), "integration folder should be preloaded (empty)");
+            Assert.That(unitFolder.Children, Is.Empty, "unit folder should be preloaded (empty)");
+            Assert.That(integrationFolder.Children, Is.Empty, "integration folder should be preloaded (empty)");
         });
     }
 }

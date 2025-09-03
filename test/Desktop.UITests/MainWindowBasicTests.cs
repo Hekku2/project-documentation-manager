@@ -27,9 +27,9 @@ public class MainWindowBasicTests : MainWindowTestBase
 
         var menu = window.FindControl<Menu>("MainMenu");
         Assert.That(menu, Is.Not.Null, "Main menu not found");
-        
+
         // Verify the menu structure contains File and Build menus
-        Assert.That(menu.Items.Count, Is.EqualTo(3), "Menu should have three top-level items (File, View, and Build)");
+        Assert.That(menu.Items, Has.Count.EqualTo(3), "Menu should have three top-level items (File, View, and Build)");
     }
 
     [AvaloniaTest]
@@ -40,7 +40,7 @@ public class MainWindowBasicTests : MainWindowTestBase
 
         // Find TreeView by traversing the visual tree
         var treeViews = window.GetVisualDescendants().OfType<TreeView>().ToList();
-        Assert.That(treeViews.Count, Is.GreaterThan(0), "File explorer TreeView not found");
+        Assert.That(treeViews, Is.Not.Empty, "File explorer TreeView not found");
     }
 
     [AvaloniaTest]
@@ -48,18 +48,18 @@ public class MainWindowBasicTests : MainWindowTestBase
     {
         var window = CreateMainWindow();
         window.Show();
-        
+
         // Open a file first to ensure FileEditorContent is displayed
         var viewModel = (MainWindowViewModel)window.DataContext!;
         await viewModel.EditorTabBar.OpenFileAsync("/test/file.md");
-        
+
         // Wait for the file to be opened and ensure we have an active tab
         await WaitForConditionAsync(() => viewModel.EditorTabBar.ActiveTab != null, 2000);
 
         // Find the DocumentEditor within the FileEditorContent
         var editorUserControl = window.GetVisualDescendants().OfType<EditorUserControl>().FirstOrDefault();
         Assert.That(editorUserControl, Is.Not.Null, "EditorUserControl not found");
-        
+
         var fileEditorContent = editorUserControl!.GetVisualDescendants().OfType<Desktop.Views.FileEditorContent>().FirstOrDefault();
         var documentEditor = fileEditorContent?.FindControl<TextBox>("DocumentEditor");
         Assert.Multiple(() =>
