@@ -128,6 +128,7 @@ public class FileExplorerViewModel(
             if (_eventHandler != null && fileService != null)
             {
                 fileService.FileSystemChanged -= _eventHandler;
+                _eventHandler = null;
             }
             fileService?.StopFileSystemMonitoring();
 
