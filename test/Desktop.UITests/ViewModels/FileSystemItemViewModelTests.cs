@@ -2,8 +2,7 @@ using Avalonia.Headless.NUnit;
 using Desktop.Factories;
 using Desktop.Models;
 using Desktop.Services;
-using Desktop.ViewModels;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 
 namespace Desktop.UITests.ViewModels;
@@ -17,9 +16,7 @@ public class FileSystemItemViewModelTests
     [SetUp]
     public void Setup()
     {
-        var loggerFactory = Substitute.For<ILoggerFactory>();
-        loggerFactory.CreateLogger<FileSystemItemViewModel>().Returns(Substitute.For<ILogger<FileSystemItemViewModel>>());
-        
+        var loggerFactory = NullLoggerFactory.Instance;
         _fileSystemExplorerService = Substitute.For<IFileSystemExplorerService>();
         
         _fileSystemItemViewModelFactory = new FileSystemItemViewModelFactory(

@@ -6,6 +6,7 @@ using Desktop.Configuration;
 using Business.Services;
 using Business.Models;
 using NSubstitute;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Desktop.UITests.ViewModels;
 
@@ -25,7 +26,7 @@ public class BuildConfirmationDialogViewModelTests
         _mockFileCollector = Substitute.For<IMarkdownFileCollectorService>();
         _mockCombination = Substitute.For<IMarkdownCombinationService>();
         _mockFileWriter = Substitute.For<IMarkdownDocumentFileWriterService>();
-        _mockLogger = Substitute.For<ILogger<BuildConfirmationDialogViewModel>>();
+        _mockLogger = NullLoggerFactory.Instance.CreateLogger<BuildConfirmationDialogViewModel>();
     }
 
     private BuildConfirmationDialogViewModel CreateDialogViewModel(ApplicationOptions? customOptions = null)

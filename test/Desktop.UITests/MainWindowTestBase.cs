@@ -10,6 +10,7 @@ using Desktop.Models;
 using Desktop.Factories;
 using NSubstitute;
 using Business.Services;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Desktop.UITests;
 
@@ -33,16 +34,16 @@ public abstract class MainWindowTestBase
     [SetUp]
     public void Setup()
     {
-        _vmLogger = Substitute.For<ILogger<MainWindowViewModel>>();
-        _tabBarLogger = Substitute.For<ILogger<EditorTabBarViewModel>>();
-        _contentLogger = Substitute.For<ILogger<EditorContentViewModel>>();
-        _stateLogger = Substitute.For<ILogger<EditorStateService>>();
+        _vmLogger = NullLoggerFactory.Instance.CreateLogger<MainWindowViewModel>();
+        _tabBarLogger = NullLoggerFactory.Instance.CreateLogger<EditorTabBarViewModel>();
+        _contentLogger = NullLoggerFactory.Instance.CreateLogger<EditorContentViewModel>();
+        _stateLogger = NullLoggerFactory.Instance.CreateLogger<EditorStateService>();
         _options = Options.Create(new ApplicationOptions());
         _fileService = Substitute.For<IFileService>();
         _serviceProvider = Substitute.For<IServiceProvider>();
         
         // Setup service provider to return mock loggers for all needed types  
-        _serviceProvider.GetService(typeof(ILogger<SettingsContentViewModel>)).Returns(Substitute.For<ILogger<SettingsContentViewModel>>());
+        _serviceProvider.GetService(typeof(ILogger<SettingsContentViewModel>)).Returns(NullLoggerFactory.Instance.CreateLogger<SettingsContentViewModel>());
         _markdownCombinationService = Substitute.For<IMarkdownCombinationService>();
         _markdownFileCollectorService = Substitute.For<IMarkdownFileCollectorService>();
         _markdownRenderingService = Substitute.For<Desktop.Services.IMarkdownRenderingService>();
@@ -173,7 +174,7 @@ public abstract class MainWindowTestBase
         editorContentViewModel ??= new EditorContentViewModel(_contentLogger, editorStateService, _options, _serviceProvider, _markdownCombinationService, _markdownFileCollectorService, _markdownRenderingService, settingsContentViewModelFactory);
         
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
-        var editorLogger = Substitute.For<ILogger<Desktop.ViewModels.EditorViewModel>>();
+        var editorLogger = NullLoggerFactory.Instance.CreateLogger<Desktop.ViewModels.EditorViewModel>();
         return new Desktop.ViewModels.EditorViewModel(editorLogger, _options, editorTabBarViewModel, editorContentViewModel, hotkeyService);
     }
 
@@ -188,8 +189,8 @@ public abstract class MainWindowTestBase
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
         var fileSystemExplorerService = Substitute.For<Desktop.Services.IFileSystemExplorerService>();
         var fileExplorerViewModel = new FileExplorerViewModel(
-                Substitute.For<ILogger<FileExplorerViewModel>>(),
-                Substitute.For<ILoggerFactory>(),
+                NullLoggerFactory.Instance.CreateLogger<FileExplorerViewModel>(),
+                NullLoggerFactory.Instance,
                 _fileSystemExplorerService,
                 Substitute.For<Desktop.Services.IFileSystemChangeHandler>(),
                 _fileService);
@@ -207,8 +208,8 @@ public abstract class MainWindowTestBase
         
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
         var fileExplorerViewModel = new FileExplorerViewModel(
-                Substitute.For<ILogger<FileExplorerViewModel>>(),
-                Substitute.For<ILoggerFactory>(),
+                NullLoggerFactory.Instance.CreateLogger<FileExplorerViewModel>(),
+                NullLoggerFactory.Instance,
                 _fileSystemExplorerService,
                 Substitute.For<Desktop.Services.IFileSystemChangeHandler>(),
                 _fileService);
@@ -222,8 +223,8 @@ public abstract class MainWindowTestBase
         _fileService.GetFileStructureAsync(Arg.Any<string>()).Returns(Task.FromResult<FileSystemItem?>(CreateNestedTestStructure()));
         
         var fileExplorerViewModel = new FileExplorerViewModel(
-                Substitute.For<ILogger<FileExplorerViewModel>>(),
-                Substitute.For<ILoggerFactory>(),
+                NullLoggerFactory.Instance.CreateLogger<FileExplorerViewModel>(),
+                NullLoggerFactory.Instance,
                 _fileSystemExplorerService,
                 Substitute.For<Desktop.Services.IFileSystemChangeHandler>(),
                 _fileService);
@@ -236,8 +237,8 @@ public abstract class MainWindowTestBase
         _fileService.GetFileStructureAsync(Arg.Any<string>()).Returns(Task.FromResult<FileSystemItem?>(CreateSimpleTestStructure()));
         
         var fileExplorerViewModel = new FileExplorerViewModel(
-                Substitute.For<ILogger<FileExplorerViewModel>>(),
-                Substitute.For<ILoggerFactory>(),
+                NullLoggerFactory.Instance.CreateLogger<FileExplorerViewModel>(),
+                NullLoggerFactory.Instance,
                 _fileSystemExplorerService,
                 Substitute.For<Desktop.Services.IFileSystemChangeHandler>(),
                 _fileService);

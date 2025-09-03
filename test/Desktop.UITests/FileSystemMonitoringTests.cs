@@ -9,6 +9,7 @@ using Desktop.Models;
 using NSubstitute;
 using Business.Services;
 using System.Linq;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Desktop.UITests;
 
@@ -58,10 +59,10 @@ public class FileSystemMonitoringTests
 
     private static (MainWindow window, IFileService fileService, MainWindowViewModel viewModel, FileExplorerViewModel fileExplorerViewModel) CreateMainWindowWithMonitoring()
     {
-        var vmLogger = Substitute.For<ILogger<MainWindowViewModel>>();
-        var tabBarLogger = Substitute.For<ILogger<EditorTabBarViewModel>>();
-        var contentLogger = Substitute.For<ILogger<EditorContentViewModel>>();
-        var stateLogger = Substitute.For<ILogger<EditorStateService>>();
+        var vmLogger = NullLoggerFactory.Instance.CreateLogger<MainWindowViewModel>();
+        var tabBarLogger = NullLoggerFactory.Instance.CreateLogger<EditorTabBarViewModel>();
+        var contentLogger = NullLoggerFactory.Instance.CreateLogger<EditorContentViewModel>();
+        var stateLogger = NullLoggerFactory.Instance.CreateLogger<EditorStateService>();
         var options = Options.Create(new ApplicationOptions());
         var fileService = Substitute.For<IFileService>();
         var serviceProvider = Substitute.For<IServiceProvider>();
@@ -96,13 +97,13 @@ public class FileSystemMonitoringTests
         
         var logTransitionService = Substitute.For<Desktop.Logging.ILogTransitionService>();
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
-        var editorLogger = Substitute.For<ILogger<Desktop.ViewModels.EditorViewModel>>();
+        var editorLogger = NullLoggerFactory.Instance.CreateLogger<Desktop.ViewModels.EditorViewModel>();
         var editorViewModel = new Desktop.ViewModels.EditorViewModel(editorLogger, options, editorTabBarViewModel, editorContentViewModel, hotkeyService);
         var fileSystemExplorerService = Substitute.For<Desktop.Services.IFileSystemExplorerService>();
         var fileSystemChangeHandler = new Desktop.Services.FileSystemChangeHandler(fileService);
         var fileExplorerViewModel = new FileExplorerViewModel(
-            Substitute.For<ILogger<FileExplorerViewModel>>(),
-            Substitute.For<ILoggerFactory>(),
+            NullLoggerFactory.Instance.CreateLogger<FileExplorerViewModel>(),
+            NullLoggerFactory.Instance,
             fileSystemExplorerService,
             fileSystemChangeHandler,
             fileService);

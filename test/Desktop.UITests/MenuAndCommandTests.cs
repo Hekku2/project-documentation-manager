@@ -9,6 +9,7 @@ using Desktop.Models;
 using NSubstitute;
 using Business.Services;
 using Business.Models;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Desktop.UITests;
 
@@ -125,7 +126,7 @@ public class MenuAndCommandTests : MainWindowTestBase
     [AvaloniaTest]
     public void MainWindow_Should_Trigger_BuildConfirmationDialog_Event_When_Build_Command_Executed()
     {
-        var vmLogger = Substitute.For<ILogger<MainWindowViewModel>>();
+        var vmLogger = NullLoggerFactory.Instance.CreateLogger<MainWindowViewModel>();
         var options = Options.Create(new ApplicationOptions());
         var fileService = Substitute.For<IFileService>();
         var serviceProvider = Substitute.For<IServiceProvider>();
@@ -134,7 +135,7 @@ public class MenuAndCommandTests : MainWindowTestBase
         var mockFileCollector = Substitute.For<IMarkdownFileCollectorService>();
         var mockCombination = Substitute.For<IMarkdownCombinationService>();
         var mockFileWriter = Substitute.For<IMarkdownDocumentFileWriterService>();
-        var mockLogger = Substitute.For<ILogger<BuildConfirmationDialogViewModel>>();
+        var mockLogger = NullLoggerFactory.Instance.CreateLogger<BuildConfirmationDialogViewModel>();
         
         var mockDialogViewModel = new BuildConfirmationDialogViewModel(options, mockFileCollector, mockCombination, mockFileWriter, mockLogger);
         serviceProvider.GetService(typeof(BuildConfirmationDialogViewModel)).Returns(mockDialogViewModel);
@@ -148,9 +149,9 @@ public class MenuAndCommandTests : MainWindowTestBase
         var markdownFileCollectorService = Substitute.For<IMarkdownFileCollectorService>();
         var markdownRenderingService = Substitute.For<Desktop.Services.IMarkdownRenderingService>();
         
-        var stateLogger = Substitute.For<ILogger<EditorStateService>>();
-        var tabBarLogger = Substitute.For<ILogger<EditorTabBarViewModel>>();
-        var contentLogger = Substitute.For<ILogger<EditorContentViewModel>>();
+        var stateLogger = NullLoggerFactory.Instance.CreateLogger<EditorStateService>();
+        var tabBarLogger = NullLoggerFactory.Instance.CreateLogger<EditorTabBarViewModel>();
+        var contentLogger = NullLoggerFactory.Instance.CreateLogger<EditorContentViewModel>();
         
         var editorStateService = new EditorStateService(stateLogger);
         var editorTabBarViewModel = new EditorTabBarViewModel(tabBarLogger, fileService, editorStateService);
@@ -158,7 +159,7 @@ public class MenuAndCommandTests : MainWindowTestBase
         
         var logTransitionService = Substitute.For<Desktop.Logging.ILogTransitionService>();
         var hotkeyService = Substitute.For<Desktop.Services.IHotkeyService>();
-        var editorLogger = Substitute.For<ILogger<Desktop.ViewModels.EditorViewModel>>();
+        var editorLogger = NullLoggerFactory.Instance.CreateLogger<Desktop.ViewModels.EditorViewModel>();
         var editorViewModel = new Desktop.ViewModels.EditorViewModel(editorLogger, options, editorTabBarViewModel, editorContentViewModel, hotkeyService);
         var viewModel = new MainWindowViewModel(vmLogger, options, editorStateService, editorViewModel, logTransitionService, hotkeyService);
         

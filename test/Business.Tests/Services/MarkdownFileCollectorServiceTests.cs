@@ -1,5 +1,6 @@
 using Business.Services;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -15,7 +16,7 @@ public class MarkdownFileCollectorServiceTests
     [SetUp]
     public void SetUp()
     {
-        _logger = Substitute.For<ILogger<MarkdownFileCollectorService>>();
+        _logger = NullLoggerFactory.Instance.CreateLogger<MarkdownFileCollectorService>();
         _service = new MarkdownFileCollectorService(_logger);
         _testDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(_testDirectory);

@@ -66,6 +66,7 @@ public class FileExplorerViewModel(
                 var rootViewModel = factory.CreateWithChildren(
                     fileStructure
                 );
+
                 RootItem = rootViewModel;
 
                 FileSystemItems.Clear();
