@@ -28,12 +28,10 @@ public class HotkeyService(ILogger<HotkeyService> logger) : IHotkeyService
 
     public void UpdateHotkey(string actionName, string keyGesture, ICommand command)
     {
-        if (_actionToGesture.TryGetValue(actionName, out var oldGesture))
+        if (_actionToGesture.TryGetValue(actionName, out var oldGesture) && TryParseKeyGesture(oldGesture, out var oldKey, out var oldModifiers))
         {
-            if (TryParseKeyGesture(oldGesture, out var oldKey, out var oldModifiers))
-            {
-                _hotkeyMappings.TryRemove((oldKey, oldModifiers), out _);
-            }
+            _hotkeyMappings.TryRemove((oldKey, oldModifiers), out _);
+
         }
 
         RegisterHotkey(actionName, keyGesture, command);
@@ -48,10 +46,10 @@ public class HotkeyService(ILogger<HotkeyService> logger) : IHotkeyService
                 if (mapping.Command?.CanExecute(null) == true)
                 {
                     mapping.Command.Execute(null);
-                    HotkeyExecuted?.Invoke(this, new HotkeyExecutedEventArgs 
-                    { 
-                        Action = mapping.Action, 
-                        Command = mapping.Command 
+                    HotkeyExecuted?.Invoke(this, new HotkeyExecutedEventArgs
+                    {
+                        Action = mapping.Action,
+                        Command = mapping.Command
                     });
                     return true;
                 }
@@ -67,14 +65,14 @@ public class HotkeyService(ILogger<HotkeyService> logger) : IHotkeyService
     public void ApplyToWindow(Window window)
     {
         window.KeyBindings.Clear();
-        
+
         foreach (var (keyData, commandData) in _hotkeyMappings)
         {
             var keyGesture = new KeyGesture(keyData.Key, keyData.Modifiers);
-            window.KeyBindings.Add(new KeyBinding 
-            { 
-                Gesture = keyGesture, 
-                Command = commandData.Command 
+            window.KeyBindings.Add(new KeyBinding
+            {
+                Gesture = keyGesture,
+                Command = commandData.Command
             });
         }
     }
@@ -95,7 +93,7 @@ public class HotkeyService(ILogger<HotkeyService> logger) : IHotkeyService
 
         _hotkeyMappings[(key, modifiers)] = (actionName, command);
         _actionToGesture[actionName] = keyGesture;
-        
+
         logger.LogDebug("Registered hotkey {KeyGesture} for action {Action}", keyGesture, actionName);
     }
 

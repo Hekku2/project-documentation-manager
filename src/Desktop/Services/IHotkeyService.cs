@@ -15,9 +15,3 @@ public interface IHotkeyService
     void ApplyToWindow(Window window);
     event EventHandler<HotkeyExecutedEventArgs>? HotkeyExecuted;
 }
-
-public class HotkeyExecutedEventArgs : EventArgs
-{
-    public required string Action { get; set; }
-    public required ICommand Command { get; set; }
-}

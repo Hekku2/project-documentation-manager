@@ -6,26 +6,28 @@ using System;
 using System.Threading.Tasks;
 using Desktop.Logging;
 using Desktop.DependencyInjection;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Desktop;
 
-class Program
+[ExcludeFromCodeCoverage]
+public static class Program
 {
     [STAThread]
     public static async Task Main(string[] args)
     {
         var host = CreateHostBuilder(args).Build();
-      
+
         // Set the service provider in the App
         App.ServiceProvider = host.Services;
-        
+
         // Initialize in-memory logging before starting the host
         var dynamicLoggerProvider = host.Services.GetRequiredService<IDynamicLoggerProvider>();
         var inMemoryLoggerProvider = host.Services.GetRequiredService<InMemoryLoggerProvider>();
         dynamicLoggerProvider.AddLoggerProvider(inMemoryLoggerProvider);
-        
+
         await host.StartAsync();
-        
+
         try
         {
             // Run Avalonia app with host cancellation token integration
@@ -35,9 +37,9 @@ class Program
                 Args = args,
                 ShutdownMode = Avalonia.Controls.ShutdownMode.OnMainWindowClose
             };
-            
+
             app.SetupWithLifetime(lifetime);
-            
+
             // Connect host cancellation to Avalonia shutdown
             var hostLifetime = host.Services.GetRequiredService<IHostApplicationLifetime>();
             hostLifetime.ApplicationStopping.Register(() =>
@@ -50,7 +52,7 @@ class Program
                     });
                 }
             });
-            
+
             lifetime.Start(args);
         }
         finally
