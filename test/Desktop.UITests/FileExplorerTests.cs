@@ -121,8 +121,8 @@ public class FileExplorerTests : MainWindowTestBase
 
         // Wait for lazy loading to complete
         await WaitForConditionAsync(() =>
-            srcFolder.Children.Any(c => c.Name != "Loading...") &&
-            testFolder.Children.Any(c => c.Name != "Loading..."), 2000);
+            srcFolder.Children.Any(c => c.Name != LoadingPlaceholder) &&
+            testFolder.Children.Any(c => c.Name != LoadingPlaceholder), 2000);
 
         Assert.Multiple(() =>
         {

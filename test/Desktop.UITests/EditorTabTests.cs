@@ -454,7 +454,7 @@ public class EditorTabTests : MainWindowTestBase
 
         // Should now have only 1 tab (errors)
         Assert.That(viewModel.BottomPanelTabs, Has.Count.EqualTo(1), "Should have 1 tab after closing logs");
-        var remainingTab = viewModel.BottomPanelTabs.First();
+        var remainingTab = viewModel.BottomPanelTabs[0];
         Assert.That(remainingTab.Id, Is.EqualTo("errors"), "Remaining tab should be errors");
 
         // Close the errors tab
@@ -480,7 +480,7 @@ public class EditorTabTests : MainWindowTestBase
         // Show logs
         viewModel!.ShowLogsCommand.Execute(null);
         Assert.That(viewModel.BottomPanelTabs, Has.Count.EqualTo(1), "Should have 1 tab");
-        var originalLogTab = viewModel.BottomPanelTabs.First();
+        var originalLogTab = viewModel.BottomPanelTabs[0];
 
         // Close the logs tab
         viewModel.CloseBottomTab(originalLogTab);
@@ -490,7 +490,7 @@ public class EditorTabTests : MainWindowTestBase
         viewModel.ShowLogsCommand.Execute(null);
         Assert.That(viewModel.BottomPanelTabs, Has.Count.EqualTo(1), "Should have 1 tab again after reopening");
 
-        var newLogTab = viewModel.BottomPanelTabs.First();
+        var newLogTab = viewModel.BottomPanelTabs[0];
         Assert.Multiple(() =>
         {
             Assert.That(newLogTab.Id, Is.EqualTo("logs"), "Recreated tab should be logs");
@@ -529,13 +529,13 @@ public class EditorTabTests : MainWindowTestBase
         Assert.Multiple(() =>
         {
             Assert.That(viewModel.EditorTabBar.EditorTabs, Has.Count.EqualTo(1), "One tab should be open");
-            var tab = viewModel.EditorTabBar.EditorTabs.First();
+            var tab = viewModel.EditorTabBar.EditorTabs[0];
             Assert.That(tab.Title, Is.EqualTo("README.md"), "Tab title should be README.md");
             Assert.That(tab.FilePath, Is.EqualTo("/test/path/README.md"), "Tab file path should be correct");
             Assert.That(tab.IsActive, Is.True, "Tab should be active");
         });
 
-        var originalTabId = viewModel.EditorTabBar.EditorTabs.First().Id;
+        var originalTabId = viewModel.EditorTabBar.EditorTabs[0].Id;
 
         // Test the core logic: simulate what should happen when the same file is opened again
         var normalizedPath = System.IO.Path.GetFullPath("/test/path/README.md");
@@ -584,7 +584,7 @@ public class EditorTabTests : MainWindowTestBase
     public async Task MainWindow_Should_Create_Separate_Tabs_For_Different_Files()
     {
         var window = CreateMainWindowWithNestedStructure();
-        var (viewModel, fileExplorerViewModel) = await SetupWindowAndWaitForLoadAsync(window);
+        var (viewModel, _) = await SetupWindowAndWaitForLoadAsync(window);
 
         // Open first file
         await viewModel.EditorTabBar.OpenFileAsync("/test/path/README.md");

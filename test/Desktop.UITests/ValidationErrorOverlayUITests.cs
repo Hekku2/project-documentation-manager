@@ -25,21 +25,19 @@ public class ValidationErrorOverlayUITests
             CurrentFileName = "/test/path/test.mdext",
             ValidationResult = new ValidationResult
             {
-                Errors = new List<ValidationIssue>
-                {
-                    new ValidationIssue
-                    {
+                Errors =
+                [
+                    new() {
                         Message = "Error on line 2",
                         SourceFile = "/test/path/test.mdext",
                         LineNumber = 2
                     },
-                    new ValidationIssue
-                    {
+                    new() {
                         Message = "Error on line 4",
                         SourceFile = "/test/path/test.mdext",
                         LineNumber = 4
                     }
-                }
+                ]
             }
         };
 
@@ -74,15 +72,14 @@ public class ValidationErrorOverlayUITests
             CurrentFileName = null, // No file selected
             ValidationResult = new ValidationResult
             {
-                Errors = new List<ValidationIssue>
-                {
-                    new ValidationIssue
-                    {
+                Errors =
+                [
+                    new() {
                         Message = "Error on line 2",
                         SourceFile = "/test/path/test.mdext",
                         LineNumber = 2
                     }
-                }
+                ]
             }
         };
 
@@ -110,15 +107,14 @@ public class ValidationErrorOverlayUITests
             CurrentFileName = "/test/path/test.mdext",
             ValidationResult = new ValidationResult
             {
-                Errors = new List<ValidationIssue>
-                {
-                    new ValidationIssue
-                    {
+                Errors =
+                [
+                    new() {
                         Message = "Error without source file",
                         SourceFile = null, // No source file
                         LineNumber = 2
                     }
-                }
+                ]
             }
         };
 
@@ -146,27 +142,26 @@ public class ValidationErrorOverlayUITests
             CurrentFileName = "/test/path/file1.mdext",
             ValidationResult = new ValidationResult
             {
-                Errors = new List<ValidationIssue>
-                {
-                    new ValidationIssue
-                    {
+                Errors =
+                [
+                    new() {
                         Message = "Error in file1",
                         SourceFile = "/test/path/file1.mdext",
                         LineNumber = 2
                     },
-                    new ValidationIssue
+                    new()
                     {
                         Message = "Error in file2",
                         SourceFile = "/test/path/file2.mdext",
                         LineNumber = 2
                     },
-                    new ValidationIssue
+                    new()
                     {
                         Message = "Error in file3",
                         SourceFile = "/test/path/file3.mdext",
                         LineNumber = 3
                     }
-                }
+                ]
             }
         };
 

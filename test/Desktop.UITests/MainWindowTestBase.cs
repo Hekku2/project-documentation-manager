@@ -3,7 +3,6 @@ using Desktop.Views;
 using Desktop.ViewModels;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.Extensions.DependencyInjection;
 using Desktop.Configuration;
 using Desktop.Services;
 using Desktop.Models;
@@ -17,6 +16,7 @@ namespace Desktop.UITests;
 [NonParallelizable]
 public abstract class MainWindowTestBase
 {
+    protected const string LoadingPlaceholder = "Loading...";
     protected ILogger<MainWindowViewModel> _vmLogger = null!;
     protected ILogger<EditorTabBarViewModel> _tabBarLogger = null!;
     protected ILogger<EditorContentViewModel> _contentLogger = null!;
@@ -100,7 +100,7 @@ public abstract class MainWindowTestBase
         // Wait for root to be auto-expanded with children
         await WaitForConditionAsync(() =>
             fileExplorerViewModel.RootItem!.IsExpanded &&
-            fileExplorerViewModel.RootItem.Children.Any(c => c.Name != "Loading..."), 3000);
+            fileExplorerViewModel.RootItem.Children.Any(c => c.Name != LoadingPlaceholder), 3000);
 
         return (viewModel!, fileExplorerViewModel);
     }
@@ -113,7 +113,7 @@ public abstract class MainWindowTestBase
         // Wait for children to be loaded (either already loaded or loading to complete)
         await WaitForConditionAsync(() =>
             folder.Children.Any() &&
-            (folder.Children.All(c => c.Name != "Loading...") || folder.Children.Count > 1), 2000);
+            (folder.Children.All(c => c.Name != LoadingPlaceholder) || folder.Children.Count > 1), 2000);
     }
 
     protected static async Task SelectFileAndWaitForTabAsync(FileSystemItemViewModel? file, MainWindowViewModel viewModel)

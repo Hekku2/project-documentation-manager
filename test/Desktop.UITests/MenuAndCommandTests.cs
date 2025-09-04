@@ -211,7 +211,7 @@ public class MenuAndCommandTests : MainWindowTestBase
     public async Task MainWindow_ValidateAllCommand_Should_Process_All_Templates()
     {
         var window = CreateMainWindow();
-        var (viewModel, fileExplorerViewModel) = await SetupWindowAndWaitForLoadAsync(window);
+        var (viewModel, _) = await SetupWindowAndWaitForLoadAsync(window);
 
         // Mock template and source files
         var templateFiles = new[]

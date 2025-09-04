@@ -15,8 +15,6 @@ public class FileExplorerViewModel : ViewModelBase, IDisposable
     private FileSystemItemViewModel? _rootItem;
     private bool _disposed = false;
     private readonly ILogger<FileExplorerViewModel> _logger;
-    private readonly ILoggerFactory _loggerFactory;
-    private readonly IFileSystemExplorerService _fileSystemExplorerService;
     private readonly IFileSystemChangeHandler _fileSystemChangeHandler;
     private readonly IFileService _fileService;
     private readonly IFileSystemMonitorService _fileSystemMonitor;
@@ -50,16 +48,14 @@ public class FileExplorerViewModel : ViewModelBase, IDisposable
         IOptions<ApplicationOptions> applicationOptions)
     {
         _logger = logger;
-        _loggerFactory = loggerFactory;
-        _fileSystemExplorerService = fileSystemExplorerService;
         _fileSystemChangeHandler = fileSystemChangeHandler;
         _fileService = fileService;
         _fileSystemMonitor = fileSystemMonitor;
         _applicationOptions = applicationOptions.Value;
 
         _fileSystemItemViewModelFactory = new FileSystemItemViewModelFactory(
-            _loggerFactory,
-            _fileSystemExplorerService,
+            loggerFactory,
+            fileSystemExplorerService,
             onItemSelected: OnItemSelected,
             onItemPreview: OnItemPreview);
 
@@ -153,13 +149,10 @@ public class FileExplorerViewModel : ViewModelBase, IDisposable
     {
         if (!_disposed)
         {
-            if (disposing)
+            if (disposing && _fileSystemMonitor != null)
             {
-                // Only unsubscribe from events when disposing (not from finalizer)
-                if (_fileSystemMonitor != null)
-                {
-                    _fileSystemMonitor.FileSystemChanged -= DelegateFileSystemChangeEvent;
-                }
+                _fileSystemMonitor.FileSystemChanged -= DelegateFileSystemChangeEvent;
+
             }
 
             _disposed = true;

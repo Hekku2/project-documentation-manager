@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using Desktop.Models;
 using Microsoft.Extensions.Logging;
 
 namespace Desktop.Services;
@@ -140,6 +139,10 @@ public class FileSystemMonitorService(ILogger<FileSystemMonitorService> logger) 
     {
         try
         {
+            var fileName = Path.GetFileName(path);
+            if (fileName.StartsWith('.') || fileName.StartsWith('~'))
+                return true;
+
             if (File.Exists(path))
             {
                 var fileInfo = new FileInfo(path);
@@ -151,8 +154,7 @@ public class FileSystemMonitorService(ILogger<FileSystemMonitorService> logger) 
                 return IsHiddenOrSystem(dirInfo.Attributes);
             }
 
-            var fileName = Path.GetFileName(path);
-            return fileName.StartsWith('.') || fileName.StartsWith('~');
+            return false;
         }
         catch
         {

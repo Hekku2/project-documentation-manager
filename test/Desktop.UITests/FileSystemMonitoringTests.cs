@@ -58,15 +58,9 @@ public class FileSystemMonitoringTests
 
     private static async Task WaitForFileStructureLoadAsync(FileExplorerViewModel fileExplorerViewModel)
     {
-        await Task.Delay(500);
-
-        var maxWait = 50;
-        var waitCount = 0;
-        while (fileExplorerViewModel.RootItem == null && waitCount < maxWait)
-        {
+        var attempts = 0;
+        while (fileExplorerViewModel.RootItem == null && attempts++ < 50)
             await Task.Delay(100);
-            waitCount++;
-        }
     }
 
     private static (MainWindow window, IFileService fileService, IFileSystemMonitorService fileSystemMonitorService, MainWindowViewModel viewModel, FileExplorerViewModel fileExplorerViewModel) CreateMainWindowWithMonitoring()
@@ -87,7 +81,7 @@ public class FileSystemMonitoringTests
         fileService.GetFileStructureAsync(Arg.Any<string>()).Returns(Task.FromResult<FileSystemItem?>(CreateTestStructure()));
         fileService.IsValidFolder(Arg.Any<string>()).Returns(true);
         fileService.ReadFileContentAsync(Arg.Any<string>()).Returns("Mock file content");
-        
+
         // Configure mock to simulate real behavior: IsMonitoring starts false, becomes true after StartMonitoring
         var isMonitoring = false;
         fileSystemMonitorService.IsMonitoring.Returns(_ => isMonitoring);
@@ -151,14 +145,14 @@ public class FileSystemMonitoringTests
 
         // Verify that StartMonitoring was called with exact path
         fileSystemMonitorService.Received(1).StartMonitoring("/test/path");
-        
+
         Cleanup(window, fileExplorerViewModel);
     }
 
     [AvaloniaTest]
     public async Task FileExplorerViewModel_Should_Handle_File_Created_Event()
     {
-        var (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
+        var (window, _, fileSystemMonitorService, _, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
 
         await WaitForFileStructureLoadAsync(fileExplorerViewModel);
@@ -199,14 +193,14 @@ public class FileSystemMonitoringTests
             Assert.That(newFile!.IsDirectory, Is.False, "newfile.cs should be a file");
             Assert.That(newFile.FullPath, Is.EqualTo("/test/path/src/newfile.cs"), "newfile.cs should have correct path");
         });
-        
+
         Cleanup(window, fileExplorerViewModel);
     }
 
     [AvaloniaTest]
     public async Task FileExplorerViewModel_Should_Handle_Directory_Created_Event()
     {
-        var (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
+        var (window, _, fileSystemMonitorService, _, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
 
         await WaitForFileStructureLoadAsync(fileExplorerViewModel);
@@ -239,17 +233,17 @@ public class FileSystemMonitoringTests
             Assert.That(newDir.FullPath, Is.EqualTo("/test/path/docs"), "docs should have correct path");
 
             // Verify sorting: directories should come first
-            var firstChild = fileExplorerViewModel.RootItem.Children.First();
+            var firstChild = fileExplorerViewModel.RootItem.Children[0];
             Assert.That(firstChild.Name, Is.EqualTo("docs"), "docs should be sorted first (directories first, alphabetical)");
         });
-        
+
         Cleanup(window, fileExplorerViewModel);
     }
 
     [AvaloniaTest]
     public async Task FileExplorerViewModel_Should_Handle_File_Deleted_Event()
     {
-        var (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
+        var (window, _, fileSystemMonitorService, _, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
 
         await WaitForFileStructureLoadAsync(fileExplorerViewModel);
@@ -288,14 +282,14 @@ public class FileSystemMonitoringTests
             var srcFolder = fileExplorerViewModel.RootItem.Children.FirstOrDefault(c => c.Name == "src");
             Assert.That(srcFolder, Is.Not.Null, "src folder should still exist");
         });
-        
+
         Cleanup(window, fileExplorerViewModel);
     }
 
     [AvaloniaTest]
     public async Task FileExplorerViewModel_Should_Handle_File_Renamed_Event()
     {
-        var (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
+        var (window, _, fileSystemMonitorService, _, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
 
         await WaitForFileStructureLoadAsync(fileExplorerViewModel);
@@ -337,14 +331,14 @@ public class FileSystemMonitoringTests
             Assert.That(newFile!.IsDirectory, Is.False, "CHANGELOG.md should be a file");
             Assert.That(newFile.FullPath, Is.EqualTo("/test/path/CHANGELOG.md"), "CHANGELOG.md should have correct path");
         });
-        
+
         Cleanup(window, fileExplorerViewModel);
     }
 
     [AvaloniaTest]
     public async Task FileExplorerViewModel_Should_Only_Update_Expanded_Folders()
     {
-        var (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
+        var (window, _, fileSystemMonitorService, _, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
 
         await WaitForFileStructureLoadAsync(fileExplorerViewModel);
@@ -391,14 +385,14 @@ public class FileSystemMonitoringTests
             var childrenNames = srcFolder.Children.Select(c => c.Name).OrderBy(n => n).ToArray();
             Assert.That(childrenNames, Is.EqualTo(new[] { "controllers", "main.cs", "newfile.cs" }), "src should have controllers, main.cs and newfile.cs");
         });
-        
+
         Cleanup(window, fileExplorerViewModel);
     }
 
     [AvaloniaTest]
     public async Task FileExplorerViewModel_Should_Sort_New_Items_Correctly()
     {
-        var (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
+        var (window, _, fileSystemMonitorService, _, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
 
         await WaitForFileStructureLoadAsync(fileExplorerViewModel);
@@ -458,7 +452,7 @@ public class FileSystemMonitoringTests
             Assert.That(fileExplorerViewModel.RootItem.Children[4].Name, Is.EqualTo("README.md"), "README.md should be fifth (file, alphabetical)");
             Assert.That(fileExplorerViewModel.RootItem.Children[4].IsDirectory, Is.False, "fifth item should be file");
         });
-        
+
         Cleanup(window, fileExplorerViewModel);
     }
 
@@ -492,14 +486,14 @@ public class FileSystemMonitoringTests
         // Verify no changes occurred
         Assert.That(fileExplorerViewModel.RootItem.Children, Has.Count.EqualTo(initialCount),
             "root should still have same number of children (change was outside monitored path)");
-        
+
         Cleanup(window, fileExplorerViewModel);
     }
 
     [AvaloniaTest]
     public async Task FileExplorerViewModel_Should_Preload_Next_Level_When_Expanded()
     {
-        var (window, fileService, fileSystemMonitorService, viewModel, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
+        var (window, _, _, _, fileExplorerViewModel) = CreateMainWindowWithMonitoring();
         window.Show();
 
         await WaitForFileStructureLoadAsync(fileExplorerViewModel);
@@ -567,7 +561,7 @@ public class FileSystemMonitoringTests
             Assert.That(unitFolder.Children, Is.Empty, "unit folder should be preloaded (empty)");
             Assert.That(integrationFolder.Children, Is.Empty, "integration folder should be preloaded (empty)");
         });
-        
+
         Cleanup(window, fileExplorerViewModel);
     }
 }

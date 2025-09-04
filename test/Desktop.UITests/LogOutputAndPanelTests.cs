@@ -171,7 +171,7 @@ public class LogOutputAndPanelTests : MainWindowTestBase
 
         // Should now have only 1 tab (errors)
         Assert.That(viewModel.BottomPanelTabs, Has.Count.EqualTo(1), "Should have 1 tab after closing logs");
-        var remainingTab = viewModel.BottomPanelTabs.First();
+        var remainingTab = viewModel.BottomPanelTabs[0];
         Assert.That(remainingTab.Id, Is.EqualTo("errors"), "Remaining tab should be errors");
 
         // Close the errors tab
@@ -197,7 +197,7 @@ public class LogOutputAndPanelTests : MainWindowTestBase
         // Show logs
         viewModel!.ShowLogsCommand.Execute(null);
         Assert.That(viewModel.BottomPanelTabs, Has.Count.EqualTo(1), "Should have 1 tab");
-        var originalLogTab = viewModel.BottomPanelTabs.First();
+        var originalLogTab = viewModel.BottomPanelTabs[0];
 
         // Close the logs tab
         viewModel.CloseBottomTab(originalLogTab);
@@ -207,7 +207,7 @@ public class LogOutputAndPanelTests : MainWindowTestBase
         viewModel.ShowLogsCommand.Execute(null);
         Assert.That(viewModel.BottomPanelTabs, Has.Count.EqualTo(1), "Should have 1 tab again after reopening");
 
-        var newLogTab = viewModel.BottomPanelTabs.First();
+        var newLogTab = viewModel.BottomPanelTabs[0];
         Assert.Multiple(() =>
         {
             Assert.That(newLogTab.Id, Is.EqualTo("logs"), "Recreated tab should be logs");

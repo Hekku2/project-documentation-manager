@@ -2,7 +2,7 @@ using System;
 
 namespace Desktop.Services;
 
-public class FileSystemChangedEventArgs : EventArgs
+public sealed class FileSystemChangedEventArgs : EventArgs
 {
     public FileSystemChangeType ChangeType { get; init; }
     public string Path { get; init; } = string.Empty;

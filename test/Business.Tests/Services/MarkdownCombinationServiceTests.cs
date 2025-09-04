@@ -62,7 +62,7 @@ public class MarkdownCombinationServiceTests
         // Arrange
         var templateDocuments = new List<MarkdownDocument>
         {
-            new MarkdownDocument { FileName = "template.md", FilePath = "/test/template.md", Content = "# Title\n\nThis is regular content without inserts." }
+            new() { FileName = "template.md", FilePath = "/test/template.md", Content = "# Title\n\nThis is regular content without inserts." }
         };
         var sourceDocuments = new List<MarkdownDocument>();
 
@@ -84,11 +84,11 @@ public class MarkdownCombinationServiceTests
         // Arrange
         var templateDocuments = new List<MarkdownDocument>
         {
-            new MarkdownDocument { FileName = "windows-features.md", FilePath = "/test/windows-features.md", Content = " * windows feature\n <MarkDownExtension operation=\"insert\" file=\"common-features.md\" />" }
+            new() { FileName = "windows-features.md", FilePath = "/test/windows-features.md", Content = " * windows feature\n <MarkDownExtension operation=\"insert\" file=\"common-features.md\" />" }
         };
         var sourceDocuments = new List<MarkdownDocument>
         {
-            new MarkdownDocument { FileName = "common-features.md", FilePath = "/test/common-features.md", Content = " * common feature" }
+            new() { FileName = "common-features.md", FilePath = "/test/common-features.md", Content = " * common feature" }
         };
 
         // Act
@@ -109,13 +109,13 @@ public class MarkdownCombinationServiceTests
         // Arrange
         var templateDocuments = new List<MarkdownDocument>
         {
-            new MarkdownDocument { FileName = "combined.md", FilePath = "/test/combined.md", Content = "# Features\n\n<MarkDownExtension operation=\"insert\" file=\"intro.md\" />\n\n<MarkDownExtension operation=\"insert\" file=\"details.md\" />\n\n<MarkDownExtension operation=\"insert\" file=\"conclusion.md\" />" }
+            new() { FileName = "combined.md", FilePath = "/test/combined.md", Content = "# Features\n\n<MarkDownExtension operation=\"insert\" file=\"intro.md\" />\n\n<MarkDownExtension operation=\"insert\" file=\"details.md\" />\n\n<MarkDownExtension operation=\"insert\" file=\"conclusion.md\" />" }
         };
         var sourceDocuments = new List<MarkdownDocument>
         {
-            new MarkdownDocument { FileName = "intro.md", FilePath = "/test/intro.md", Content = "This is the introduction." },
-            new MarkdownDocument { FileName = "details.md", FilePath = "/test/details.md", Content = "Here are the details." },
-            new MarkdownDocument { FileName = "conclusion.md", FilePath = "/test/conclusion.md", Content = "This is the conclusion." }
+            new() { FileName = "intro.md", FilePath = "/test/intro.md", Content = "This is the introduction." },
+            new() { FileName = "details.md", FilePath = "/test/details.md", Content = "Here are the details." },
+            new() { FileName = "conclusion.md", FilePath = "/test/conclusion.md", Content = "This is the conclusion." }
         };
 
         // Act
@@ -136,12 +136,12 @@ public class MarkdownCombinationServiceTests
         // Arrange
         var templateDocuments = new List<MarkdownDocument>
         {
-            new MarkdownDocument { FileName = "windows-features.md", FilePath = "/test/windows-features.md", Content = " * windows feature\n <MarkDownExtension operation=\"insert\" file=\"common-features.md\" />" },
-            new MarkdownDocument { FileName = "ubuntu-features.md", FilePath = "/test/ubuntu-features.md", Content = " * linux feature\n <MarkDownExtension operation=\"insert\" file=\"common-features.md\" />" }
+            new() { FileName = "windows-features.md", FilePath = "/test/windows-features.md", Content = " * windows feature\n <MarkDownExtension operation=\"insert\" file=\"common-features.md\" />" },
+            new() { FileName = "ubuntu-features.md", FilePath = "/test/ubuntu-features.md", Content = " * linux feature\n <MarkDownExtension operation=\"insert\" file=\"common-features.md\" />" }
         };
         var sourceDocuments = new List<MarkdownDocument>
         {
-            new MarkdownDocument { FileName = "common-features.md", FilePath = "/test/common-features.md", Content = " * common feature" }
+            new() { FileName = "common-features.md", FilePath = "/test/common-features.md", Content = " * common feature" }
         };
 
         // Act
@@ -163,7 +163,7 @@ public class MarkdownCombinationServiceTests
         // Arrange
         var templateDocuments = new List<MarkdownDocument>
         {
-            new MarkdownDocument { FileName = "template.md", FilePath = "/test/template.md", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"missing-file.md\" />\n\nEnd." }
+            new() { FileName = "template.md", FilePath = "/test/template.md", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"missing-file.md\" />\n\nEnd." }
         };
         var sourceDocuments = new List<MarkdownDocument>();
 
@@ -182,12 +182,12 @@ public class MarkdownCombinationServiceTests
         // Arrange
         var templateDocuments = new List<MarkdownDocument>
         {
-            new MarkdownDocument { FileName = "main.md", FilePath = "/test/main.md", Content = "# Main\n\n<MarkDownExtension operation=\"insert\" file=\"level1.md\" />" }
+            new() { FileName = "main.md", FilePath = "/test/main.md", Content = "# Main\n\n<MarkDownExtension operation=\"insert\" file=\"level1.md\" />" }
         };
         var sourceDocuments = new List<MarkdownDocument>
         {
-            new MarkdownDocument { FileName = "level1.md", FilePath = "/test/level1.md", Content = "## Level 1\n\n<MarkDownExtension operation=\"insert\" file=\"level2.md\" />" },
-            new MarkdownDocument { FileName = "level2.md", FilePath = "/test/level2.md", Content = "### Level 2 Content" }
+            new() { FileName = "level1.md", FilePath = "/test/level1.md", Content = "## Level 1\n\n<MarkDownExtension operation=\"insert\" file=\"level2.md\" />" },
+            new() { FileName = "level2.md", FilePath = "/test/level2.md", Content = "### Level 2 Content" }
         };
 
         // Act
@@ -208,11 +208,11 @@ public class MarkdownCombinationServiceTests
         // Arrange
         var templateDocuments = new List<MarkdownDocument>
         {
-            new MarkdownDocument { FileName = "template.md", FilePath = "/test/template.md", Content = "<MarkDownExtension operation=\"insert\" file=\"COMMON-FEATURES.MD\" />" }
+            new() { FileName = "template.md", FilePath = "/test/template.md", Content = "<MarkDownExtension operation=\"insert\" file=\"COMMON-FEATURES.MD\" />" }
         };
         var sourceDocuments = new List<MarkdownDocument>
         {
-            new MarkdownDocument { FileName = "common-features.md", FilePath = "/test/common-features.md", Content = "Common content" }
+            new() { FileName = "common-features.md", FilePath = "/test/common-features.md", Content = "Common content" }
         };
 
         // Act
@@ -229,11 +229,11 @@ public class MarkdownCombinationServiceTests
         // Arrange
         var templateDocuments = new List<MarkdownDocument>
         {
-            new MarkdownDocument { FileName = "template.md", FilePath = "/test/template.md", Content = "Before\n<MarkDownExtension operation=\"insert\" file=\"common-features.md\" />\nAfter" }
+            new() { FileName = "template.md", FilePath = "/test/template.md", Content = "Before\n<MarkDownExtension operation=\"insert\" file=\"common-features.md\" />\nAfter" }
         };
         var sourceDocuments = new List<MarkdownDocument>
         {
-            new MarkdownDocument { FileName = "common-features.md", FilePath = "/test/common-features.md", Content = "Inserted content" }
+            new() { FileName = "common-features.md", FilePath = "/test/common-features.md", Content = "Inserted content" }
         };
 
         // Act
@@ -250,11 +250,11 @@ public class MarkdownCombinationServiceTests
         // Arrange
         var templateDocuments = new List<MarkdownDocument>
         {
-            new MarkdownDocument { FileName = "template.md", FilePath = "/test/template.md", Content = "Start\n<MarkDownExtension operation=\"insert\" file=\"common.md\" />\nMiddle\n<MarkDownExtension operation=\"insert\" file=\"common.md\" />\nEnd" }
+            new() { FileName = "template.md", FilePath = "/test/template.md", Content = "Start\n<MarkDownExtension operation=\"insert\" file=\"common.md\" />\nMiddle\n<MarkDownExtension operation=\"insert\" file=\"common.md\" />\nEnd" }
         };
         var sourceDocuments = new List<MarkdownDocument>
         {
-            new MarkdownDocument { FileName = "common.md", FilePath = "/test/common.md", Content = "CONTENT" }
+            new() { FileName = "common.md", FilePath = "/test/common.md", Content = "CONTENT" }
         };
 
         // Act
@@ -272,11 +272,11 @@ public class MarkdownCombinationServiceTests
         // Arrange
         var templateDocuments = new List<MarkdownDocument>
         {
-            new MarkdownDocument { FileName = "template.md", FilePath = "/test/template.md", Content = "Before <MarkDownExtension operation=\"insert\" file=\"empty.md\" /> After" }
+            new() { FileName = "template.md", FilePath = "/test/template.md", Content = "Before <MarkDownExtension operation=\"insert\" file=\"empty.md\" /> After" }
         };
         var sourceDocuments = new List<MarkdownDocument>
         {
-            new MarkdownDocument { FileName = "empty.md", FilePath = "/test/empty.md", Content = "" }
+            new() { FileName = "empty.md", FilePath = "/test/empty.md", Content = "" }
         };
 
         // Act
@@ -485,7 +485,7 @@ public class MarkdownCombinationServiceTests
         };
         var sourceDocuments = new List<MarkdownDocument>
         {
-            new MarkdownDocument { FileName = "common.mdsrc", FilePath = "/test/common.mdsrc", Content = "Common content" }
+            new() { FileName = "common.mdsrc", FilePath = "/test/common.mdsrc", Content = "Common content" }
         };
 
         // Act
@@ -516,7 +516,7 @@ public class MarkdownCombinationServiceTests
         };
         var sourceDocuments = new List<MarkdownDocument>
         {
-            new MarkdownDocument { FileName = "valid.mdsrc", FilePath = "/test/valid.mdsrc", Content = "Valid content" }
+            new() { FileName = "valid.mdsrc", FilePath = "/test/valid.mdsrc", Content = "Valid content" }
         };
 
         // Act
@@ -541,8 +541,8 @@ public class MarkdownCombinationServiceTests
         var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"circular1.mdsrc\" />" };
         var sourceDocuments = new List<MarkdownDocument>
         {
-            new MarkdownDocument { FileName = "circular1.mdsrc", FilePath = "/test/circular1.mdsrc", Content = "Content <MarkDownExtension operation=\"insert\" file=\"circular2.mdsrc\" />" },
-            new MarkdownDocument { FileName = "circular2.mdsrc", FilePath = "/test/circular2.mdsrc", Content = "Content <MarkDownExtension operation=\"insert\" file=\"circular1.mdsrc\" />" }
+            new() { FileName = "circular1.mdsrc", FilePath = "/test/circular1.mdsrc", Content = "Content <MarkDownExtension operation=\"insert\" file=\"circular2.mdsrc\" />" },
+            new() { FileName = "circular2.mdsrc", FilePath = "/test/circular2.mdsrc", Content = "Content <MarkDownExtension operation=\"insert\" file=\"circular1.mdsrc\" />" }
         };
 
         // Act
@@ -566,7 +566,7 @@ public class MarkdownCombinationServiceTests
         var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension file=\"common/common.mdsrc\" />" };
         var sourceDocuments = new List<MarkdownDocument>
         {
-            new MarkdownDocument { FileName = "common/common.mdsrc", FilePath = "/test/common/common.mdsrc", Content = "Common content" }
+            new() { FileName = "common/common.mdsrc", FilePath = "/test/common/common.mdsrc", Content = "Common content" }
         };
 
         // Act
@@ -654,7 +654,7 @@ Missing file
         };
         var sourceDocuments = new List<MarkdownDocument>
         {
-            new MarkdownDocument { FileName = "common/common.mdsrc", FilePath = "/test/common/common.mdsrc", Content = "Common content" }
+            new() { FileName = "common/common.mdsrc", FilePath = "/test/common/common.mdsrc", Content = "Common content" }
         };
 
         // Act
@@ -689,7 +689,7 @@ Missing file
         var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"valid.mdsrc\" />\n<MarkDownExtension operation=\"insert\" file=\"missing.mdsrc\" />\n<MarkDownExtension operation=\"insert\" file=\"valid.mdsrc\" />\n<MarkDownExtension operation=\"insert\" file=\"\" />" };
         var sourceDocuments = new List<MarkdownDocument>
         {
-            new MarkdownDocument { FileName = "valid.mdsrc", FilePath = "/test/valid.mdsrc", Content = "Valid content" }
+            new() { FileName = "valid.mdsrc", FilePath = "/test/valid.mdsrc", Content = "Valid content" }
         };
 
         // Act
@@ -740,7 +740,7 @@ Missing file
         var templateDocuments = new List<MarkdownDocument>();
         var sourceDocuments = new List<MarkdownDocument>
         {
-            new MarkdownDocument { FileName = "source1.mdsrc", FilePath = "/test/source1.mdsrc", Content = "Content 1" }
+            new() { FileName = "source1.mdsrc", FilePath = "/test/source1.mdsrc", Content = "Content 1" }
         };
 
         // Act
@@ -761,13 +761,13 @@ Missing file
         // Arrange
         var templateDocuments = new List<MarkdownDocument>
         {
-            new MarkdownDocument { FileName = "template1.mdext", FilePath = "/test/template1.mdext", Content = "# Template 1\n<MarkDownExtension operation=\"insert\" file=\"source1.mdsrc\" />" },
-            new MarkdownDocument { FileName = "template2.mdext", FilePath = "/test/template2.mdext", Content = "# Template 2\n<MarkDownExtension operation=\"insert\" file=\"source2.mdsrc\" />" }
+            new() { FileName = "template1.mdext", FilePath = "/test/template1.mdext", Content = "# Template 1\n<MarkDownExtension operation=\"insert\" file=\"source1.mdsrc\" />" },
+            new() { FileName = "template2.mdext", FilePath = "/test/template2.mdext", Content = "# Template 2\n<MarkDownExtension operation=\"insert\" file=\"source2.mdsrc\" />" }
         };
         var sourceDocuments = new List<MarkdownDocument>
         {
-            new MarkdownDocument { FileName = "source1.mdsrc", FilePath = "/test/source1.mdsrc", Content = "Content 1" },
-            new MarkdownDocument { FileName = "source2.mdsrc", FilePath = "/test/source2.mdsrc", Content = "Content 2" }
+            new() { FileName = "source1.mdsrc", FilePath = "/test/source1.mdsrc", Content = "Content 1" },
+            new() { FileName = "source2.mdsrc", FilePath = "/test/source2.mdsrc", Content = "Content 2" }
         };
 
         // Act
@@ -788,12 +788,12 @@ Missing file
         // Arrange
         var templateDocuments = new List<MarkdownDocument>
         {
-            new MarkdownDocument { FileName = "template1.mdext", FilePath = "/test/template1.mdext", Content = "# Template 1\n<MarkDownExtension operation=\"insert\" file=\"missing1.mdsrc\" />" },
-            new MarkdownDocument { FileName = "template2.mdext", FilePath = "/test/template2.mdext", Content = "# Template 2\n<MarkDownExtension operation=\"insert\" file=\"missing2.mdsrc\" />" }
+            new() { FileName = "template1.mdext", FilePath = "/test/template1.mdext", Content = "# Template 1\n<MarkDownExtension operation=\"insert\" file=\"missing1.mdsrc\" />" },
+            new() { FileName = "template2.mdext", FilePath = "/test/template2.mdext", Content = "# Template 2\n<MarkDownExtension operation=\"insert\" file=\"missing2.mdsrc\" />" }
         };
         var sourceDocuments = new List<MarkdownDocument>
         {
-            new MarkdownDocument { FileName = "available.mdsrc", FilePath = "/test/available.mdsrc", Content = "Available content" }
+            new() { FileName = "available.mdsrc", FilePath = "/test/available.mdsrc", Content = "Available content" }
         };
 
         // Act
@@ -816,12 +816,12 @@ Missing file
         // Arrange
         var templateDocuments = new List<MarkdownDocument>
         {
-            new MarkdownDocument { FileName = "valid.mdext", FilePath = "/test/valid.mdext", Content = "# Valid Template\n<MarkDownExtension operation=\"insert\" file=\"source1.mdsrc\" />" },
-            new MarkdownDocument { FileName = "invalid.mdext", FilePath = "/test/invalid.mdext", Content = "# Invalid Template\n<MarkDownExtension operation=\"insert\" file=\"missing.mdsrc\" />" }
+            new() { FileName = "valid.mdext", FilePath = "/test/valid.mdext", Content = "# Valid Template\n<MarkDownExtension operation=\"insert\" file=\"source1.mdsrc\" />" },
+            new() { FileName = "invalid.mdext", FilePath = "/test/invalid.mdext", Content = "# Invalid Template\n<MarkDownExtension operation=\"insert\" file=\"missing.mdsrc\" />" }
         };
         var sourceDocuments = new List<MarkdownDocument>
         {
-            new MarkdownDocument { FileName = "source1.mdsrc", FilePath = "/test/source1.mdsrc", Content = "Available content" }
+            new() { FileName = "source1.mdsrc", FilePath = "/test/source1.mdsrc", Content = "Available content" }
         };
 
         // Act
@@ -843,13 +843,13 @@ Missing file
         // Arrange
         var templateDocuments = new List<MarkdownDocument>
         {
-            new MarkdownDocument { FileName = "template1.mdext", FilePath = "/test/template1.mdext", Content = "# Template 1\n<MarkDownExtension operation=\"insert\" file=\"source1.mdsrc\" />\n<MarkDownExtension operation=\"insert\" file=\"source1.mdsrc\" />" },
-            new MarkdownDocument { FileName = "template2.mdext", FilePath = "/test/template2.mdext", Content = "# Template 2\n<MarkDownExtension operation=\"insert\" file=\"source2.mdsrc\" />\n<MarkDownExtension operation=\"insert\" file=\"source2.mdsrc\" />" }
+            new() { FileName = "template1.mdext", FilePath = "/test/template1.mdext", Content = "# Template 1\n<MarkDownExtension operation=\"insert\" file=\"source1.mdsrc\" />\n<MarkDownExtension operation=\"insert\" file=\"source1.mdsrc\" />" },
+            new() { FileName = "template2.mdext", FilePath = "/test/template2.mdext", Content = "# Template 2\n<MarkDownExtension operation=\"insert\" file=\"source2.mdsrc\" />\n<MarkDownExtension operation=\"insert\" file=\"source2.mdsrc\" />" }
         };
         var sourceDocuments = new List<MarkdownDocument>
         {
-            new MarkdownDocument { FileName = "source1.mdsrc", FilePath = "/test/source1.mdsrc", Content = "Content 1" },
-            new MarkdownDocument { FileName = "source2.mdsrc", FilePath = "/test/source2.mdsrc", Content = "Content 2" }
+            new() { FileName = "source1.mdsrc", FilePath = "/test/source1.mdsrc", Content = "Content 1" },
+            new() { FileName = "source2.mdsrc", FilePath = "/test/source2.mdsrc", Content = "Content 2" }
         };
 
         // Act

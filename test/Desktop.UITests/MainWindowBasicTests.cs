@@ -62,6 +62,7 @@ public class MainWindowBasicTests : MainWindowTestBase
 
         var fileEditorContent = editorUserControl!.GetVisualDescendants().OfType<Desktop.Views.FileEditorContent>().FirstOrDefault();
         var documentEditor = fileEditorContent?.FindControl<TextBox>("DocumentEditor");
+        Assert.That(documentEditor, Is.Not.Null, "DocumentEditor not found");
         Assert.Multiple(() =>
         {
             Assert.That(viewModel.EditorTabBar.ActiveTab, Is.Not.Null, "Active tab should exist after opening file");
