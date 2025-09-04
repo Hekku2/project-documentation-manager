@@ -56,6 +56,13 @@ public class ErrorNavigationTests : MainWindowTestBase
         var errorTab = viewModel.BottomPanelTabs.FirstOrDefault(t => t.Id == "errors");
         Assert.That(errorTab, Is.Not.Null, "Error tab should be created");
         Assert.That(errorTab.ErrorEntries, Has.Count.EqualTo(2), "Should have 2 error entries");
+        Assert.Multiple(() =>
+        {
+            Assert.That(viewModel.IsBottomPanelVisible, Is.True, "Bottom panel should be visible");
+            Assert.That(viewModel.ActiveBottomTab, Is.EqualTo(errorTab), "Errors tab should be active");
+            Assert.That(errorTab.Content, Does.Contain("Error: Test error message"), "Content should include error");
+            Assert.That(errorTab.Content, Does.Contain("Warning: Test warning message"), "Content should include warning");
+        });
 
         var errorEntry = errorTab.ErrorEntries[0];
         Assert.Multiple(() =>
