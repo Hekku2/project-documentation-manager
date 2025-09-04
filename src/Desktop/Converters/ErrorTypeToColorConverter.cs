@@ -8,6 +8,10 @@ namespace Desktop.Converters;
 public class ErrorTypeToColorConverter : IValueConverter
 {
     public static readonly ErrorTypeToColorConverter Instance = new();
+    
+    private static readonly SolidColorBrush _errorBrush = new(Color.Parse("#FF6B6B")); // Red for errors
+    private static readonly SolidColorBrush _warningBrush = new(Color.Parse("#FFD93D")); // Yellow for warnings  
+    private static readonly SolidColorBrush _defaultBrush = new(Color.Parse("#CCCCCC")); // Default gray
 
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
@@ -15,13 +19,13 @@ public class ErrorTypeToColorConverter : IValueConverter
         {
             return errorType.ToLowerInvariant() switch
             {
-                "error" => new SolidColorBrush(Color.Parse("#FF6B6B")), // Red for errors
-                "warning" => new SolidColorBrush(Color.Parse("#FFD93D")), // Yellow for warnings
-                _ => new SolidColorBrush(Color.Parse("#CCCCCC")) // Default gray
+                "error" => _errorBrush,
+                "warning" => _warningBrush,
+                _ => _defaultBrush
             };
         }
 
-        return new SolidColorBrush(Color.Parse("#CCCCCC"));
+        return _defaultBrush;
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

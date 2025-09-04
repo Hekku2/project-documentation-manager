@@ -63,23 +63,12 @@ public static class ValidationHighlightBehavior
 
     private static void ApplyErrorStyling(TextBox textBox, List<int> errorLines)
     {
-        // Apply red underline effect using text decorations
-        var textDecorations = new TextDecorationCollection
-        {
-            new TextDecoration
-            {
-                Location = TextDecorationLocation.Underline,
-                Stroke = new SolidColorBrush(Colors.Red),
-                StrokeThickness = 2
-            }
-        };
-        
         // Apply the text decoration to the entire textbox when errors are present
         // Note: Avalonia's TextBox doesn't support per-line decorations easily,
         // so we'll use a red border as a visual indicator
         textBox.BorderBrush = new SolidColorBrush(Colors.Red);
         textBox.BorderThickness = new Thickness(2);
-        
+
         // Store error lines for potential future use
         textBox.SetValue(ErrorLinesProperty, errorLines);
     }
