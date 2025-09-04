@@ -56,11 +56,8 @@ public class ValidationResultExtensionsTests
     [Test]
     public void GetErrorsForFile_WithNullValidationResult_ReturnsEmptyList()
     {
-        // Arrange
-        ValidationResult? validationResult = null;
-
         // Act
-        var filteredErrors = validationResult!.GetErrorsForFile("file1.mdext");
+        var filteredErrors = ValidationResultExtensions.GetErrorsForFile(null, "file1.mdext");
 
         // Assert
         Assert.That(filteredErrors, Is.Empty, "Should return empty list for null validation result");

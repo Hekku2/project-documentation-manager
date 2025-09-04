@@ -190,7 +190,7 @@ public class MarkdownFileCollectorServiceTests
         var result = await _service.CollectTemplateFilesAsync(_testDirectory);
 
         // Assert
-        Assert.That(result.Count(), Is.EqualTo(0), "Should return empty collection for directory with no .mdext files");
+        Assert.That(result, Is.Empty, "Should return empty collection for directory with no .mdext files");
     }
 
     [Test]

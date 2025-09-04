@@ -63,6 +63,23 @@ public class FileSystemMonitoringTests
             await Task.Delay(100);
     }
 
+    private static async Task<bool> WaitForAsync(Func<Task<bool>> predicate, TimeSpan timeout, TimeSpan pollInterval)
+    {
+        var deadline = DateTime.UtcNow + timeout;
+        while (DateTime.UtcNow < deadline)
+        {
+            if (await predicate())
+                return true;
+            await Task.Delay(pollInterval);
+        }
+        return false;
+    }
+
+    private static async Task<bool> WaitForAsync(Func<bool> predicate, TimeSpan timeout, TimeSpan pollInterval)
+    {
+        return await WaitForAsync(() => Task.FromResult(predicate()), timeout, pollInterval);
+    }
+
     private static (MainWindow window, IFileService fileService, IFileSystemMonitorService fileSystemMonitorService, MainWindowViewModel viewModel, FileExplorerViewModel fileExplorerViewModel) CreateMainWindowWithMonitoring()
     {
         var vmLogger = NullLoggerFactory.Instance.CreateLogger<MainWindowViewModel>();
@@ -164,7 +181,10 @@ public class FileSystemMonitoringTests
         Assert.That(srcFolder, Is.Not.Null, "src folder should exist");
 
         srcFolder!.IsExpanded = true;
-        await Task.Delay(1000);
+        
+        var childrenLoaded = await WaitForAsync(() => srcFolder.Children.Count == 2, TimeSpan.FromSeconds(5), TimeSpan.FromMilliseconds(100));
+        if (!childrenLoaded)
+            Assert.Fail("Timed out waiting for src folder children to load");
 
         // Initial state: src folder should have 2 children (controllers, main.cs)
         Assert.That(srcFolder.Children, Has.Count.EqualTo(2), "src should initially have 2 children");
@@ -182,7 +202,9 @@ public class FileSystemMonitoringTests
         fileSystemMonitorService.FileSystemChanged += Raise.EventWith(fileSystemMonitorService, eventArgs);
 
         // Wait for UI to update
-        await Task.Delay(500);
+        var fileAdded = await WaitForAsync(() => srcFolder.Children.Count == 3, TimeSpan.FromSeconds(5), TimeSpan.FromMilliseconds(100));
+        if (!fileAdded)
+            Assert.Fail("Timed out waiting for newfile.cs to be added to src folder");
 
         // Verify new file was added
         Assert.Multiple(() =>
@@ -221,7 +243,9 @@ public class FileSystemMonitoringTests
         fileSystemMonitorService.FileSystemChanged += Raise.EventWith(fileSystemMonitorService, eventArgs);
 
         // Wait for UI to update
-        await Task.Delay(500);
+        var directoryAdded = await WaitForAsync(() => fileExplorerViewModel.RootItem.Children.Count == 4, TimeSpan.FromSeconds(5), TimeSpan.FromMilliseconds(100));
+        if (!directoryAdded)
+            Assert.Fail("Timed out waiting for docs directory to be added to root");
 
         // Verify new directory was added
         Assert.Multiple(() =>
@@ -269,7 +293,9 @@ public class FileSystemMonitoringTests
         fileSystemMonitorService.FileSystemChanged += Raise.EventWith(fileSystemMonitorService, eventArgs);
 
         // Wait for UI to update
-        await Task.Delay(500);
+        var fileDeleted = await WaitForAsync(() => fileExplorerViewModel.RootItem.Children.Count == 2, TimeSpan.FromSeconds(5), TimeSpan.FromMilliseconds(100));
+        if (!fileDeleted)
+            Assert.Fail("Timed out waiting for README.md to be deleted from root");
 
         // Verify file was removed
         Assert.Multiple(() =>
@@ -316,7 +342,12 @@ public class FileSystemMonitoringTests
         fileSystemMonitorService.FileSystemChanged += Raise.EventWith(fileSystemMonitorService, eventArgs);
 
         // Wait for UI to update
-        await Task.Delay(500);
+        var fileRenamed = await WaitForAsync(() => 
+            fileExplorerViewModel.RootItem.Children.All(c => c.Name != "README.md") &&
+            fileExplorerViewModel.RootItem.Children.Any(c => c.Name == "CHANGELOG.md"),
+            TimeSpan.FromSeconds(5), TimeSpan.FromMilliseconds(100));
+        if (!fileRenamed)
+            Assert.Fail("Timed out waiting for README.md to be renamed to CHANGELOG.md");
 
         // Verify file was renamed (old removed, new added)
         Assert.Multiple(() =>
@@ -361,7 +392,9 @@ public class FileSystemMonitoringTests
         fileSystemMonitorService.FileSystemChanged += Raise.EventWith(fileSystemMonitorService, eventArgs);
 
         // Wait for UI to update
-        await Task.Delay(500);
+        var hasChildrenUpdated = await WaitForAsync(() => srcFolder.HasChildren && !srcFolder.IsExpanded, TimeSpan.FromSeconds(5), TimeSpan.FromMilliseconds(100));
+        if (!hasChildrenUpdated)
+            Assert.Fail("Timed out waiting for src folder to have children loaded while remaining unexpanded");
 
         // With the new loading behavior, visible folders load their children immediately
         // even when not expanded, so children will be loaded but folder stays collapsed
@@ -374,7 +407,10 @@ public class FileSystemMonitoringTests
 
         // Now expand the src folder
         srcFolder.IsExpanded = true;
-        await Task.Delay(1000);
+        
+        var expansionComplete = await WaitForAsync(() => srcFolder.IsExpanded && srcFolder.Children.Count == 3, TimeSpan.FromSeconds(5), TimeSpan.FromMilliseconds(100));
+        if (!expansionComplete)
+            Assert.Fail("Timed out waiting for src folder expansion to complete with 3 children");
 
         // Now it should load the actual children (including the original main.cs and controllers)
         // And the newfile.cs should be there since the file system change was tracked in the underlying model
@@ -417,7 +453,10 @@ public class FileSystemMonitoringTests
         };
 
         fileSystemMonitorService.FileSystemChanged += Raise.EventWith(fileSystemMonitorService, newDirEvent);
-        await Task.Delay(500);
+        
+        var directoryAddedForSorting = await WaitForAsync(() => fileExplorerViewModel.RootItem.Children.Count == 4, TimeSpan.FromSeconds(5), TimeSpan.FromMilliseconds(100));
+        if (!directoryAddedForSorting)
+            Assert.Fail("Timed out waiting for docs directory to be added for sorting test");
 
         // Add a new file that should be sorted among files
         var newFileEvent = new FileSystemChangedEventArgs
@@ -428,7 +467,10 @@ public class FileSystemMonitoringTests
         };
 
         fileSystemMonitorService.FileSystemChanged += Raise.EventWith(fileSystemMonitorService, newFileEvent);
-        await Task.Delay(500);
+        
+        var sortingComplete = await WaitForAsync(() => fileExplorerViewModel.RootItem.Children.Count == 5, TimeSpan.FromSeconds(5), TimeSpan.FromMilliseconds(100));
+        if (!sortingComplete)
+            Assert.Fail("Timed out waiting for sorting to complete with 5 children");
 
         // Verify sorting: directories first (alphabetical), then files (alphabetical)
         Assert.Multiple(() =>
@@ -480,8 +522,10 @@ public class FileSystemMonitoringTests
 
         fileSystemMonitorService.FileSystemChanged += Raise.EventWith(fileSystemMonitorService, eventArgs);
 
-        // Wait for potential UI update
-        await Task.Delay(500);
+        // Wait for potential UI update - checking that count doesn't change (remains at initialCount)
+        var noChangesDetected = await WaitForAsync(() => fileExplorerViewModel.RootItem.Children.Count == initialCount, TimeSpan.FromSeconds(2), TimeSpan.FromMilliseconds(100));
+        if (!noChangesDetected)
+            Assert.Fail("Expected no changes for files outside monitored path, but children count changed");
 
         // Verify no changes occurred
         Assert.That(fileExplorerViewModel.RootItem.Children, Has.Count.EqualTo(initialCount),
@@ -506,7 +550,14 @@ public class FileSystemMonitoringTests
 
         // Expand the src folder to trigger loading and preloading
         srcFolder!.IsExpanded = true;
-        await Task.Delay(1500); // Give extra time for preloading to complete
+        
+        var preloadingComplete = await WaitForAsync(() => {
+            if (srcFolder.Children.Count != 2) return false;
+            var controllersFolder = srcFolder.Children.FirstOrDefault(c => c.Name == "controllers");
+            return controllersFolder?.Children.Count == 1;
+        }, TimeSpan.FromSeconds(10), TimeSpan.FromMilliseconds(100));
+        if (!preloadingComplete)
+            Assert.Fail("Timed out waiting for src folder expansion and controllers preloading to complete");
 
         // Verify src folder has loaded its direct children
         Assert.Multiple(() =>
@@ -543,7 +594,10 @@ public class FileSystemMonitoringTests
 
         // Expand tests folder to verify preloading works there too
         testsFolder!.IsExpanded = true;
-        await Task.Delay(1500); // Give time for preloading
+        
+        var testsPreloadingComplete = await WaitForAsync(() => testsFolder.Children.Count == 2, TimeSpan.FromSeconds(10), TimeSpan.FromMilliseconds(100));
+        if (!testsPreloadingComplete)
+            Assert.Fail("Timed out waiting for tests folder expansion and preloading to complete");
 
         Assert.Multiple(() =>
         {

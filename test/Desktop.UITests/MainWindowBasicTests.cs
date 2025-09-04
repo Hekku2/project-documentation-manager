@@ -42,6 +42,8 @@ public class MainWindowBasicTests : MainWindowTestBase
         Assert.That(treeViews, Is.Not.Empty, "File explorer TreeView not found");
         var fileExplorer = window.GetVisualDescendants().OfType<FileExplorerUserControl>().FirstOrDefault();
         Assert.That(fileExplorer, Is.Not.Null, "FileExplorerUserControl should be present");
+        var fvm = fileExplorer!.DataContext as FileExplorerViewModel;
+        Assert.That(fvm, Is.Not.Null, "FileExplorerUserControl.DataContext should be FileExplorerViewModel");
     }
 
     [AvaloniaTest]

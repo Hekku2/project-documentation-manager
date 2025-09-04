@@ -23,7 +23,7 @@ public static class ValidationIssueExtensions
             // Resolve both paths to their full canonical forms for comparison
             var resolvedSourceFile = Path.GetFullPath(issue.SourceFile);
             var resolvedFileName = Path.GetFullPath(fileName);
-            
+
             // Compare the resolved full paths
             return string.Equals(resolvedSourceFile, resolvedFileName, StringComparison.OrdinalIgnoreCase);
         }
@@ -32,22 +32,5 @@ public static class ValidationIssueExtensions
             // If path resolution fails (e.g., invalid characters), fall back to direct string comparison
             return string.Equals(issue.SourceFile, fileName, StringComparison.OrdinalIgnoreCase);
         }
-    }
-}
-
-public static class ValidationResultExtensions
-{
-    /// <summary>
-    /// Gets all errors from a ValidationResult that belong to a specific file
-    /// </summary>
-    /// <param name="validationResult">The validation result to filter</param>
-    /// <param name="fileName">The filename to filter by</param>
-    /// <returns>A list of validation issues for the specified file</returns>
-    public static List<ValidationIssue> GetErrorsForFile(this ValidationResult validationResult, string? fileName)
-    {
-        if (validationResult == null)
-            return new List<ValidationIssue>();
-
-        return validationResult.Errors.Where(error => error.IsFromFile(fileName)).ToList();
     }
 }

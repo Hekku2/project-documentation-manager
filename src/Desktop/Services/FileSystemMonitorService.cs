@@ -44,6 +44,10 @@ public class FileSystemMonitorService(ILogger<FileSystemMonitorService> logger) 
             _fileSystemWatcher.Deleted += OnFileSystemChanged;
             _fileSystemWatcher.Changed += OnFileSystemChanged;
             _fileSystemWatcher.Renamed += OnFileSystemRenamed;
+            _fileSystemWatcher.Error += (_, args) =>
+            {
+                logger.LogWarning(args.GetException(), "FileSystemWatcher error; events may have been dropped");
+            };
 
             _fileSystemWatcher.EnableRaisingEvents = true;
 
@@ -140,7 +144,7 @@ public class FileSystemMonitorService(ILogger<FileSystemMonitorService> logger) 
         try
         {
             var fileName = Path.GetFileName(path);
-            if (fileName.StartsWith('.') || fileName.StartsWith('~'))
+            if (!string.IsNullOrEmpty(fileName) && (fileName[0] == '.' || fileName[0] == '~'))
                 return true;
 
             if (File.Exists(path))

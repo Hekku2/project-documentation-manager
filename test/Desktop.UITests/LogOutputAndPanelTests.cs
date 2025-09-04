@@ -180,6 +180,10 @@ public class LogOutputAndPanelTests : MainWindowTestBase
             // Should now have no tabs and panel should be hidden
             Assert.That(viewModel.BottomPanelTabs, Is.Empty, "Should have no tabs after closing all");
             Assert.That(viewModel.IsBottomPanelVisible, Is.False, "Bottom panel should be hidden when no tabs remain");
+
+            var bottomPanelUserControl = window.GetVisualDescendants().OfType<BottomPanelUserControl>().FirstOrDefault();
+            Assert.That(bottomPanelUserControl, Is.Not.Null, "BottomPanelUserControl should exist");
+            Assert.That(bottomPanelUserControl!.IsVisible, Is.False, "Bottom panel UI should be hidden when no tabs remain");
         });
     }
 

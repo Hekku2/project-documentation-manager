@@ -33,6 +33,8 @@ public class ServiceConfigurationTests
                 "EditorContentViewModel should be resolvable");
             Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.ViewModels.BuildConfirmationDialogViewModel>(),
                 "BuildConfirmationDialogViewModel should be resolvable");
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.ViewModels.FileExplorerViewModel>(),
+                "FileExplorerViewModel should be resolvable");
             // Views
             Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.Views.MainWindow>(),
                 "MainWindow should be resolvable");
@@ -43,6 +45,8 @@ public class ServiceConfigurationTests
                 "IEditorStateService should be resolvable");
             Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.Services.IHotkeyService>(),
                 "IHotkeyService should be resolvable");
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.Services.IFileSystemChangeHandler>(),
+                "IFileSystemChangeHandler should be resolvable");
             // Business Services
             Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Business.Services.IMarkdownCombinationService>(),
                 "IMarkdownCombinationService should be resolvable");
@@ -50,6 +54,7 @@ public class ServiceConfigurationTests
                 "IMarkdownDocumentFileWriterService should be resolvable");
             Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Business.Services.IMarkdownFileCollectorService>(),
                 "IMarkdownFileCollectorService should be resolvable");
+
             // Logging Services
             Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.Logging.IDynamicLoggerProvider>(),
                 "IDynamicLoggerProvider should be resolvable");
