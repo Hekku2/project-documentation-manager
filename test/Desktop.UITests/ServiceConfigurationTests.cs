@@ -39,15 +39,15 @@ public class ServiceConfigurationTests
             Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Views.MainWindow>(),
                 "MainWindow should be resolvable");
             // Application Services
-            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Services.IFileService>(),
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.Services.IFileService>(),
                 "IFileService should be resolvable");
-            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Services.IEditorStateService>(),
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.Services.IEditorStateService>(),
                 "IEditorStateService should be resolvable");
-            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Services.IHotkeyService>(),
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.Services.IHotkeyService>(),
                 "IHotkeyService should be resolvable");
-            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Services.IFileSystemChangeHandler>(),
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.Services.IFileSystemChangeHandler>(),
                 "IFileSystemChangeHandler should be resolvable");
-            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Services.IFileSystemMonitorService>(),
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.Services.IFileSystemMonitorService>(),
                 "IFileSystemMonitorService should be resolvable");
             // Business Services
             Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Business.Services.IMarkdownCombinationService>(),

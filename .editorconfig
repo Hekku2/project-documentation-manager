@@ -144,6 +144,8 @@ dotnet_diagnostic.NUnit2045.severity = warning
 # Analyzer rule configuration
 [*.cs]
 dotnet_diagnostic.IDE0059.severity = warning
+dotnet_diagnostic.IDE0005.severity = warning
+dotnet_diagnostic.IDE0130.severity = warning
 
 # CSharp code style settings:
 [*.cs]

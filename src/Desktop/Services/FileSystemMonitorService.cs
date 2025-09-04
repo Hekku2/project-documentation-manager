@@ -1,9 +1,11 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using Microsoft.Extensions.Logging;
 
 namespace Desktop.Services;
 
+[ExcludeFromCodeCoverage]
 public class FileSystemMonitorService(ILogger<FileSystemMonitorService> logger) : IFileSystemMonitorService
 {
     private FileSystemWatcher? _fileSystemWatcher;
