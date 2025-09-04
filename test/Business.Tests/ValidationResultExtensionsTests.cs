@@ -12,13 +12,13 @@ public class ValidationResultExtensionsTests
         // Arrange
         var validationResult = new ValidationResult
         {
-            Errors = new List<ValidationIssue>
-            {
-                new ValidationIssue { Message = "Error 1", SourceFile = "file1.mdext", LineNumber = 1 },
-                new ValidationIssue { Message = "Error 2", SourceFile = "file2.mdext", LineNumber = 2 },
-                new ValidationIssue { Message = "Error 3", SourceFile = "file1.mdext", LineNumber = 3 },
-                new ValidationIssue { Message = "Error 4", SourceFile = null, LineNumber = 4 }
-            }
+            Errors =
+            [
+                new() { Message = "Error 1", SourceFile = "file1.mdext", LineNumber = 1 },
+                new() { Message = "Error 2", SourceFile = "file2.mdext", LineNumber = 2 },
+                new() { Message = "Error 3", SourceFile = "file1.mdext", LineNumber = 3 },
+                new() { Message = "Error 4", SourceFile = null, LineNumber = 4 }
+            ]
         };
 
         // Act
@@ -39,11 +39,11 @@ public class ValidationResultExtensionsTests
         // Arrange
         var validationResult = new ValidationResult
         {
-            Errors = new List<ValidationIssue>
-            {
-                new ValidationIssue { Message = "Error 1", SourceFile = "file2.mdext", LineNumber = 1 },
-                new ValidationIssue { Message = "Error 2", SourceFile = "file3.mdext", LineNumber = 2 }
-            }
+            Errors =
+            [
+                new() { Message = "Error 1", SourceFile = "file2.mdext", LineNumber = 1 },
+                new() { Message = "Error 2", SourceFile = "file3.mdext", LineNumber = 2 }
+            ]
         };
 
         // Act
@@ -69,11 +69,11 @@ public class ValidationResultExtensionsTests
         // Arrange
         var validationResult = new ValidationResult
         {
-            Errors = new List<ValidationIssue>
-            {
-                new ValidationIssue { Message = "Error 1", SourceFile = "file1.mdext", LineNumber = 1 },
-                new ValidationIssue { Message = "Error 2", SourceFile = "file2.mdext", LineNumber = 2 }
-            }
+            Errors =
+            [
+                new() { Message = "Error 1", SourceFile = "file1.mdext", LineNumber = 1 },
+                new() { Message = "Error 2", SourceFile = "file2.mdext", LineNumber = 2 }
+            ]
         };
 
         // Act
