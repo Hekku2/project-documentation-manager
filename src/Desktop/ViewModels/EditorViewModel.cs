@@ -1,5 +1,3 @@
-using System;
-using System.Windows.Input;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Desktop.Configuration;

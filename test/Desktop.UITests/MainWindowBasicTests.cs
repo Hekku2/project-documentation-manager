@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
 using Desktop.ViewModels;
@@ -41,6 +40,8 @@ public class MainWindowBasicTests : MainWindowTestBase
         // Find TreeView by traversing the visual tree
         var treeViews = window.GetVisualDescendants().OfType<TreeView>().ToList();
         Assert.That(treeViews, Is.Not.Empty, "File explorer TreeView not found");
+        var fileExplorer = window.GetVisualDescendants().OfType<FileExplorerUserControl>().FirstOrDefault();
+        Assert.That(fileExplorer, Is.Not.Null, "FileExplorerUserControl should be present");
     }
 
     [AvaloniaTest]
@@ -60,7 +61,7 @@ public class MainWindowBasicTests : MainWindowTestBase
         var editorUserControl = window.GetVisualDescendants().OfType<EditorUserControl>().FirstOrDefault();
         Assert.That(editorUserControl, Is.Not.Null, "EditorUserControl not found");
 
-        var fileEditorContent = editorUserControl!.GetVisualDescendants().OfType<Desktop.Views.FileEditorContent>().FirstOrDefault();
+        var fileEditorContent = editorUserControl!.GetVisualDescendants().OfType<FileEditorContent>().FirstOrDefault();
         var documentEditor = fileEditorContent?.FindControl<TextBox>("DocumentEditor");
         Assert.That(documentEditor, Is.Not.Null, "DocumentEditor not found");
         Assert.Multiple(() =>
@@ -68,7 +69,7 @@ public class MainWindowBasicTests : MainWindowTestBase
             Assert.That(viewModel.EditorTabBar.ActiveTab, Is.Not.Null, "Active tab should exist after opening file");
             Assert.That(viewModel.EditorTabBar.ActiveTab!.Content, Is.Not.Null, "Tab content should exist");
             Assert.That(viewModel.EditorContent.CurrentContentData, Is.Not.Null, "Editor content data should exist");
-            Assert.That(viewModel.EditorContent.CurrentContentData, Is.TypeOf<Desktop.Models.FileEditorContentData>(), "Should be file editor content");
+            Assert.That(viewModel.EditorContent.CurrentContentData, Is.TypeOf<Models.FileEditorContentData>(), "Should be file editor content");
         });
     }
 

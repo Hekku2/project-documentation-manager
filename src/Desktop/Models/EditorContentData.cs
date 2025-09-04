@@ -1,4 +1,3 @@
-using System;
 using Desktop.Configuration;
 using Desktop.ViewModels;
 using Business.Models;
@@ -32,12 +31,12 @@ public class FilePreviewContentData : EditorContentData
     public bool IsCompiled { get; set; }
     public string? CompilationError { get; set; }
     public string? HtmlContent { get; set; }
-    
+
     /// <summary>
     /// Gets the content to display - compiled content if available and successful, otherwise raw content
     /// </summary>
     public string DisplayContent => IsCompiled && !string.IsNullOrEmpty(CompiledContent) ? CompiledContent : FileContent;
-    
+
     /// <summary>
     /// Determines if this can be rendered as HTML content
     /// </summary>

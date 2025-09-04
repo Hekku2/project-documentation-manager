@@ -1,7 +1,6 @@
 using Business.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using NSubstitute;
 using NUnit.Framework;
 
 namespace Business.Tests.Services;

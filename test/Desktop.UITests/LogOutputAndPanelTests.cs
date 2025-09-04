@@ -1,7 +1,5 @@
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
 using Avalonia.Headless.NUnit;
-using Avalonia.Media;
 using Avalonia.VisualTree;
 using Desktop.ViewModels;
 using Desktop.Views;
@@ -12,7 +10,7 @@ namespace Desktop.UITests;
 public class LogOutputAndPanelTests : MainWindowTestBase
 {
     [AvaloniaTest]
-    public void MainWindow_Should_Have_Log_Output_Section_Visible_By_Default()
+    public void MainWindow_Should_Create_Log_Output_Tab_On_Demand()
     {
         var window = CreateMainWindow();
         window.Show();
