@@ -8,6 +8,9 @@ namespace Desktop.Converters;
 public class BoolToColorConverter : IValueConverter
 {
     public static readonly BoolToColorConverter Instance = new();
+    
+    private static readonly SolidColorBrush _activeBrush = new(Color.Parse("#007ACC"));
+    private static readonly SolidColorBrush _inactiveBrush = new(Color.Parse("#3E3E42"));
 
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
@@ -15,10 +18,10 @@ public class BoolToColorConverter : IValueConverter
         {
             // Active tab: bright blue background
             // Inactive tab: dark gray background
-            return isActive ? new SolidColorBrush(Color.Parse("#007ACC")) : new SolidColorBrush(Color.Parse("#3E3E42"));
+            return isActive ? _activeBrush : _inactiveBrush;
         }
 
-        return new SolidColorBrush(Color.Parse("#3E3E42"));
+        return _inactiveBrush;
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
