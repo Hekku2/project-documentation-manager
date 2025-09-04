@@ -14,13 +14,13 @@ public class ContextMenuTests : MainWindowTestBase
         // Arrange
         var window = CreateMainWindow();
         window.Show();
-        
+
         await Task.Delay(100); // Allow UI to initialize
 
         // Find the FileExplorerUserControl 
         var fileExplorer = window.GetVisualDescendants().OfType<FileExplorerUserControl>().FirstOrDefault();
         Assert.That(fileExplorer, Is.Not.Null, "FileExplorerUserControl should be found");
-        
+
         await Task.Delay(500); // Allow file system to load
 
         // Find TreeView and TreeViewItems
@@ -30,7 +30,7 @@ public class ContextMenuTests : MainWindowTestBase
         var treeViewItems = treeView!.GetVisualDescendants().OfType<Avalonia.Controls.TreeViewItem>().ToList();
         if (treeViewItems.Count > 0)
         {
-            var firstItem = treeViewItems.First();
+            var firstItem = treeViewItems[0];
             Assert.That(firstItem.ContextMenu, Is.Not.Null, "TreeViewItem should have a context menu");
         }
         // Note: If no items are loaded in tests, this is expected behavior

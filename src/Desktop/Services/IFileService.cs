@@ -1,24 +1,7 @@
-using System;
 using System.Threading.Tasks;
 using Desktop.Models;
 
 namespace Desktop.Services;
-
-public enum FileSystemChangeType
-{
-    Created,
-    Deleted,
-    Changed,
-    Renamed
-}
-
-public class FileSystemChangedEventArgs : EventArgs
-{
-    public FileSystemChangeType ChangeType { get; init; }
-    public string Path { get; init; } = string.Empty;
-    public string? OldPath { get; init; }
-    public bool IsDirectory { get; init; }
-}
 
 public interface IFileService
 {
@@ -56,26 +39,6 @@ public interface IFileService
     /// <param name="content">Content to write</param>
     /// <returns>True if successful, false otherwise</returns>
     Task<bool> WriteFileContentAsync(string filePath, string content);
-
-    /// <summary>
-    /// Event raised when a file or directory changes in the monitored project folder
-    /// </summary>
-    event EventHandler<FileSystemChangedEventArgs>? FileSystemChanged;
-
-    /// <summary>
-    /// Starts monitoring the file system for changes in the project folder
-    /// </summary>
-    void StartFileSystemMonitoring();
-
-    /// <summary>
-    /// Stops monitoring the file system for changes
-    /// </summary>
-    void StopFileSystemMonitoring();
-
-    /// <summary>
-    /// Gets whether file system monitoring is currently active
-    /// </summary>
-    bool IsMonitoringFileSystem { get; }
 
     /// <summary>
     /// Creates a FileSystemItem from a file or directory path

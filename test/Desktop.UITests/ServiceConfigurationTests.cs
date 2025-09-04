@@ -17,10 +17,7 @@ public class ServiceConfigurationTests
             .UseContentRoot(AppContext.BaseDirectory)
             .ConfigureServices((context, services) =>
             {
-                // Use the exact same service configuration as the main program
                 ServiceConfiguration.ConfigureServices(context, services);
-                
-                // MainWindow can now be registered since we have Avalonia platform initialized
             });
         using var host = hostBuilder.Build();
         var serviceProvider = host.Services;
@@ -28,38 +25,45 @@ public class ServiceConfigurationTests
         Assert.Multiple(() =>
         {
             // ViewModels
-            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.ViewModels.MainWindowViewModel>(), 
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.ViewModels.MainWindowViewModel>(),
                 "MainWindowViewModel should be resolvable");
-            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.ViewModels.EditorTabBarViewModel>(), 
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.ViewModels.EditorTabBarViewModel>(),
                 "EditorTabBarViewModel should be resolvable");
-            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.ViewModels.EditorContentViewModel>(), 
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.ViewModels.EditorContentViewModel>(),
                 "EditorContentViewModel should be resolvable");
-            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.ViewModels.BuildConfirmationDialogViewModel>(), 
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.ViewModels.BuildConfirmationDialogViewModel>(),
                 "BuildConfirmationDialogViewModel should be resolvable");
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.ViewModels.FileExplorerViewModel>(),
+                "FileExplorerViewModel should be resolvable");
             // Views
-            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.Views.MainWindow>(), 
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Views.MainWindow>(),
                 "MainWindow should be resolvable");
             // Application Services
-            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.Services.IFileService>(), 
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Services.IFileService>(),
                 "IFileService should be resolvable");
-            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.Services.IEditorStateService>(), 
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Services.IEditorStateService>(),
                 "IEditorStateService should be resolvable");
-            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.Services.IHotkeyService>(), 
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Services.IHotkeyService>(),
                 "IHotkeyService should be resolvable");
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Services.IFileSystemChangeHandler>(),
+                "IFileSystemChangeHandler should be resolvable");
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Services.IFileSystemMonitorService>(),
+                "IFileSystemMonitorService should be resolvable");
             // Business Services
-            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Business.Services.IMarkdownCombinationService>(), 
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Business.Services.IMarkdownCombinationService>(),
                 "IMarkdownCombinationService should be resolvable");
-            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Business.Services.IMarkdownDocumentFileWriterService>(), 
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Business.Services.IMarkdownDocumentFileWriterService>(),
                 "IMarkdownDocumentFileWriterService should be resolvable");
-            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Business.Services.IMarkdownFileCollectorService>(), 
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Business.Services.IMarkdownFileCollectorService>(),
                 "IMarkdownFileCollectorService should be resolvable");
+
             // Logging Services
-            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.Logging.IDynamicLoggerProvider>(), 
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Logging.IDynamicLoggerProvider>(),
                 "IDynamicLoggerProvider should be resolvable");
-            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Desktop.Logging.ILogTransitionService>(), 
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<Logging.ILogTransitionService>(),
                 "ILogTransitionService should be resolvable");
             // Configuration
-            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<IOptions<Desktop.Configuration.ApplicationOptions>>(), 
+            Assert.DoesNotThrow(() => serviceProvider.GetRequiredService<IOptions<Configuration.ApplicationOptions>>(),
                 "ApplicationOptions should be resolvable");
         });
         // Verify multiple instances of transient services are different

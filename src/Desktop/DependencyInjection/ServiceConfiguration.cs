@@ -37,6 +37,7 @@ public static class ServiceConfiguration
         });
 
         // Register application services
+        services.AddSingleton<Services.IFileSystemMonitorService, Services.FileSystemMonitorService>();
         services.AddSingleton<Services.IFileService, Services.FileService>();
         services.AddSingleton<Services.IEditorStateService, Services.EditorStateService>();
         services.AddSingleton<Services.IHotkeyService, Services.HotkeyService>();

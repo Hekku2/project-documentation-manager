@@ -136,6 +136,15 @@ dotnet_naming_symbols.all_members.applicable_kinds = *
 
 dotnet_naming_style.pascal_case_style.capitalization = pascal_case
 
+# Analyzer rule configuration (tests only)
+[test/**/*.cs]
+dotnet_diagnostic.NUnit2046.severity = warning
+dotnet_diagnostic.NUnit2045.severity = warning
+
+# Analyzer rule configuration
+[*.cs]
+dotnet_diagnostic.IDE0059.severity = warning
+
 # CSharp code style settings:
 [*.cs]
 # Newline settings

@@ -10,8 +10,7 @@ public class ValidationAndErrorTests : MainWindowTestBase
     public async Task MainWindow_Should_Display_Validation_Errors_In_Error_Panel()
     {
         var window = CreateMainWindow();
-        var (viewModel, fileExplorerViewModel) = await SetupWindowAndWaitForLoadAsync(window);
-
+        var (viewModel, _) = await SetupWindowAndWaitForLoadAsync(window);
 
         // Open a file
         await viewModel.EditorTabBar.OpenFileAsync("/test/path/README.md");
@@ -20,33 +19,33 @@ public class ValidationAndErrorTests : MainWindowTestBase
         // Mock validation service to return errors
         var mockValidationResult = new ValidationResult
         {
-            Errors = 
+            Errors =
             [
-                new ValidationIssue 
-                { 
-                    Message = "Missing source file", 
-                    LineNumber = 5, 
-                    DirectivePath = "missing.md" 
+                new ValidationIssue
+                {
+                    Message = "Missing source file",
+                    LineNumber = 5,
+                    DirectivePath = "missing.md"
                 },
-                new ValidationIssue 
-                { 
-                    Message = "Invalid directive format", 
-                    LineNumber = 10 
+                new ValidationIssue
+                {
+                    Message = "Invalid directive format",
+                    LineNumber = 10
                 }
             ],
-            Warnings = 
+            Warnings =
             [
-                new ValidationIssue 
-                { 
-                    Message = "Unused source file", 
-                    DirectivePath = "unused.md" 
+                new ValidationIssue
+                {
+                    Message = "Unused source file",
+                    DirectivePath = "unused.md"
                 }
             ]
         };
 
         // Manually update the current validation result to simulate validation
         _editorStateService.CurrentValidationResult = mockValidationResult;
-        
+
         // Manually call the UpdateErrorPanelWithValidationResults method
         viewModel.UpdateErrorPanelWithValidationResults(mockValidationResult);
 
@@ -73,7 +72,7 @@ public class ValidationAndErrorTests : MainWindowTestBase
     public async Task MainWindow_Should_Not_Show_Error_Panel_When_Validation_Passes()
     {
         var window = CreateMainWindow();
-        var (viewModel, fileExplorerViewModel) = await SetupWindowAndWaitForLoadAsync(window);
+        var (viewModel, _) = await SetupWindowAndWaitForLoadAsync(window);
 
         // Open a file
         await viewModel.EditorTabBar.OpenFileAsync("/test/path/README.md");
@@ -89,7 +88,7 @@ public class ValidationAndErrorTests : MainWindowTestBase
         // Store initial state
         var wasBottomPanelVisible = viewModel.IsBottomPanelVisible;
         var initialActiveBottomTab = viewModel.ActiveBottomTab;
-        
+
         // Manually call the UpdateErrorPanelWithValidationResults method
         viewModel.UpdateErrorPanelWithValidationResults(mockValidationResult);
 
@@ -100,7 +99,7 @@ public class ValidationAndErrorTests : MainWindowTestBase
             // Error panel should NOT be shown when validation passes
             Assert.That(viewModel.IsBottomPanelVisible, Is.EqualTo(wasBottomPanelVisible), "Bottom panel visibility should not change");
             Assert.That(viewModel.ActiveBottomTab, Is.EqualTo(initialActiveBottomTab), "Active bottom tab should not change");
-            
+
             // No error tab should be created for successful validation
             var errorTab = viewModel.BottomPanelTabs.FirstOrDefault(t => t.Title == "Errors");
             if (errorTab != null)
@@ -114,7 +113,7 @@ public class ValidationAndErrorTests : MainWindowTestBase
     public async Task ValidationErrorOverlay_Should_Filter_Errors_By_Current_File()
     {
         var window = CreateMainWindow();
-        var (viewModel, fileExplorerViewModel) = await SetupWindowAndWaitForLoadAsync(window);
+        var (viewModel, _) = await SetupWindowAndWaitForLoadAsync(window);
 
         // Open a file
         await viewModel.EditorTabBar.OpenFileAsync("/test/path/file1.mdext");
@@ -123,12 +122,12 @@ public class ValidationAndErrorTests : MainWindowTestBase
         // Create validation results with errors from multiple files
         var mockValidationResult = new ValidationResult
         {
-            Errors = new List<ValidationIssue>
-            {
-                new ValidationIssue { Message = "[file1.mdext] Error in current file", LineNumber = 5 },
-                new ValidationIssue { Message = "[file2.mdext] Error in other file", LineNumber = 3 },
-                new ValidationIssue { Message = "[file3.mdext] Another error in other file", LineNumber = 7 }
-            }
+            Errors =
+            [
+                new() { Message = "[file1.mdext] Error in current file", LineNumber = 5 },
+                new() { Message = "[file2.mdext] Error in other file", LineNumber = 3 },
+                new() { Message = "[file3.mdext] Another error in other file", LineNumber = 7 }
+            ]
         };
 
         // Set validation results
@@ -141,12 +140,12 @@ public class ValidationAndErrorTests : MainWindowTestBase
         {
             // Verify that the ActiveFileName is set correctly
             Assert.That(viewModel.EditorContent.ActiveFileName, Is.EqualTo("file1.mdext"), "ActiveFileName should be set to current file");
-            
+
             // Verify that all errors are shown in the error panel
             Assert.That(viewModel.IsBottomPanelVisible, Is.True, "Bottom panel should be visible for errors");
             Assert.That(viewModel.ActiveBottomTab, Is.Not.Null, "Active bottom tab should exist");
             Assert.That(viewModel.ActiveBottomTab!.Title, Is.EqualTo("Errors"), "Error tab should be active");
-            
+
             // Error panel should show all errors (not filtered)
             var errorContent = viewModel.ActiveBottomTab.Content;
             Assert.That(errorContent, Does.Contain("[file1.mdext] Error in current file"), "Should contain error from current file");

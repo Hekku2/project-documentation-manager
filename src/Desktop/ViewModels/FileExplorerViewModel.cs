@@ -2,8 +2,10 @@ using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Desktop.Services;
 using Desktop.Factories;
+using Desktop.Configuration;
 
 namespace Desktop.ViewModels;
 
@@ -13,10 +15,10 @@ public class FileExplorerViewModel : ViewModelBase, IDisposable
     private FileSystemItemViewModel? _rootItem;
     private bool _disposed = false;
     private readonly ILogger<FileExplorerViewModel> _logger;
-    private readonly ILoggerFactory _loggerFactory;
-    private readonly IFileSystemExplorerService _fileSystemExplorerService;
     private readonly IFileSystemChangeHandler _fileSystemChangeHandler;
     private readonly IFileService _fileService;
+    private readonly IFileSystemMonitorService _fileSystemMonitor;
+    private readonly ApplicationOptions _applicationOptions;
     private readonly FileSystemItemViewModelFactory _fileSystemItemViewModelFactory;
 
     public ObservableCollection<FileSystemItemViewModel> FileSystemItems { get; } = [];
@@ -41,21 +43,23 @@ public class FileExplorerViewModel : ViewModelBase, IDisposable
         ILoggerFactory loggerFactory,
         IFileSystemExplorerService fileSystemExplorerService,
         IFileSystemChangeHandler fileSystemChangeHandler,
-        IFileService fileService)
+        IFileService fileService,
+        IFileSystemMonitorService fileSystemMonitor,
+        IOptions<ApplicationOptions> applicationOptions)
     {
         _logger = logger;
-        _loggerFactory = loggerFactory;
-        _fileSystemExplorerService = fileSystemExplorerService;
         _fileSystemChangeHandler = fileSystemChangeHandler;
         _fileService = fileService;
+        _fileSystemMonitor = fileSystemMonitor;
+        _applicationOptions = applicationOptions.Value;
 
         _fileSystemItemViewModelFactory = new FileSystemItemViewModelFactory(
-            _loggerFactory,
-            _fileSystemExplorerService,
+            loggerFactory,
+            fileSystemExplorerService,
             onItemSelected: OnItemSelected,
             onItemPreview: OnItemPreview);
 
-        _fileService.FileSystemChanged += DelegateFileSystemChangeEvent;
+        _fileSystemMonitor.FileSystemChanged += DelegateFileSystemChangeEvent;
     }
 
     public async Task InitializeAsync()
@@ -89,7 +93,10 @@ public class FileExplorerViewModel : ViewModelBase, IDisposable
                 FileSystemItems.Clear();
                 FileSystemItems.Add(rootViewModel);
 
-                _fileService.StartFileSystemMonitoring();
+                if (!string.IsNullOrEmpty(_applicationOptions.DefaultProjectFolder))
+                {
+                    _fileSystemMonitor.StartMonitoring(_applicationOptions.DefaultProjectFolder);
+                }
 
                 _logger.LogInformation("File structure loaded successfully");
             }
@@ -142,8 +149,11 @@ public class FileExplorerViewModel : ViewModelBase, IDisposable
     {
         if (!_disposed)
         {
-            _fileService.FileSystemChanged -= DelegateFileSystemChangeEvent;
-            _fileService.StopFileSystemMonitoring();
+            if (disposing && _fileSystemMonitor != null)
+            {
+                _fileSystemMonitor.FileSystemChanged -= DelegateFileSystemChangeEvent;
+
+            }
 
             _disposed = true;
         }

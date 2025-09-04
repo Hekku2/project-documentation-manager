@@ -25,21 +25,19 @@ public class ValidationErrorOverlayUITests
             CurrentFileName = "/test/path/test.mdext",
             ValidationResult = new ValidationResult
             {
-                Errors = new List<ValidationIssue>
-                {
-                    new ValidationIssue 
-                    { 
-                        Message = "Error on line 2", 
-                        SourceFile = "/test/path/test.mdext", 
-                        LineNumber = 2 
+                Errors =
+                [
+                    new() {
+                        Message = "Error on line 2",
+                        SourceFile = "/test/path/test.mdext",
+                        LineNumber = 2
                     },
-                    new ValidationIssue 
-                    { 
-                        Message = "Error on line 4", 
-                        SourceFile = "/test/path/test.mdext", 
-                        LineNumber = 4 
+                    new() {
+                        Message = "Error on line 4",
+                        SourceFile = "/test/path/test.mdext",
+                        LineNumber = 4
                     }
-                }
+                ]
             }
         };
 
@@ -48,10 +46,10 @@ public class ValidationErrorOverlayUITests
 
         // Assert - Verify the overlay processes the correct errors
         var filteredErrors = overlay.ValidationResult!.Errors.Where(e => e.IsFromFile(overlay.CurrentFileName)).ToList();
-        
+
         Assert.Multiple(() =>
         {
-            Assert.That(filteredErrors.Count, Is.EqualTo(2), "Should have 2 filtered errors for matching file");
+            Assert.That(filteredErrors, Has.Count.EqualTo(2), "Should have 2 filtered errors for matching file");
             Assert.That(filteredErrors[0].LineNumber, Is.EqualTo(2), "First error should be on line 2");
             Assert.That(filteredErrors[1].LineNumber, Is.EqualTo(4), "Second error should be on line 4");
         });
@@ -74,15 +72,14 @@ public class ValidationErrorOverlayUITests
             CurrentFileName = null, // No file selected
             ValidationResult = new ValidationResult
             {
-                Errors = new List<ValidationIssue>
-                {
-                    new ValidationIssue 
-                    { 
-                        Message = "Error on line 2", 
-                        SourceFile = "/test/path/test.mdext", 
-                        LineNumber = 2 
+                Errors =
+                [
+                    new() {
+                        Message = "Error on line 2",
+                        SourceFile = "/test/path/test.mdext",
+                        LineNumber = 2
                     }
-                }
+                ]
             }
         };
 
@@ -90,7 +87,7 @@ public class ValidationErrorOverlayUITests
         var filteredErrors = overlay.ValidationResult!.Errors.Where(e => e.IsFromFile(overlay.CurrentFileName)).ToList();
 
         // Assert - No errors should be shown when CurrentFileName is null
-        Assert.That(filteredErrors.Count, Is.EqualTo(0), "Should have no filtered errors when CurrentFileName is null");
+        Assert.That(filteredErrors, Is.Empty, "Should have no filtered errors when CurrentFileName is null");
     }
 
     [AvaloniaTest]
@@ -110,15 +107,14 @@ public class ValidationErrorOverlayUITests
             CurrentFileName = "/test/path/test.mdext",
             ValidationResult = new ValidationResult
             {
-                Errors = new List<ValidationIssue>
-                {
-                    new ValidationIssue 
-                    { 
-                        Message = "Error without source file", 
+                Errors =
+                [
+                    new() {
+                        Message = "Error without source file",
                         SourceFile = null, // No source file
-                        LineNumber = 2 
+                        LineNumber = 2
                     }
-                }
+                ]
             }
         };
 
@@ -126,7 +122,7 @@ public class ValidationErrorOverlayUITests
         var filteredErrors = overlay.ValidationResult!.Errors.Where(e => e.IsFromFile(overlay.CurrentFileName)).ToList();
 
         // Assert - No errors should be shown when SourceFile is null
-        Assert.That(filteredErrors.Count, Is.EqualTo(0), "Should have no filtered errors when SourceFile is null");
+        Assert.That(filteredErrors, Is.Empty, "Should have no filtered errors when SourceFile is null");
     }
 
     [AvaloniaTest]
@@ -146,27 +142,26 @@ public class ValidationErrorOverlayUITests
             CurrentFileName = "/test/path/file1.mdext",
             ValidationResult = new ValidationResult
             {
-                Errors = new List<ValidationIssue>
-                {
-                    new ValidationIssue 
-                    { 
-                        Message = "Error in file1", 
-                        SourceFile = "/test/path/file1.mdext", 
-                        LineNumber = 2 
+                Errors =
+                [
+                    new() {
+                        Message = "Error in file1",
+                        SourceFile = "/test/path/file1.mdext",
+                        LineNumber = 2
                     },
-                    new ValidationIssue 
-                    { 
-                        Message = "Error in file2", 
-                        SourceFile = "/test/path/file2.mdext", 
-                        LineNumber = 2 
+                    new()
+                    {
+                        Message = "Error in file2",
+                        SourceFile = "/test/path/file2.mdext",
+                        LineNumber = 2
                     },
-                    new ValidationIssue 
-                    { 
-                        Message = "Error in file3", 
-                        SourceFile = "/test/path/file3.mdext", 
-                        LineNumber = 3 
+                    new()
+                    {
+                        Message = "Error in file3",
+                        SourceFile = "/test/path/file3.mdext",
+                        LineNumber = 3
                     }
-                }
+                ]
             }
         };
 
@@ -176,7 +171,7 @@ public class ValidationErrorOverlayUITests
         // Assert - Only errors from file1.mdext should be shown
         Assert.Multiple(() =>
         {
-            Assert.That(filteredErrors.Count, Is.EqualTo(1), "Should have only 1 filtered error for file1.mdext");
+            Assert.That(filteredErrors, Has.Count.EqualTo(1), "Should have only 1 filtered error for file1.mdext");
             Assert.That(filteredErrors[0].SourceFile, Is.EqualTo("/test/path/file1.mdext"), "Filtered error should be from file1.mdext");
             Assert.That(filteredErrors[0].LineNumber, Is.EqualTo(2), "Filtered error should be on line 2");
         });

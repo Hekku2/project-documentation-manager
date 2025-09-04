@@ -1,7 +1,5 @@
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
 using Avalonia.Headless.NUnit;
-using Avalonia.Media;
 using Avalonia.VisualTree;
 using Desktop.ViewModels;
 using Desktop.Views;
@@ -12,7 +10,7 @@ namespace Desktop.UITests;
 public class LogOutputAndPanelTests : MainWindowTestBase
 {
     [AvaloniaTest]
-    public void MainWindow_Should_Have_Log_Output_Section_Visible_By_Default()
+    public void MainWindow_Should_Create_Log_Output_Tab_On_Demand()
     {
         var window = CreateMainWindow();
         window.Show();
@@ -21,18 +19,18 @@ public class LogOutputAndPanelTests : MainWindowTestBase
         Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
 
         // Initially no tabs should exist (created on-demand)
-        Assert.That(viewModel!.BottomPanelTabs.Count, Is.EqualTo(0), "Bottom panel should initially have no tabs");
-        
+        Assert.That(viewModel!.BottomPanelTabs, Is.Empty, "Bottom panel should initially have no tabs");
+
         // But after showing logs, the tab should exist
         viewModel.ShowLogsCommand.Execute(null);
-        Assert.That(viewModel.BottomPanelTabs.Count, Is.EqualTo(1), "Bottom panel should have 1 tab after showing logs");
+        Assert.That(viewModel.BottomPanelTabs, Has.Count.EqualTo(1), "Bottom panel should have 1 tab after showing logs");
         var logTab = viewModel.BottomPanelTabs.FirstOrDefault(t => t.Id == "logs");
         Assert.That(logTab, Is.Not.Null, "Log tab should exist after showing logs");
 
         // Find the bottom output TextBox within the BottomPanelUserControl in the UI  
         var bottomPanelUserControl = window.GetVisualDescendants().OfType<BottomPanelUserControl>().FirstOrDefault();
         var bottomOutputTextBox = bottomPanelUserControl?.FindControl<TextBox>("BottomOutput");
-        
+
         // The bottom output section should exist in the UI
         Assert.That(bottomOutputTextBox, Is.Not.Null, "Bottom output TextBox should exist in UI");
     }
@@ -47,22 +45,25 @@ public class LogOutputAndPanelTests : MainWindowTestBase
         Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
 
         // Initially no tabs should exist
-        Assert.That(viewModel!.BottomPanelTabs.Count, Is.EqualTo(0), "Should initially have no bottom panel tabs");
-        
+        Assert.That(viewModel!.BottomPanelTabs, Is.Empty, "Should initially have no bottom panel tabs");
+
         // Show both logs and errors
         viewModel.ShowLogsCommand.Execute(null);
         viewModel.ShowErrorsCommand.Execute(null);
-        
+
         // Now should have both tabs
-        Assert.That(viewModel.BottomPanelTabs.Count, Is.EqualTo(2), "Should have 2 bottom panel tabs after showing both");
-        
+        Assert.That(viewModel.BottomPanelTabs, Has.Count.EqualTo(2), "Should have 2 bottom panel tabs after showing both");
+
         var logTab = viewModel.BottomPanelTabs.FirstOrDefault(t => t.Id == "logs");
         var errorTab = viewModel.BottomPanelTabs.FirstOrDefault(t => t.Id == "errors");
-        
-        Assert.That(logTab, Is.Not.Null, "Log tab should exist");
-        Assert.That(errorTab, Is.Not.Null, "Error tab should exist");
-        Assert.That(logTab!.Title, Is.EqualTo("Log Output"), "Log tab should have correct title");
-        Assert.That(errorTab!.Title, Is.EqualTo("Errors"), "Error tab should have correct title");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(logTab, Is.Not.Null, "Log tab should exist");
+            Assert.That(logTab.Title, Is.EqualTo("Log Output"), "Log tab should have correct title");
+            Assert.That(errorTab, Is.Not.Null, "Error tab should exist");
+            Assert.That(errorTab.Title, Is.EqualTo("Errors"), "Error tab should have correct title");
+        });
     }
 
     [AvaloniaTest]
@@ -114,17 +115,17 @@ public class LogOutputAndPanelTests : MainWindowTestBase
     {
         var window = CreateMainWindow();
         var viewModel = window.DataContext as MainWindowViewModel;
-        
+
         Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
         Assert.That(viewModel!.CloseBottomPanelCommand, Is.Not.Null, "CloseBottomPanelCommand should exist");
-        
+
         // Test that the command can be executed
         bool canExecute = viewModel.CloseBottomPanelCommand.CanExecute(null);
         Assert.That(canExecute, Is.True, "CloseBottomPanelCommand should be executable");
-        
+
         // Show logs first to make panel visible
         viewModel.ShowLogsCommand.Execute(null);
-        
+
         // Track property changes
         bool visibilityChanged = false;
         viewModel.PropertyChanged += (sender, e) =>
@@ -132,10 +133,10 @@ public class LogOutputAndPanelTests : MainWindowTestBase
             if (e.PropertyName == nameof(MainWindowViewModel.IsBottomPanelVisible))
                 visibilityChanged = true;
         };
-        
+
         // Execute the command
         viewModel.CloseBottomPanelCommand.Execute(null);
-        
+
         Assert.Multiple(() =>
         {
             Assert.That(viewModel.IsBottomPanelVisible, Is.False, "Bottom panel should be hidden after command execution");
@@ -153,30 +154,33 @@ public class LogOutputAndPanelTests : MainWindowTestBase
         Assert.That(viewModel, Is.Not.Null, "ViewModel should exist");
 
         // Initially no tabs
-        Assert.That(viewModel!.BottomPanelTabs.Count, Is.EqualTo(0), "Should start with no tabs");
+        Assert.That(viewModel!.BottomPanelTabs, Is.Empty, "Should start with no tabs");
 
         // Show logs and errors
         viewModel.ShowLogsCommand.Execute(null);
         viewModel.ShowErrorsCommand.Execute(null);
-        Assert.That(viewModel.BottomPanelTabs.Count, Is.EqualTo(2), "Should have 2 tabs after showing both");
+        Assert.That(viewModel.BottomPanelTabs, Has.Count.EqualTo(2), "Should have 2 tabs after showing both");
 
         // Close the logs tab
         var logTab = viewModel.BottomPanelTabs.FirstOrDefault(t => t.Id == "logs");
         Assert.That(logTab, Is.Not.Null, "Log tab should exist");
-        
+
         viewModel.CloseBottomTab(logTab!);
-        
+
         // Should now have only 1 tab (errors)
-        Assert.That(viewModel.BottomPanelTabs.Count, Is.EqualTo(1), "Should have 1 tab after closing logs");
-        var remainingTab = viewModel.BottomPanelTabs.First();
+        Assert.That(viewModel.BottomPanelTabs, Has.Count.EqualTo(1), "Should have 1 tab after closing logs");
+        var remainingTab = viewModel.BottomPanelTabs[0];
         Assert.That(remainingTab.Id, Is.EqualTo("errors"), "Remaining tab should be errors");
 
         // Close the errors tab
         viewModel.CloseBottomTab(remainingTab);
-        
-        // Should now have no tabs and panel should be hidden
-        Assert.That(viewModel.BottomPanelTabs.Count, Is.EqualTo(0), "Should have no tabs after closing all");
-        Assert.That(viewModel.IsBottomPanelVisible, Is.False, "Bottom panel should be hidden when no tabs remain");
+
+        Assert.Multiple(() =>
+        {
+            // Should now have no tabs and panel should be hidden
+            Assert.That(viewModel.BottomPanelTabs, Is.Empty, "Should have no tabs after closing all");
+            Assert.That(viewModel.IsBottomPanelVisible, Is.False, "Bottom panel should be hidden when no tabs remain");
+        });
     }
 
     [AvaloniaTest]
@@ -190,22 +194,25 @@ public class LogOutputAndPanelTests : MainWindowTestBase
 
         // Show logs
         viewModel!.ShowLogsCommand.Execute(null);
-        Assert.That(viewModel.BottomPanelTabs.Count, Is.EqualTo(1), "Should have 1 tab");
-        var originalLogTab = viewModel.BottomPanelTabs.First();
-        
+        Assert.That(viewModel.BottomPanelTabs, Has.Count.EqualTo(1), "Should have 1 tab");
+        var originalLogTab = viewModel.BottomPanelTabs[0];
+
         // Close the logs tab
         viewModel.CloseBottomTab(originalLogTab);
-        Assert.That(viewModel.BottomPanelTabs.Count, Is.EqualTo(0), "Should have no tabs after closing");
+        Assert.That(viewModel.BottomPanelTabs, Is.Empty, "Should have no tabs after closing");
 
         // Show logs again from menu
         viewModel.ShowLogsCommand.Execute(null);
-        Assert.That(viewModel.BottomPanelTabs.Count, Is.EqualTo(1), "Should have 1 tab again after reopening");
-        
-        var newLogTab = viewModel.BottomPanelTabs.First();
-        Assert.That(newLogTab.Id, Is.EqualTo("logs"), "Recreated tab should be logs");
-        Assert.That(newLogTab.Title, Is.EqualTo("Log Output"), "Recreated tab should have correct title");
-        Assert.That(viewModel.IsBottomPanelVisible, Is.True, "Bottom panel should be visible again");
-        Assert.That(viewModel.ActiveBottomTab, Is.EqualTo(newLogTab), "Recreated tab should be active");
+        Assert.That(viewModel.BottomPanelTabs, Has.Count.EqualTo(1), "Should have 1 tab again after reopening");
+
+        var newLogTab = viewModel.BottomPanelTabs[0];
+        Assert.Multiple(() =>
+        {
+            Assert.That(newLogTab.Id, Is.EqualTo("logs"), "Recreated tab should be logs");
+            Assert.That(newLogTab.Title, Is.EqualTo("Log Output"), "Recreated tab should have correct title");
+            Assert.That(viewModel.IsBottomPanelVisible, Is.True, "Bottom panel should be visible again");
+            Assert.That(viewModel.ActiveBottomTab, Is.EqualTo(newLogTab), "Recreated tab should be active");
+        });
     }
 
     [AvaloniaTest]
@@ -235,9 +242,9 @@ public class LogOutputAndPanelTests : MainWindowTestBase
         // Verify horizontal scrolling is enabled
         Assert.Multiple(() =>
         {
-            Assert.That(logScrollViewer!.HorizontalScrollBarVisibility, Is.EqualTo(Avalonia.Controls.Primitives.ScrollBarVisibility.Auto), 
+            Assert.That(logScrollViewer!.HorizontalScrollBarVisibility, Is.EqualTo(Avalonia.Controls.Primitives.ScrollBarVisibility.Auto),
                 "Log display should have horizontal scrolling set to Auto");
-            Assert.That(logScrollViewer.VerticalScrollBarVisibility, Is.EqualTo(Avalonia.Controls.Primitives.ScrollBarVisibility.Auto), 
+            Assert.That(logScrollViewer.VerticalScrollBarVisibility, Is.EqualTo(Avalonia.Controls.Primitives.ScrollBarVisibility.Auto),
                 "Log display should have vertical scrolling set to Auto");
         });
     }
@@ -261,13 +268,13 @@ public class LogOutputAndPanelTests : MainWindowTestBase
         // Verify the TextBox has horizontal scrolling configured and text wrapping disabled
         Assert.Multiple(() =>
         {
-            Assert.That(bottomOutputTextBox!.TextWrapping, Is.EqualTo(Avalonia.Media.TextWrapping.NoWrap), 
+            Assert.That(bottomOutputTextBox!.TextWrapping, Is.EqualTo(Avalonia.Media.TextWrapping.NoWrap),
                 "BottomOutput should have text wrapping disabled to enable horizontal scrolling");
-            Assert.That(ScrollViewer.GetHorizontalScrollBarVisibility(bottomOutputTextBox), 
-                Is.EqualTo(Avalonia.Controls.Primitives.ScrollBarVisibility.Auto), 
+            Assert.That(ScrollViewer.GetHorizontalScrollBarVisibility(bottomOutputTextBox),
+                Is.EqualTo(Avalonia.Controls.Primitives.ScrollBarVisibility.Auto),
                 "BottomOutput should have horizontal scrolling set to Auto");
-            Assert.That(ScrollViewer.GetVerticalScrollBarVisibility(bottomOutputTextBox), 
-                Is.EqualTo(Avalonia.Controls.Primitives.ScrollBarVisibility.Auto), 
+            Assert.That(ScrollViewer.GetVerticalScrollBarVisibility(bottomOutputTextBox),
+                Is.EqualTo(Avalonia.Controls.Primitives.ScrollBarVisibility.Auto),
                 "BottomOutput should have vertical scrolling set to Auto");
         });
     }
