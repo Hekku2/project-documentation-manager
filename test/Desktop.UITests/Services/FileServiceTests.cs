@@ -104,7 +104,11 @@ public class FileServiceTests
         var result = await _fileService.CreateFileAsync(nonExistentFolder, "test.md");
 
         // Assert
-        Assert.That(result, Is.False);
+        Assert.Multiple(() =>
+        {
+            Assert.That(result, Is.False);
+            Assert.That(Directory.Exists(nonExistentFolder), Is.False);
+        });
     }
 
     [Test]
