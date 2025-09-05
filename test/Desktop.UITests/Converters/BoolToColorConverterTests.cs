@@ -1,5 +1,6 @@
 using System.Globalization;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using Desktop.Converters;
 
 namespace Desktop.UITests.Converters;
@@ -30,15 +31,15 @@ public class BoolToColorConverterTests
     public void Convert_WithTrue_Should_Return_ActiveColor()
     {
         // Act
-        var result = _converter.Convert(true, typeof(SolidColorBrush), null, CultureInfo.InvariantCulture);
+        var result = _converter.Convert(true, typeof(ImmutableSolidColorBrush), null, CultureInfo.InvariantCulture);
 
         // Assert
         Assert.Multiple(() =>
         {
             Assert.That(result, Is.Not.Null);
-            Assert.That(result, Is.TypeOf<SolidColorBrush>());
-            
-            var brush = result as SolidColorBrush;
+            Assert.That(result, Is.TypeOf<ImmutableSolidColorBrush>());
+
+            var brush = result as ImmutableSolidColorBrush;
             var expectedColor = Color.Parse("#007ACC");
             Assert.That(brush!.Color, Is.EqualTo(expectedColor));
         });
@@ -54,9 +55,9 @@ public class BoolToColorConverterTests
         Assert.Multiple(() =>
         {
             Assert.That(result, Is.Not.Null);
-            Assert.That(result, Is.TypeOf<SolidColorBrush>());
-            
-            var brush = result as SolidColorBrush;
+            Assert.That(result, Is.TypeOf<ImmutableSolidColorBrush>());
+
+            var brush = result as ImmutableSolidColorBrush;
             var expectedColor = Color.Parse("#3E3E42");
             Assert.That(brush!.Color, Is.EqualTo(expectedColor));
         });
@@ -66,15 +67,15 @@ public class BoolToColorConverterTests
     public void Convert_WithNull_Should_Return_InactiveColor()
     {
         // Act
-        var result = _converter.Convert(null, typeof(SolidColorBrush), null, CultureInfo.InvariantCulture);
+        var result = _converter.Convert(null, typeof(ImmutableSolidColorBrush), null, CultureInfo.InvariantCulture);
 
         // Assert
         Assert.Multiple(() =>
         {
             Assert.That(result, Is.Not.Null);
-            Assert.That(result, Is.TypeOf<SolidColorBrush>());
-            
-            var brush = result as SolidColorBrush;
+            Assert.That(result, Is.TypeOf<ImmutableSolidColorBrush>());
+
+            var brush = result as ImmutableSolidColorBrush;
             var expectedColor = Color.Parse("#3E3E42");
             Assert.That(brush!.Color, Is.EqualTo(expectedColor));
         });
@@ -89,15 +90,15 @@ public class BoolToColorConverterTests
         foreach (var value in nonBoolValues)
         {
             // Act
-            var result = _converter.Convert(value, typeof(SolidColorBrush), null, CultureInfo.InvariantCulture);
+            var result = _converter.Convert(value, typeof(ImmutableSolidColorBrush), null, CultureInfo.InvariantCulture);
 
             // Assert
             Assert.Multiple(() =>
             {
                 Assert.That(result, Is.Not.Null, $"Failed for value: {value}");
-                Assert.That(result, Is.TypeOf<SolidColorBrush>(), $"Failed for value: {value}");
-                
-                var brush = result as SolidColorBrush;
+                Assert.That(result, Is.TypeOf<ImmutableSolidColorBrush>(), $"Failed for value: {value}");
+
+                var brush = result as ImmutableSolidColorBrush;
                 var expectedColor = Color.Parse("#3E3E42");
                 Assert.That(brush!.Color, Is.EqualTo(expectedColor), $"Failed for value: {value}");
             });
@@ -113,8 +114,8 @@ public class BoolToColorConverterTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(result1, Is.TypeOf<SolidColorBrush>());
-            Assert.That(result2, Is.TypeOf<SolidColorBrush>());
+            Assert.That(result1, Is.TypeOf<ImmutableSolidColorBrush>());
+            Assert.That(result2, Is.TypeOf<ImmutableSolidColorBrush>());
         });
     }
 
@@ -122,13 +123,13 @@ public class BoolToColorConverterTests
     public void Convert_WithDifferentParameters_Should_IgnoreParameter()
     {
         // Act
-        var result1 = _converter.Convert(true, typeof(SolidColorBrush), null, CultureInfo.InvariantCulture);
-        var result2 = _converter.Convert(true, typeof(SolidColorBrush), "some parameter", CultureInfo.InvariantCulture);
+        var result1 = _converter.Convert(true, typeof(ImmutableSolidColorBrush), null, CultureInfo.InvariantCulture);
+        var result2 = _converter.Convert(true, typeof(ImmutableSolidColorBrush), "some parameter", CultureInfo.InvariantCulture);
 
         // Assert
-        var brush1 = result1 as SolidColorBrush;
-        var brush2 = result2 as SolidColorBrush;
-        
+        var brush1 = result1 as ImmutableSolidColorBrush;
+        var brush2 = result2 as ImmutableSolidColorBrush;
+
         Assert.That(brush1!.Color, Is.EqualTo(brush2!.Color));
     }
 
@@ -136,15 +137,15 @@ public class BoolToColorConverterTests
     public void Convert_WithDifferentCultures_Should_IgnoreCulture()
     {
         // Act
-        var result1 = _converter.Convert(true, typeof(SolidColorBrush), null, CultureInfo.InvariantCulture);
-        var result2 = _converter.Convert(true, typeof(SolidColorBrush), null, new CultureInfo("en-US"));
-        var result3 = _converter.Convert(true, typeof(SolidColorBrush), null, new CultureInfo("fi-FI"));
+        var result1 = _converter.Convert(true, typeof(ImmutableSolidColorBrush), null, CultureInfo.InvariantCulture);
+        var result2 = _converter.Convert(true, typeof(ImmutableSolidColorBrush), null, new CultureInfo("en-US"));
+        var result3 = _converter.Convert(true, typeof(ImmutableSolidColorBrush), null, new CultureInfo("fi-FI"));
 
         // Assert
-        var brush1 = result1 as SolidColorBrush;
-        var brush2 = result2 as SolidColorBrush;
-        var brush3 = result3 as SolidColorBrush;
-        
+        var brush1 = result1 as ImmutableSolidColorBrush;
+        var brush2 = result2 as ImmutableSolidColorBrush;
+        var brush3 = result3 as ImmutableSolidColorBrush;
+
         Assert.Multiple(() =>
         {
             Assert.That(brush1!.Color, Is.EqualTo(brush2!.Color));
@@ -156,20 +157,20 @@ public class BoolToColorConverterTests
     public void ConvertBack_Should_Throw_NotImplementedException()
     {
         // Act & Assert
-        Assert.Throws<System.NotImplementedException>(() => 
-            _converter.ConvertBack(new SolidColorBrush(Colors.Blue), typeof(bool), null, CultureInfo.InvariantCulture));
+        Assert.Throws<System.NotImplementedException>(() =>
+            _converter.ConvertBack(new ImmutableSolidColorBrush(Colors.Blue), typeof(bool), null, CultureInfo.InvariantCulture));
     }
 
     [Test]
     public void Convert_Colors_Should_Be_Correct_HexValues()
     {
         // Act
-        var activeResult = _converter.Convert(true, typeof(SolidColorBrush), null, CultureInfo.InvariantCulture);
-        var inactiveResult = _converter.Convert(false, typeof(SolidColorBrush), null, CultureInfo.InvariantCulture);
+        var activeResult = _converter.Convert(true, typeof(ImmutableSolidColorBrush), null, CultureInfo.InvariantCulture);
+        var inactiveResult = _converter.Convert(false, typeof(ImmutableSolidColorBrush), null, CultureInfo.InvariantCulture);
 
         // Assert
-        var activeBrush = activeResult as SolidColorBrush;
-        var inactiveBrush = inactiveResult as SolidColorBrush;
+        var activeBrush = activeResult as ImmutableSolidColorBrush;
+        var inactiveBrush = inactiveResult as ImmutableSolidColorBrush;
 
         Assert.Multiple(() =>
         {

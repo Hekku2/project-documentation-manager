@@ -1,5 +1,6 @@
 using System.Globalization;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using Desktop.Converters;
 
 namespace Desktop.UITests.Converters;
@@ -30,15 +31,15 @@ public class ErrorTypeToColorConverterTests
     public void Convert_WithError_Should_Return_RedColor()
     {
         // Act
-        var result = _converter.Convert("error", typeof(SolidColorBrush), null, CultureInfo.InvariantCulture);
+        var result = _converter.Convert("error", typeof(ImmutableSolidColorBrush), null, CultureInfo.InvariantCulture);
 
         // Assert
         Assert.Multiple(() =>
         {
             Assert.That(result, Is.Not.Null);
-            Assert.That(result, Is.TypeOf<SolidColorBrush>());
-            
-            var brush = result as SolidColorBrush;
+            Assert.That(result, Is.TypeOf<ImmutableSolidColorBrush>());
+
+            var brush = result as ImmutableSolidColorBrush;
             var expectedColor = Color.Parse("#FF6B6B");
             Assert.That(brush!.Color, Is.EqualTo(expectedColor));
         });
@@ -48,15 +49,15 @@ public class ErrorTypeToColorConverterTests
     public void Convert_WithWarning_Should_Return_YellowColor()
     {
         // Act
-        var result = _converter.Convert("warning", typeof(SolidColorBrush), null, CultureInfo.InvariantCulture);
+        var result = _converter.Convert("warning", typeof(ImmutableSolidColorBrush), null, CultureInfo.InvariantCulture);
 
         // Assert
         Assert.Multiple(() =>
         {
             Assert.That(result, Is.Not.Null);
-            Assert.That(result, Is.TypeOf<SolidColorBrush>());
-            
-            var brush = result as SolidColorBrush;
+            Assert.That(result, Is.TypeOf<ImmutableSolidColorBrush>());
+
+            var brush = result as ImmutableSolidColorBrush;
             var expectedColor = Color.Parse("#FFD93D");
             Assert.That(brush!.Color, Is.EqualTo(expectedColor));
         });
@@ -71,15 +72,15 @@ public class ErrorTypeToColorConverterTests
         foreach (var errorType in unknownTypes)
         {
             // Act
-            var result = _converter.Convert(errorType, typeof(SolidColorBrush), null, CultureInfo.InvariantCulture);
+            var result = _converter.Convert(errorType, typeof(ImmutableSolidColorBrush), null, CultureInfo.InvariantCulture);
 
             // Assert
             Assert.Multiple(() =>
             {
                 Assert.That(result, Is.Not.Null, $"Failed for error type: {errorType}");
-                Assert.That(result, Is.TypeOf<SolidColorBrush>(), $"Failed for error type: {errorType}");
-                
-                var brush = result as SolidColorBrush;
+                Assert.That(result, Is.TypeOf<ImmutableSolidColorBrush>(), $"Failed for error type: {errorType}");
+
+                var brush = result as ImmutableSolidColorBrush;
                 var expectedColor = Color.Parse("#CCCCCC");
                 Assert.That(brush!.Color, Is.EqualTo(expectedColor), $"Failed for error type: {errorType}");
             });
@@ -96,8 +97,8 @@ public class ErrorTypeToColorConverterTests
         // Act & Assert for error variations
         foreach (var errorType in errorVariations)
         {
-            var result = _converter.Convert(errorType, typeof(SolidColorBrush), null, CultureInfo.InvariantCulture);
-            var brush = result as SolidColorBrush;
+            var result = _converter.Convert(errorType, typeof(ImmutableSolidColorBrush), null, CultureInfo.InvariantCulture);
+            var brush = result as ImmutableSolidColorBrush;
             var expectedColor = Color.Parse("#FF6B6B");
             Assert.That(brush!.Color, Is.EqualTo(expectedColor), $"Failed for error type: {errorType}");
         }
@@ -105,8 +106,8 @@ public class ErrorTypeToColorConverterTests
         // Act & Assert for warning variations
         foreach (var warningType in warningVariations)
         {
-            var result = _converter.Convert(warningType, typeof(SolidColorBrush), null, CultureInfo.InvariantCulture);
-            var brush = result as SolidColorBrush;
+            var result = _converter.Convert(warningType, typeof(ImmutableSolidColorBrush), null, CultureInfo.InvariantCulture);
+            var brush = result as ImmutableSolidColorBrush;
             var expectedColor = Color.Parse("#FFD93D");
             Assert.That(brush!.Color, Is.EqualTo(expectedColor), $"Failed for warning type: {warningType}");
         }
@@ -116,15 +117,15 @@ public class ErrorTypeToColorConverterTests
     public void Convert_WithNull_Should_Return_DefaultColor()
     {
         // Act
-        var result = _converter.Convert(null, typeof(SolidColorBrush), null, CultureInfo.InvariantCulture);
+        var result = _converter.Convert(null, typeof(ImmutableSolidColorBrush), null, CultureInfo.InvariantCulture);
 
         // Assert
         Assert.Multiple(() =>
         {
             Assert.That(result, Is.Not.Null);
-            Assert.That(result, Is.TypeOf<SolidColorBrush>());
-            
-            var brush = result as SolidColorBrush;
+            Assert.That(result, Is.TypeOf<ImmutableSolidColorBrush>());
+
+            var brush = result as ImmutableSolidColorBrush;
             var expectedColor = Color.Parse("#CCCCCC");
             Assert.That(brush!.Color, Is.EqualTo(expectedColor));
         });
@@ -139,15 +140,15 @@ public class ErrorTypeToColorConverterTests
         foreach (var value in nonStringValues)
         {
             // Act
-            var result = _converter.Convert(value, typeof(SolidColorBrush), null, CultureInfo.InvariantCulture);
+            var result = _converter.Convert(value, typeof(ImmutableSolidColorBrush), null, CultureInfo.InvariantCulture);
 
             // Assert
             Assert.Multiple(() =>
             {
                 Assert.That(result, Is.Not.Null, $"Failed for value: {value}");
-                Assert.That(result, Is.TypeOf<SolidColorBrush>(), $"Failed for value: {value}");
-                
-                var brush = result as SolidColorBrush;
+                Assert.That(result, Is.TypeOf<ImmutableSolidColorBrush>(), $"Failed for value: {value}");
+
+                var brush = result as ImmutableSolidColorBrush;
                 var expectedColor = Color.Parse("#CCCCCC");
                 Assert.That(brush!.Color, Is.EqualTo(expectedColor), $"Failed for value: {value}");
             });
@@ -158,15 +159,15 @@ public class ErrorTypeToColorConverterTests
     public void Convert_WithEmptyString_Should_Return_DefaultColor()
     {
         // Act
-        var result = _converter.Convert("", typeof(SolidColorBrush), null, CultureInfo.InvariantCulture);
+        var result = _converter.Convert("", typeof(ImmutableSolidColorBrush), null, CultureInfo.InvariantCulture);
 
         // Assert
         Assert.Multiple(() =>
         {
             Assert.That(result, Is.Not.Null);
-            Assert.That(result, Is.TypeOf<SolidColorBrush>());
-            
-            var brush = result as SolidColorBrush;
+            Assert.That(result, Is.TypeOf<ImmutableSolidColorBrush>());
+
+            var brush = result as ImmutableSolidColorBrush;
             var expectedColor = Color.Parse("#CCCCCC");
             Assert.That(brush!.Color, Is.EqualTo(expectedColor));
         });
@@ -181,15 +182,15 @@ public class ErrorTypeToColorConverterTests
         foreach (var value in whitespaceValues)
         {
             // Act
-            var result = _converter.Convert(value, typeof(SolidColorBrush), null, CultureInfo.InvariantCulture);
+            var result = _converter.Convert(value, typeof(ImmutableSolidColorBrush), null, CultureInfo.InvariantCulture);
 
             // Assert
             Assert.Multiple(() =>
             {
                 Assert.That(result, Is.Not.Null, $"Failed for whitespace: '{value}'");
-                Assert.That(result, Is.TypeOf<SolidColorBrush>(), $"Failed for whitespace: '{value}'");
-                
-                var brush = result as SolidColorBrush;
+                Assert.That(result, Is.TypeOf<ImmutableSolidColorBrush>(), $"Failed for whitespace: '{value}'");
+
+                var brush = result as ImmutableSolidColorBrush;
                 var expectedColor = Color.Parse("#CCCCCC");
                 Assert.That(brush!.Color, Is.EqualTo(expectedColor), $"Failed for whitespace: '{value}'");
             });
@@ -205,8 +206,8 @@ public class ErrorTypeToColorConverterTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(result1, Is.TypeOf<SolidColorBrush>());
-            Assert.That(result2, Is.TypeOf<SolidColorBrush>());
+            Assert.That(result1, Is.TypeOf<ImmutableSolidColorBrush>());
+            Assert.That(result2, Is.TypeOf<ImmutableSolidColorBrush>());
         });
     }
 
@@ -214,13 +215,13 @@ public class ErrorTypeToColorConverterTests
     public void Convert_WithDifferentParameters_Should_IgnoreParameter()
     {
         // Act
-        var result1 = _converter.Convert("error", typeof(SolidColorBrush), null, CultureInfo.InvariantCulture);
-        var result2 = _converter.Convert("error", typeof(SolidColorBrush), "some parameter", CultureInfo.InvariantCulture);
+        var result1 = _converter.Convert("error", typeof(ImmutableSolidColorBrush), null, CultureInfo.InvariantCulture);
+        var result2 = _converter.Convert("error", typeof(ImmutableSolidColorBrush), "some parameter", CultureInfo.InvariantCulture);
 
         // Assert
-        var brush1 = result1 as SolidColorBrush;
-        var brush2 = result2 as SolidColorBrush;
-        
+        var brush1 = result1 as ImmutableSolidColorBrush;
+        var brush2 = result2 as ImmutableSolidColorBrush;
+
         Assert.That(brush1!.Color, Is.EqualTo(brush2!.Color));
     }
 
@@ -228,15 +229,15 @@ public class ErrorTypeToColorConverterTests
     public void Convert_WithDifferentCultures_Should_IgnoreCulture()
     {
         // Act
-        var result1 = _converter.Convert("error", typeof(SolidColorBrush), null, CultureInfo.InvariantCulture);
-        var result2 = _converter.Convert("error", typeof(SolidColorBrush), null, new CultureInfo("en-US"));
-        var result3 = _converter.Convert("error", typeof(SolidColorBrush), null, new CultureInfo("fi-FI"));
+        var result1 = _converter.Convert("error", typeof(ImmutableSolidColorBrush), null, CultureInfo.InvariantCulture);
+        var result2 = _converter.Convert("error", typeof(ImmutableSolidColorBrush), null, new CultureInfo("en-US"));
+        var result3 = _converter.Convert("error", typeof(ImmutableSolidColorBrush), null, new CultureInfo("fi-FI"));
 
         // Assert
-        var brush1 = result1 as SolidColorBrush;
-        var brush2 = result2 as SolidColorBrush;
-        var brush3 = result3 as SolidColorBrush;
-        
+        var brush1 = result1 as ImmutableSolidColorBrush;
+        var brush2 = result2 as ImmutableSolidColorBrush;
+        var brush3 = result3 as ImmutableSolidColorBrush;
+
         Assert.Multiple(() =>
         {
             Assert.That(brush1!.Color, Is.EqualTo(brush2!.Color));
@@ -248,22 +249,22 @@ public class ErrorTypeToColorConverterTests
     public void ConvertBack_Should_Throw_NotImplementedException()
     {
         // Act & Assert
-        Assert.Throws<System.NotImplementedException>(() => 
-            _converter.ConvertBack(new SolidColorBrush(Colors.Red), typeof(string), null, CultureInfo.InvariantCulture));
+        Assert.Throws<System.NotImplementedException>(() =>
+            _converter.ConvertBack(new ImmutableSolidColorBrush(Colors.Red), typeof(string), null, CultureInfo.InvariantCulture));
     }
 
     [Test]
     public void Convert_Colors_Should_Be_Correct_HexValues()
     {
         // Act
-        var errorResult = _converter.Convert("error", typeof(SolidColorBrush), null, CultureInfo.InvariantCulture);
-        var warningResult = _converter.Convert("warning", typeof(SolidColorBrush), null, CultureInfo.InvariantCulture);
-        var defaultResult = _converter.Convert("unknown", typeof(SolidColorBrush), null, CultureInfo.InvariantCulture);
+        var errorResult = _converter.Convert("error", typeof(ImmutableSolidColorBrush), null, CultureInfo.InvariantCulture);
+        var warningResult = _converter.Convert("warning", typeof(ImmutableSolidColorBrush), null, CultureInfo.InvariantCulture);
+        var defaultResult = _converter.Convert("unknown", typeof(ImmutableSolidColorBrush), null, CultureInfo.InvariantCulture);
 
         // Assert
-        var errorBrush = errorResult as SolidColorBrush;
-        var warningBrush = warningResult as SolidColorBrush;
-        var defaultBrush = defaultResult as SolidColorBrush;
+        var errorBrush = errorResult as ImmutableSolidColorBrush;
+        var warningBrush = warningResult as ImmutableSolidColorBrush;
+        var defaultBrush = defaultResult as ImmutableSolidColorBrush;
 
         Assert.Multiple(() =>
         {
@@ -291,9 +292,9 @@ public class ErrorTypeToColorConverterTests
     public void Convert_Same_ErrorType_Should_Return_Same_Brush_Instance()
     {
         // Act - Call multiple times with same error type
-        var result1 = _converter.Convert("error", typeof(SolidColorBrush), null, CultureInfo.InvariantCulture);
-        var result2 = _converter.Convert("error", typeof(SolidColorBrush), null, CultureInfo.InvariantCulture);
-        var result3 = _converter.Convert("ERROR", typeof(SolidColorBrush), null, CultureInfo.InvariantCulture);
+        var result1 = _converter.Convert("error", typeof(ImmutableSolidColorBrush), null, CultureInfo.InvariantCulture);
+        var result2 = _converter.Convert("error", typeof(ImmutableSolidColorBrush), null, CultureInfo.InvariantCulture);
+        var result3 = _converter.Convert("ERROR", typeof(ImmutableSolidColorBrush), null, CultureInfo.InvariantCulture);
 
         // Assert - Should return the same brush instance (optimization verification)
         Assert.Multiple(() =>
