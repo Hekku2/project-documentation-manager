@@ -10,10 +10,9 @@ public class ErrorTypeToColorConverter : IValueConverter
 {
     public static readonly ErrorTypeToColorConverter Instance = new();
 
-    private static readonly ImmutableSolidColorBrush _errorBrush = new(Color.Parse("#FF6B6B")); // Red for errors
-    private static readonly ImmutableSolidColorBrush _warningBrush = new(Color.Parse("#FFD93D")); // Yellow for warnings  
-    private static readonly ImmutableSolidColorBrush _defaultBrush = new(Color.Parse("#CCCCCC")); // Default gray
-
+    private static readonly IBrush _errorBrush = new ImmutableSolidColorBrush(Color.Parse("#FF6B6B")); // Red for errors
+    private static readonly IBrush _warningBrush = new ImmutableSolidColorBrush(Color.Parse("#FFD93D")); // Yellow for warnings
+    private static readonly IBrush _defaultBrush = new ImmutableSolidColorBrush(Color.Parse("#CCCCCC")); // Default gray
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is string errorType)
