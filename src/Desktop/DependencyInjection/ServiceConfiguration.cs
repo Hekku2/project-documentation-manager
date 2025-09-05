@@ -3,7 +3,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Desktop.Logging;
 using Desktop.Factories;
-using System.Runtime.InteropServices;
 
 namespace Desktop.DependencyInjection;
 
