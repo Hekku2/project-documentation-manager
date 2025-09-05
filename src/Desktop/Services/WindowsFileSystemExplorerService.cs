@@ -1,13 +1,16 @@
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Runtime.Versioning;
 using Microsoft.Extensions.Logging;
 
 namespace Desktop.Services;
 
+[ExcludeFromCodeCoverage]
+[SupportedOSPlatform("windows")]
 public class WindowsFileSystemExplorerService(ILogger<WindowsFileSystemExplorerService> logger) : IFileSystemExplorerService
 {
-    // TODO: This should be only used in windows. If other OS is used, provide alternative implementation, or disable the functionality
     public void ShowInExplorer(string filePath)
     {
         try

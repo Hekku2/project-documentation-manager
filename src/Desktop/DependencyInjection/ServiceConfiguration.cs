@@ -42,8 +42,9 @@ public static class ServiceConfiguration
         services.AddSingleton<Services.IEditorStateService, Services.EditorStateService>();
         services.AddSingleton<Services.IHotkeyService, Services.HotkeyService>();
         services.AddSingleton<Services.IMarkdownRenderingService, Services.MarkdownRenderingService>();
-        services.AddSingleton<Services.IFileSystemExplorerService, Services.WindowsFileSystemExplorerService>();
         services.AddSingleton<Services.IFileSystemChangeHandler, Services.FileSystemChangeHandler>();
+
+        services.AddFileSystemExplorerService();
 
         // Register factories
         services.AddSingleton<ISettingsContentViewModelFactory, SettingsContentViewModelFactory>();
