@@ -142,8 +142,7 @@ public class FileServiceTests
         Assert.Multiple(() =>
         {
             Assert.That(result, Is.True);
-            var content = File.ReadAllText(filePath);
-            Assert.That(content, Is.EqualTo(string.Empty));
+            Assert.That(new FileInfo(filePath).Length, Is.EqualTo(0));
         });
     }
 
