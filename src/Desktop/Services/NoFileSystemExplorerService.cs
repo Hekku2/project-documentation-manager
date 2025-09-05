@@ -1,9 +1,16 @@
 namespace Desktop.Services;
 
-public class NoFileSystemExplorerService : IFileSystemExplorerService
+using Microsoft.Extensions.Logging;
+using System.Runtime.Versioning;
+
+namespace Desktop.Services;
+
+[UnsupportedOSPlatform("windows")]
+public class NoFileSystemExplorerService(ILogger<NoFileSystemExplorerService> logger) : IFileSystemExplorerService
 {
     public void ShowInExplorer(string filePath)
     {
-        // No-op implementation for non-Windows platforms
+        logger.LogInformation("ShowInExplorer not supported on this platform. Path: {Path}", filePath);
     }
+}
 }
