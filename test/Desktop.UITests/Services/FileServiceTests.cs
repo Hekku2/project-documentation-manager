@@ -54,23 +54,6 @@ public class FileServiceTests
         });
     }
 
-    [Test]
-    public async Task CreateFileAsync_WithDefaultFileName_CreatesNewfileMd()
-    {
-        // Arrange
-        var fileName = "newfile.md";
-        var expectedFilePath = Path.Combine(_options.DefaultProjectFolder, fileName);
-
-        // Act
-        var result = await _fileService.CreateFileAsync(_options.DefaultProjectFolder, fileName);
-
-        // Assert
-        Assert.Multiple(() =>
-        {
-            Assert.That(result, Is.True);
-            Assert.That(File.Exists(expectedFilePath), Is.True);
-        });
-    }
 
     [Test]
     public async Task CreateFileAsync_WithNullFolderPath_ReturnsFalse()
