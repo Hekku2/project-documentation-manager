@@ -37,7 +37,7 @@ public class BoolToGridLengthConverterTests
         {
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.TypeOf<GridLength>());
-            
+
             var gridLength = (GridLength)result!;
             Assert.That(gridLength.Value, Is.EqualTo(1.0));
             Assert.That(gridLength.GridUnitType, Is.EqualTo(GridUnitType.Star));
@@ -58,7 +58,7 @@ public class BoolToGridLengthConverterTests
         {
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.TypeOf<GridLength>());
-            
+
             var gridLength = (GridLength)result!;
             Assert.That(gridLength.Value, Is.EqualTo(0.0));
             Assert.That(gridLength.GridUnitType, Is.EqualTo(GridUnitType.Pixel));
@@ -79,7 +79,7 @@ public class BoolToGridLengthConverterTests
         {
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.TypeOf<GridLength>());
-            
+
             var gridLength = (GridLength)result!;
             Assert.That(gridLength.Value, Is.EqualTo(0.0));
             Assert.That(gridLength.GridUnitType, Is.EqualTo(GridUnitType.Pixel));
@@ -102,7 +102,7 @@ public class BoolToGridLengthConverterTests
             {
                 Assert.That(result, Is.Not.Null, $"Failed for value: {value}");
                 Assert.That(result, Is.TypeOf<GridLength>(), $"Failed for value: {value}");
-                
+
                 var gridLength = (GridLength)result!;
                 Assert.That(gridLength.Value, Is.EqualTo(0.0), $"Failed for value: {value}");
                 Assert.That(gridLength.GridUnitType, Is.EqualTo(GridUnitType.Pixel), $"Failed for value: {value}");
@@ -121,7 +121,7 @@ public class BoolToGridLengthConverterTests
         {
             Assert.That(result1, Is.TypeOf<GridLength>());
             Assert.That(result2, Is.TypeOf<GridLength>());
-            
+
             var gridLength1 = (GridLength)result1!;
             var gridLength2 = (GridLength)result2!;
             Assert.That(gridLength1.Value, Is.EqualTo(gridLength2.Value));
@@ -139,7 +139,7 @@ public class BoolToGridLengthConverterTests
         // Assert
         var gridLength1 = (GridLength)result1!;
         var gridLength2 = (GridLength)result2!;
-        
+
         Assert.Multiple(() =>
         {
             Assert.That(gridLength1.Value, Is.EqualTo(gridLength2.Value));
@@ -159,7 +159,7 @@ public class BoolToGridLengthConverterTests
         var gridLength1 = (GridLength)result1!;
         var gridLength2 = (GridLength)result2!;
         var gridLength3 = (GridLength)result3!;
-        
+
         Assert.Multiple(() =>
         {
             Assert.That(gridLength1.Value, Is.EqualTo(gridLength2.Value));
@@ -173,7 +173,7 @@ public class BoolToGridLengthConverterTests
     public void ConvertBack_Should_Throw_NotImplementedException()
     {
         // Act & Assert
-        Assert.Throws<System.NotImplementedException>(() => 
+        Assert.Throws<System.NotImplementedException>(() =>
             _converter.ConvertBack(new GridLength(1, GridUnitType.Star), typeof(bool), null, CultureInfo.InvariantCulture));
     }
 

@@ -395,4 +395,28 @@ public class HotkeyServiceTests
             Assert.That(_hotkeyService.TryExecuteHotkey(Key.O, KeyModifiers.Control), Is.True, "New hotkey should work");
         });
     }
+
+    [Test]
+    public void UpdateHotkey_WithInvalidGesture_KeepsExistingMapping()
+    {
+        // Arrange
+        var settings = new HotkeySettings
+        {
+            Save = "Ctrl+S",
+            SaveAll = "Ctrl+Shift+S",
+            BuildDocumentation = "Ctrl+B"
+        };
+        var commands = new Dictionary<string, ICommand>
+        {
+            ["Save"] = _mockSaveCommand
+        };
+        _hotkeyService.RegisterHotkeys(settings, commands);
+        _mockSaveCommand.CanExecute(null).Returns(true);
+
+        // Act - attempt invalid update
+        _hotkeyService.UpdateHotkey("Save", "Ctrl+", _mockSaveCommand);
+
+        // Assert - old mapping still works
+        Assert.That(_hotkeyService.TryExecuteHotkey(Key.S, KeyModifiers.Control), Is.True);
+    }
 }

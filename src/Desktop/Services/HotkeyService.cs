@@ -28,10 +28,16 @@ public class HotkeyService(ILogger<HotkeyService> logger) : IHotkeyService
 
     public void UpdateHotkey(string actionName, string keyGesture, ICommand command)
     {
+        if (!TryParseKeyGesture(keyGesture, out var _, out var _))
+        {
+            // We check it here, because we don't want to remove the old hotkey if the new one is invalid
+            logger.LogWarning("Invalid key gesture '{KeyGesture}' for action {Action}", keyGesture, actionName);
+            return;
+        }
+
         if (_actionToGesture.TryGetValue(actionName, out var oldGesture) && TryParseKeyGesture(oldGesture, out var oldKey, out var oldModifiers))
         {
             _hotkeyMappings.TryRemove((oldKey, oldModifiers), out _);
-
         }
 
         RegisterHotkey(actionName, keyGesture, command);

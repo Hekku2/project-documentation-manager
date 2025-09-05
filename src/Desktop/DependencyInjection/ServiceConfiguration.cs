@@ -3,6 +3,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Desktop.Logging;
 using Desktop.Factories;
+using System.Runtime.InteropServices;
 
 namespace Desktop.DependencyInjection;
 
@@ -42,8 +43,16 @@ public static class ServiceConfiguration
         services.AddSingleton<Services.IEditorStateService, Services.EditorStateService>();
         services.AddSingleton<Services.IHotkeyService, Services.HotkeyService>();
         services.AddSingleton<Services.IMarkdownRenderingService, Services.MarkdownRenderingService>();
-        services.AddSingleton<Services.IFileSystemExplorerService, Services.WindowsFileSystemExplorerService>();
         services.AddSingleton<Services.IFileSystemChangeHandler, Services.FileSystemChangeHandler>();
+
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            services.AddSingleton<Services.IFileSystemExplorerService, Services.WindowsFileSystemExplorerService>();
+        }
+        else
+        {
+            services.AddSingleton<Services.IFileSystemExplorerService, Services.NoFileSystemExplorerService>();
+        }
 
         // Register factories
         services.AddSingleton<ISettingsContentViewModelFactory, SettingsContentViewModelFactory>();

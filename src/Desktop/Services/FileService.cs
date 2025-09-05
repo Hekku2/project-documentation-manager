@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -10,7 +9,6 @@ using Microsoft.Extensions.Options;
 
 namespace Desktop.Services;
 
-[ExcludeFromCodeCoverage]
 public class FileService(ILogger<FileService> logger, IOptions<ApplicationOptions> options) : IFileService, IDisposable
 {
     private readonly ApplicationOptions _options = options.Value;
