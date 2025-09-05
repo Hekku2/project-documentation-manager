@@ -30,11 +30,13 @@ public class FileSystemItemViewModel : ViewModelBase
     private readonly ILogger<FileSystemItemViewModel> _logger;
     private readonly IFileSystemExplorerService _fileSystemExplorerService;
     private readonly IFileSystemItemViewModelFactory _viewModelFactory;
+    private readonly IFileService _fileService;
 
     public FileSystemItemViewModel(
         ILogger<FileSystemItemViewModel> logger,
         IFileSystemItemViewModelFactory viewModelFactory,
         IFileSystemExplorerService fileSystemExplorerService,
+        IFileService fileService,
         FileSystemItem item,
         bool loadChildren,
         Action<string> onItemSelected,
@@ -48,10 +50,11 @@ public class FileSystemItemViewModel : ViewModelBase
         _onItemPreview = onItemPreview;
         _fileSystemExplorerService = fileSystemExplorerService;
         _viewModelFactory = viewModelFactory;
+        _fileService = fileService;
 
         // Initialize context menu commands
         OpenCommand = new RelayCommand(ExecuteOpen, CanExecuteOpen);
-        NewCommand = new RelayCommand(() => { }, () => false); // Disabled command for directories
+        NewCommand = new RelayCommand(ExecuteNew, CanExecuteNew);
         ShowInExplorerCommand = new RelayCommand(ExecuteShowInExplorer, CanExecuteShowInExplorer);
         CopyPathCommand = new RelayCommand(ExecuteCopyPath, CanExecutePathCommand);
         RefreshCommand = new RelayCommand(ExecuteRefresh, CanExecuteRefresh);
@@ -153,6 +156,7 @@ public class FileSystemItemViewModel : ViewModelBase
 
 
     private bool CanExecuteOpen() => !string.IsNullOrEmpty(FullPath);
+    private bool CanExecuteNew() => IsDirectory && !string.IsNullOrEmpty(FullPath) && Directory.Exists(FullPath);
     private bool CanExecuteShowInExplorer() => !string.IsNullOrEmpty(FullPath) && (File.Exists(FullPath) || Directory.Exists(FullPath));
     private bool CanExecutePathCommand() => !string.IsNullOrEmpty(FullPath);
     private bool CanExecuteRefresh() => IsDirectory && !string.IsNullOrEmpty(FullPath);
@@ -169,6 +173,35 @@ public class FileSystemItemViewModel : ViewModelBase
         {
             // For files, open them in the editor
             _onItemSelected.Invoke(FullPath);
+        }
+    }
+
+    private async void ExecuteNew()
+    {
+        if (!IsDirectory || string.IsNullOrEmpty(FullPath))
+            return;
+
+        try
+        {
+            _logger.LogDebug("Creating new file in folder: {FolderPath}", FullPath);
+            
+            var success = await _fileService.CreateFileAsync(FullPath, "newfile.md");
+            
+            if (success)
+            {
+                _logger.LogInformation("Successfully created new file in folder: {FolderPath}", FullPath);
+                
+                // Refresh the folder to show the new file
+                ExecuteRefresh();
+            }
+            else
+            {
+                _logger.LogWarning("Failed to create new file in folder: {FolderPath}", FullPath);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating new file in folder: {FolderPath}", FullPath);
         }
     }
 

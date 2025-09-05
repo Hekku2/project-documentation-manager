@@ -9,11 +9,9 @@ using Microsoft.Extensions.Options;
 
 namespace Desktop.Services;
 
-public class FileService(ILogger<FileService> logger, IOptions<ApplicationOptions> options) : IFileService, IDisposable
+public class FileService(ILogger<FileService> logger, IOptions<ApplicationOptions> options) : IFileService
 {
     private readonly ApplicationOptions _options = options.Value;
-    private bool _disposed = false;
-
 
     public async Task<FileSystemItem?> GetFileStructureAsync()
     {
@@ -240,7 +238,7 @@ public class FileService(ILogger<FileService> logger, IOptions<ApplicationOption
             return false;
         }
 
-        // If the folder genuinely doesn’t exist, treat it as “already clean”
+        // If the folder genuinely doesn't exist, treat it as "already clean"
         if (!Directory.Exists(fullPath))
         {
             logger.LogDebug(
@@ -296,12 +294,45 @@ public class FileService(ILogger<FileService> logger, IOptions<ApplicationOption
         }
     }
 
-    public void Dispose()
+    public async Task<bool> CreateFileAsync(string folderPath, string fileName)
     {
-        if (!_disposed)
+        if (string.IsNullOrWhiteSpace(folderPath))
         {
-            _disposed = true;
+            logger.LogWarning("Folder path is null or empty");
+            return false;
         }
-        GC.SuppressFinalize(this);
+
+        if (string.IsNullOrWhiteSpace(fileName))
+        {
+            logger.LogWarning("File name is null or empty");
+            return false;
+        }
+
+        if (!Directory.Exists(folderPath))
+        {
+            logger.LogWarning("Folder does not exist: {FolderPath}", folderPath);
+            return false;
+        }
+
+        try
+        {
+            var filePath = Path.Combine(folderPath, fileName);
+
+            if (File.Exists(filePath))
+            {
+                logger.LogWarning("File already exists: {FilePath}", filePath);
+                return false;
+            }
+
+            logger.LogDebug("Creating new file: {FilePath}", filePath);
+            await File.WriteAllTextAsync(filePath, string.Empty);
+            logger.LogInformation("Successfully created file: {FilePath}", filePath);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error creating file in folder: {FolderPath}", folderPath);
+            return false;
+        }
     }
 }

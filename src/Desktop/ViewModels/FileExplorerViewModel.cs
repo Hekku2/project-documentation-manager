@@ -56,6 +56,7 @@ public class FileExplorerViewModel : ViewModelBase, IDisposable
         _fileSystemItemViewModelFactory = new FileSystemItemViewModelFactory(
             loggerFactory,
             fileSystemExplorerService,
+            fileService,
             onItemSelected: OnItemSelected,
             onItemPreview: OnItemPreview);
 
