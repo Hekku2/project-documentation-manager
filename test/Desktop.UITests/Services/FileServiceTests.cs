@@ -55,33 +55,12 @@ public class FileServiceTests
     }
 
 
-    [Test]
-    public async Task CreateFileAsync_WithNullFolderPath_ReturnsFalse()
+    [TestCase(null)]
+    [TestCase("")]
+    [TestCase("   ")]
+    public async Task CreateFileAsync_WithInvalidFolderPath_ReturnsFalse(string? folderPath)
     {
-        // Act
-        var result = await _fileService.CreateFileAsync(null!, "test.md");
-
-        // Assert
-        Assert.That(result, Is.False);
-    }
-
-    [Test]
-    public async Task CreateFileAsync_WithEmptyFolderPath_ReturnsFalse()
-    {
-        // Act
-        var result = await _fileService.CreateFileAsync("", "test.md");
-
-        // Assert
-        Assert.That(result, Is.False);
-    }
-
-    [Test]
-    public async Task CreateFileAsync_WithWhitespaceFolderPath_ReturnsFalse()
-    {
-        // Act
-        var result = await _fileService.CreateFileAsync("   ", "test.md");
-
-        // Assert
+        var result = await _fileService.CreateFileAsync(folderPath!, "test.md");
         Assert.That(result, Is.False);
     }
 
