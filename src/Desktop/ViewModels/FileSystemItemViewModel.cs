@@ -101,15 +101,20 @@ public class FileSystemItemViewModel : ViewModelBase
         {
             if (SetProperty(ref _isExpanded, value))
             {
-                if (value && !_childrenLoaded)
+                Task.Run(async () =>
                 {
-                    _ = LoadChildrenAsync(true); // Enable deep preloading for manual expansion
-                }
-                else if (value && _childrenLoaded)
-                {
-                    // Already loaded but now expanded - load children of child folders
-                    PreloadNextLevel();
-                }
+                    if (value && !_childrenLoaded)
+                    {
+                        await LoadChildrenAsync(true); // Enable deep preloading for manual expansion
+                    }
+                    else if (value && _childrenLoaded)
+                    {
+                        // Already loaded but now expanded - load children of child folders
+                        await PreloadNextLevelAsync();
+                    }
+                });
+
+
             }
         }
     }
@@ -184,16 +189,16 @@ public class FileSystemItemViewModel : ViewModelBase
         try
         {
             _logger.LogDebug("Creating new file in folder: {FolderPath}", FullPath);
-            
+
             var success = await _fileService.CreateFileAsync(FullPath, "newfile.md");
-            
+
             if (success)
             {
                 _logger.LogInformation("Successfully created new file in folder: {FolderPath}", FullPath);
-                
+
                 // Small delay to ensure file system reflects the change
                 await Task.Delay(100);
-                
+
                 // Refresh the folder to show the new file
                 ExecuteRefresh();
             }
@@ -234,43 +239,48 @@ public class FileSystemItemViewModel : ViewModelBase
         }
     }
 
-    private async void ExecuteRefresh()
+    private void ExecuteRefresh()
     {
         if (IsDirectory && _childrenLoaded)
         {
-            try
+            Task.Run(async () =>
             {
-                _logger.LogDebug("Refreshing folder: {FolderPath}", FullPath);
-                
-                // Get fresh file system data
-                var refreshedItem = _fileService.CreateFileSystemItem(FullPath, true);
-                if (refreshedItem != null)
+                try
                 {
-                    // Update the underlying Item.Children with fresh file system data
-                    Item.Children.Clear();
-                    foreach (var child in refreshedItem.Children)
+                    _logger.LogDebug("Refreshing folder: {FolderPath}", FullPath);
+
+                    // Get fresh file system data
+                    var refreshedItem = _fileService.CreateFileSystemItem(FullPath, true);
+                    if (refreshedItem != null)
                     {
-                        Item.Children.Add(child);
+                        // Update the underlying Item.Children with fresh file system data
+                        Item.Children.Clear();
+                        foreach (var child in refreshedItem.Children)
+                        {
+                            Item.Children.Add(child);
+                        }
+
+                        _logger.LogDebug("Updated file system data for {FolderPath}, found {ChildCount} children",
+                            FullPath, Item.Children.Count);
                     }
-                    
-                    _logger.LogDebug("Updated file system data for {FolderPath}, found {ChildCount} children", 
-                        FullPath, Item.Children.Count);
+
+                    // Clear UI children and reload from updated data
+                    _childrenLoaded = false;
+                    Children.Clear();
+
+                    if (IsVisible)
+                    {
+                        // If folder is visible, reload with appropriate preloading based on expansion state
+                        await LoadChildrenAsync(IsExpanded); // Enable deep preloading if expanded
+                    }
                 }
-
-                // Clear UI children and reload from updated data
-                _childrenLoaded = false;
-                Children.Clear();
-
-                if (IsVisible)
+                catch (Exception ex)
                 {
-                    // If folder is visible, reload with appropriate preloading based on expansion state
-                    await LoadChildrenAsync(IsExpanded); // Enable deep preloading if expanded
+                    _logger.LogError(ex, "Error refreshing folder: {FolderPath}", FullPath);
                 }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error refreshing folder: {FolderPath}", FullPath);
-            }
+
+            });
+
         }
     }
 
@@ -306,7 +316,7 @@ public class FileSystemItemViewModel : ViewModelBase
             // Only preload the next level if explicitly enabled (when folder is expanded)
             if (enableDeepPreloading)
             {
-                PreloadNextLevel();
+                await PreloadNextLevelAsync();
             }
         }
         finally
@@ -316,7 +326,7 @@ public class FileSystemItemViewModel : ViewModelBase
         }
     }
 
-    private async void PreloadNextLevel()
+    private async Task PreloadNextLevelAsync()
     {
         // Get all directory children that aren't already loaded
         var directoryChildren = Children
