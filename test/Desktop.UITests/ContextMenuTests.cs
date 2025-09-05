@@ -32,8 +32,9 @@ public class ContextMenuTests : MainWindowTestBase
 
         // Force TreeView to realize its items by triggering layout
         treeView.InvalidateVisual();
-        await Task.Delay(100); // Allow visual update
-
+        await WaitForConditionAsync(
+            () => treeView.GetVisualDescendants().OfType<Avalonia.Controls.TreeViewItem>().Any(),
+            timeoutMs: 2000, intervalMs: 20);
         // Try to get TreeViewItems from visual tree, but if none exist (due to virtualization),
         // verify context menu capability by creating a test TreeViewItem and checking if styles apply
         var treeViewItems = treeView.GetVisualDescendants().OfType<Avalonia.Controls.TreeViewItem>().ToList();
