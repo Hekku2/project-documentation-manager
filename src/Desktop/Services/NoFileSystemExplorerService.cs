@@ -1,5 +1,3 @@
-namespace Desktop.Services;
-
 using Microsoft.Extensions.Logging;
 using System.Runtime.Versioning;
 
@@ -12,5 +10,4 @@ public class NoFileSystemExplorerService(ILogger<NoFileSystemExplorerService> lo
     {
         logger.LogInformation("ShowInExplorer not supported on this platform. Path: {Path}", filePath);
     }
-}
 }
