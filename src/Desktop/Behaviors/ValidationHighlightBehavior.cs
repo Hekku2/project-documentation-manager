@@ -57,7 +57,7 @@ public static class ValidationHighlightBehavior
     private static void ClearErrorStyling(TextBox textBox)
     {
         // Reset text box to normal styling
-        textBox.BorderBrush = new SolidColorBrush(Colors.Transparent);
+        textBox.BorderBrush = Brushes.Transparent;
         textBox.BorderThickness = new Thickness(0);
     }
 
@@ -66,7 +66,7 @@ public static class ValidationHighlightBehavior
         // Apply the text decoration to the entire textbox when errors are present
         // Note: Avalonia's TextBox doesn't support per-line decorations easily,
         // so we'll use a red border as a visual indicator
-        textBox.BorderBrush = new SolidColorBrush(Colors.Red);
+        textBox.BorderBrush = Brushes.Red;
         textBox.BorderThickness = new Thickness(2);
 
         // Store error lines for potential future use

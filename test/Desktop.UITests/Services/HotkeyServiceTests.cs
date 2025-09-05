@@ -1,10 +1,8 @@
-using NUnit.Framework;
 using NSubstitute;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Avalonia.Input;
 using System.Windows.Input;
-using System.Collections.Generic;
 using Desktop.Services;
 using Desktop.Models;
 using Avalonia.Controls;
@@ -17,7 +15,6 @@ public class HotkeyServiceTests
 {
     private HotkeyService _hotkeyService;
     private ILogger<HotkeyService> _logger;
-    private ICommand _mockCommand;
     private ICommand _mockSaveCommand;
     private ICommand _mockSaveAllCommand;
     private ICommand _mockBuildCommand;
@@ -27,7 +24,6 @@ public class HotkeyServiceTests
     {
         _logger = NullLoggerFactory.Instance.CreateLogger<HotkeyService>();
         _hotkeyService = new HotkeyService(_logger);
-        _mockCommand = Substitute.For<ICommand>();
         _mockSaveCommand = Substitute.For<ICommand>();
         _mockSaveAllCommand = Substitute.For<ICommand>();
         _mockBuildCommand = Substitute.For<ICommand>();
@@ -40,7 +36,7 @@ public class HotkeyServiceTests
         var settings = new HotkeySettings
         {
             Save = "Ctrl+S",
-            SaveAll = "Ctrl+Shift+S", 
+            SaveAll = "Ctrl+Shift+S",
             BuildDocumentation = "Ctrl+B"
         };
         var commands = new Dictionary<string, ICommand>
@@ -87,7 +83,7 @@ public class HotkeyServiceTests
 
         // Assert
         _mockSaveCommand.CanExecute(null).Returns(true);
-        
+
         Assert.Multiple(() =>
         {
             Assert.That(_hotkeyService.TryExecuteHotkey(Key.S, KeyModifiers.Control), Is.True);
@@ -300,7 +296,7 @@ public class HotkeyServiceTests
         // Arrange
         var window = new Window();
         window.KeyBindings.Add(new KeyBinding { Gesture = new KeyGesture(Key.A, KeyModifiers.Control) });
-        
+
         var settings = new HotkeySettings
         {
             Save = "Ctrl+S",
