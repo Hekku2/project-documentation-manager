@@ -17,8 +17,13 @@ public class ContextMenuTests : MainWindowTestBase
         window.Show();
 
         // Use the proper setup method to ensure TreeView is loaded with items
-        await SetupWindowAndWaitForLoadAsync(window);
-
+        var (mainVm, explorerVm) = await SetupWindowAndWaitForLoadAsync(window);
+        Assert.Multiple(() =>
+        {
+            Assert.That(mainVm, Is.Not.Null);
+            Assert.That(explorerVm.RootItem, Is.Not.Null);
+            Assert.That(explorerVm.RootItem!.Children, Is.Not.Empty);
+        });
         // Find the FileExplorerUserControl 
         var fileExplorer = window.GetVisualDescendants().OfType<FileExplorerUserControl>().FirstOrDefault();
         Assert.That(fileExplorer, Is.Not.Null, "FileExplorerUserControl should be found");
