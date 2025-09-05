@@ -12,16 +12,19 @@ public class FileSystemItemViewModelTests
 {
     private IFileSystemItemViewModelFactory _fileSystemItemViewModelFactory = null!;
     private IFileSystemExplorerService _fileSystemExplorerService = null!;
+    private IFileService _fileService = null!;
 
     [SetUp]
     public void Setup()
     {
         var loggerFactory = NullLoggerFactory.Instance;
         _fileSystemExplorerService = Substitute.For<IFileSystemExplorerService>();
+        _fileService = Substitute.For<IFileService>();
         
         _fileSystemItemViewModelFactory = new FileSystemItemViewModelFactory(
             loggerFactory,
             _fileSystemExplorerService,
+            _fileService,
             _ => { }, // onItemSelected
             _ => { }  // onItemPreview
         );

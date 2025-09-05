@@ -9,11 +9,9 @@ using Microsoft.Extensions.Options;
 
 namespace Desktop.Services;
 
-public class FileService(ILogger<FileService> logger, IOptions<ApplicationOptions> options) : IFileService, IDisposable
+public class FileService(ILogger<FileService> logger, IOptions<ApplicationOptions> options) : IFileService
 {
     private readonly ApplicationOptions _options = options.Value;
-    private bool _disposed = false;
-
 
     public async Task<FileSystemItem?> GetFileStructureAsync()
     {
@@ -240,7 +238,7 @@ public class FileService(ILogger<FileService> logger, IOptions<ApplicationOption
             return false;
         }
 
-        // If the folder genuinely doesn’t exist, treat it as “already clean”
+        // If the folder genuinely doesn't exist, treat it as "already clean"
         if (!Directory.Exists(fullPath))
         {
             logger.LogDebug(
@@ -296,12 +294,4 @@ public class FileService(ILogger<FileService> logger, IOptions<ApplicationOption
         }
     }
 
-    public void Dispose()
-    {
-        if (!_disposed)
-        {
-            _disposed = true;
-        }
-        GC.SuppressFinalize(this);
-    }
 }

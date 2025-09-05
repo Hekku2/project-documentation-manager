@@ -57,4 +57,5 @@ public interface IFileService
     /// <param name="folderPath">Path to the folder whose contents should be deleted</param>
     /// <returns>True if successful, false otherwise</returns>
     Task<bool> DeleteFolderContentsAsync(string folderPath);
+
 }

@@ -9,6 +9,7 @@ namespace Desktop.Factories;
 public sealed class FileSystemItemViewModelFactory(
     ILoggerFactory loggerFactory,
     IFileSystemExplorerService fileSystemExplorerService,
+    IFileService fileService,
     Action<string> onItemSelected,
     Action<string> onItemPreview) : IFileSystemItemViewModelFactory
 {
@@ -28,6 +29,7 @@ public sealed class FileSystemItemViewModelFactory(
     {
         ArgumentNullException.ThrowIfNull(loggerFactory);
         ArgumentNullException.ThrowIfNull(fileSystemExplorerService);
+        ArgumentNullException.ThrowIfNull(fileService);
         ArgumentNullException.ThrowIfNull(onItemSelected);
         ArgumentNullException.ThrowIfNull(onItemPreview);
         ArgumentNullException.ThrowIfNull(item);
@@ -36,6 +38,7 @@ public sealed class FileSystemItemViewModelFactory(
             loggerFactory.CreateLogger<FileSystemItemViewModel>(),
             this,
             fileSystemExplorerService,
+            fileService,
             item,
             loadChildren,
             onItemSelected,
