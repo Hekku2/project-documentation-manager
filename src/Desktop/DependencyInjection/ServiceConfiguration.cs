@@ -45,14 +45,7 @@ public static class ServiceConfiguration
         services.AddSingleton<Services.IMarkdownRenderingService, Services.MarkdownRenderingService>();
         services.AddSingleton<Services.IFileSystemChangeHandler, Services.FileSystemChangeHandler>();
 
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
-            services.AddSingleton<Services.IFileSystemExplorerService, Services.WindowsFileSystemExplorerService>();
-        }
-        else
-        {
-            services.AddSingleton<Services.IFileSystemExplorerService, Services.NoFileSystemExplorerService>();
-        }
+        services.AddFileSystemExplorerService();
 
         // Register factories
         services.AddSingleton<ISettingsContentViewModelFactory, SettingsContentViewModelFactory>();
