@@ -32,7 +32,14 @@ public class FileServiceTests
     {
         if (Directory.Exists(_options.DefaultProjectFolder))
         {
-            Directory.Delete(_options.DefaultProjectFolder, true);
+            try
+            {
+                Directory.Delete(_options.DefaultProjectFolder, true);
+            }
+            catch (Exception ex)
+            {
+                TestContext.WriteLine($"TearDown cleanup failed: {ex}");
+            }
         }
     }
 
