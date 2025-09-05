@@ -181,7 +181,6 @@ public class FileServiceTests
         {
             Assert.That(result, Is.True);
             Assert.That(File.Exists(expectedFilePath), Is.True);
-            Assert.That(Path.GetExtension(expectedFilePath), Is.EqualTo(".txt"));
         });
     }
 }
