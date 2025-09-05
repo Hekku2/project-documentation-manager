@@ -49,7 +49,7 @@ public class HotkeyService(ILogger<HotkeyService> logger) : IHotkeyService
         {
             try
             {
-                if (mapping.Command?.CanExecute(null) == true)
+                if (mapping.Command.CanExecute(null))
                 {
                     mapping.Command.Execute(null);
                     HotkeyExecuted?.Invoke(this, new HotkeyExecutedEventArgs
