@@ -32,7 +32,14 @@ public class FileServiceTests
     {
         if (Directory.Exists(_options.DefaultProjectFolder))
         {
-            Directory.Delete(_options.DefaultProjectFolder, true);
+            try
+            {
+                Directory.Delete(_options.DefaultProjectFolder, true);
+            }
+            catch (Exception ex)
+            {
+                TestContext.WriteLine($"TearDown cleanup failed: {ex}");
+            }
         }
     }
 
@@ -54,51 +61,13 @@ public class FileServiceTests
         });
     }
 
-    [Test]
-    public async Task CreateFileAsync_WithDefaultFileName_CreatesNewfileMd()
+
+    [TestCase(null)]
+    [TestCase("")]
+    [TestCase("   ")]
+    public async Task CreateFileAsync_WithInvalidFolderPath_ReturnsFalse(string? folderPath)
     {
-        // Arrange
-        var fileName = "newfile.md";
-        var expectedFilePath = Path.Combine(_options.DefaultProjectFolder, fileName);
-
-        // Act
-        var result = await _fileService.CreateFileAsync(_options.DefaultProjectFolder, fileName);
-
-        // Assert
-        Assert.Multiple(() =>
-        {
-            Assert.That(result, Is.True);
-            Assert.That(File.Exists(expectedFilePath), Is.True);
-        });
-    }
-
-    [Test]
-    public async Task CreateFileAsync_WithNullFolderPath_ReturnsFalse()
-    {
-        // Act
-        var result = await _fileService.CreateFileAsync(null!, "test.md");
-
-        // Assert
-        Assert.That(result, Is.False);
-    }
-
-    [Test]
-    public async Task CreateFileAsync_WithEmptyFolderPath_ReturnsFalse()
-    {
-        // Act
-        var result = await _fileService.CreateFileAsync("", "test.md");
-
-        // Assert
-        Assert.That(result, Is.False);
-    }
-
-    [Test]
-    public async Task CreateFileAsync_WithWhitespaceFolderPath_ReturnsFalse()
-    {
-        // Act
-        var result = await _fileService.CreateFileAsync("   ", "test.md");
-
-        // Assert
+        var result = await _fileService.CreateFileAsync(folderPath!, "test.md");
         Assert.That(result, Is.False);
     }
 
@@ -142,7 +111,11 @@ public class FileServiceTests
         var result = await _fileService.CreateFileAsync(nonExistentFolder, "test.md");
 
         // Assert
-        Assert.That(result, Is.False);
+        Assert.Multiple(() =>
+        {
+            Assert.That(result, Is.False);
+            Assert.That(Directory.Exists(nonExistentFolder), Is.False);
+        });
     }
 
     [Test]
@@ -180,8 +153,7 @@ public class FileServiceTests
         Assert.Multiple(() =>
         {
             Assert.That(result, Is.True);
-            var content = File.ReadAllText(filePath);
-            Assert.That(content, Is.EqualTo(string.Empty));
+            Assert.That(new FileInfo(filePath).Length, Is.EqualTo(0));
         });
     }
 
@@ -220,7 +192,6 @@ public class FileServiceTests
         {
             Assert.That(result, Is.True);
             Assert.That(File.Exists(expectedFilePath), Is.True);
-            Assert.That(Path.GetExtension(expectedFilePath), Is.EqualTo(".txt"));
         });
     }
 }
