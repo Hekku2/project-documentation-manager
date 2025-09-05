@@ -313,7 +313,16 @@ public class HotkeyServiceTests
         _hotkeyService.ApplyToWindow(window);
 
         // Assert
-        Assert.That(window.KeyBindings, Has.Count.EqualTo(1)); // Only the new Save binding
+        Assert.Multiple(() =>
+        {
+            Assert.That(window.KeyBindings, Has.Count.EqualTo(1)); // Only the new Save binding
+            var kb = window.KeyBindings[0];
+            Assert.That(kb.Gesture, Is.TypeOf<KeyGesture>());
+            var kg = (KeyGesture)kb.Gesture;
+            Assert.That(kg.Key, Is.EqualTo(Key.S));
+            Assert.That(kg.KeyModifiers, Is.EqualTo(KeyModifiers.Control));
+            Assert.That(ReferenceEquals(kb.Command, _mockSaveCommand), Is.True);
+        });
     }
 
     [TestCase("Ctrl+S", Key.S, KeyModifiers.Control, true)]
