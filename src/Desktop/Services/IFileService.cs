@@ -58,11 +58,4 @@ public interface IFileService
     /// <returns>True if successful, false otherwise</returns>
     Task<bool> DeleteFolderContentsAsync(string folderPath);
 
-    /// <summary>
-    /// Creates a new file with the specified name in the target folder
-    /// </summary>
-    /// <param name="folderPath">Path to the folder where the file should be created</param>
-    /// <param name="fileName">Name of the file to create</param>
-    /// <returns>True if successful, false otherwise</returns>
-    Task<bool> CreateFileAsync(string folderPath, string fileName);
 }

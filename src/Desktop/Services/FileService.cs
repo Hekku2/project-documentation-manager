@@ -294,45 +294,4 @@ public class FileService(ILogger<FileService> logger, IOptions<ApplicationOption
         }
     }
 
-    public async Task<bool> CreateFileAsync(string folderPath, string fileName)
-    {
-        if (string.IsNullOrWhiteSpace(folderPath))
-        {
-            logger.LogWarning("Folder path is null or empty");
-            return false;
-        }
-
-        if (string.IsNullOrWhiteSpace(fileName))
-        {
-            logger.LogWarning("File name is null or empty");
-            return false;
-        }
-
-        if (!Directory.Exists(folderPath))
-        {
-            logger.LogWarning("Folder does not exist: {FolderPath}", folderPath);
-            return false;
-        }
-
-        try
-        {
-            var filePath = Path.Combine(folderPath, fileName);
-
-            if (File.Exists(filePath))
-            {
-                logger.LogWarning("File already exists: {FilePath}", filePath);
-                return false;
-            }
-
-            logger.LogDebug("Creating new file: {FilePath}", filePath);
-            await File.WriteAllTextAsync(filePath, string.Empty);
-            logger.LogInformation("Successfully created file: {FilePath}", filePath);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error creating file in folder: {FolderPath}", folderPath);
-            return false;
-        }
-    }
 }

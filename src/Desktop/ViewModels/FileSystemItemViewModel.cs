@@ -190,7 +190,8 @@ public class FileSystemItemViewModel : ViewModelBase
         {
             _logger.LogDebug("Creating new file in folder: {FolderPath}", FullPath);
 
-            var success = await _fileService.CreateFileAsync(FullPath, "newfile.md");
+            var filePath = Path.Combine(FullPath, "newfile.md");
+            var success = await _fileService.WriteFileContentAsync(filePath, string.Empty);
 
             if (success)
             {

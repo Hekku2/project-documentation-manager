@@ -20,7 +20,7 @@ public class FileSystemItemViewModelNewFileTests
         var loggerFactory = NullLoggerFactory.Instance;
         _fileSystemExplorerService = Substitute.For<IFileSystemExplorerService>();
         _fileService = Substitute.For<IFileService>();
-        
+
         _fileSystemItemViewModelFactory = new FileSystemItemViewModelFactory(
             loggerFactory,
             _fileSystemExplorerService,
@@ -36,7 +36,7 @@ public class FileSystemItemViewModelNewFileTests
         // Arrange
         var testPath = Path.Combine(Path.GetTempPath(), "TestFolder_" + Guid.NewGuid().ToString());
         Directory.CreateDirectory(testPath);
-        
+
         try
         {
             var directoryItem = new FileSystemItem
@@ -86,12 +86,12 @@ public class FileSystemItemViewModelNewFileTests
     }
 
     [AvaloniaTest]
-    public async Task NewCommand_Execute_ShouldCallCreateFileAsync()
+    public async Task NewCommand_Execute_ShouldCallWriteFileContentAsync()
     {
         // Arrange
         var testPath = Path.Combine(Path.GetTempPath(), "TestFolder_" + Guid.NewGuid().ToString());
         Directory.CreateDirectory(testPath);
-        
+
         try
         {
             var directoryItem = new FileSystemItem
@@ -101,19 +101,19 @@ public class FileSystemItemViewModelNewFileTests
                 IsDirectory = true
             };
 
-            _fileService.CreateFileAsync(Arg.Any<string>(), Arg.Any<string>()).Returns(true);
+            _fileService.WriteFileContentAsync(Arg.Any<string>(), Arg.Any<string>()).Returns(true);
             _fileService.CreateFileSystemItem(Arg.Any<string>(), Arg.Any<bool>()).Returns(directoryItem);
 
             var viewModel = _fileSystemItemViewModelFactory.Create(directoryItem);
 
             // Act
             viewModel.NewCommand.Execute(null);
-            
+
             // Wait a moment for async operation
             await Task.Delay(200);
 
             // Assert
-            await _fileService.Received(1).CreateFileAsync(testPath, "newfile.md");
+            await _fileService.Received(1).WriteFileContentAsync(Path.Combine(testPath, "newfile.md"), string.Empty);
         }
         finally
         {
@@ -128,7 +128,7 @@ public class FileSystemItemViewModelNewFileTests
         // Arrange
         var testPath = Path.Combine(Path.GetTempPath(), "TestFolder_" + Guid.NewGuid().ToString());
         Directory.CreateDirectory(testPath);
-        
+
         try
         {
             var directoryItem = new FileSystemItem
@@ -140,7 +140,7 @@ public class FileSystemItemViewModelNewFileTests
 
             var refreshedItem = new FileSystemItem
             {
-                Name = "TestFolder", 
+                Name = "TestFolder",
                 FullPath = testPath,
                 IsDirectory = true
             };
@@ -151,28 +151,28 @@ public class FileSystemItemViewModelNewFileTests
                 IsDirectory = false
             });
 
-            _fileService.CreateFileAsync(Arg.Any<string>(), Arg.Any<string>()).Returns(true);
+            _fileService.WriteFileContentAsync(Arg.Any<string>(), Arg.Any<string>()).Returns(true);
             _fileService.CreateFileSystemItem(testPath, true).Returns(refreshedItem);
 
             var viewModel = _fileSystemItemViewModelFactory.CreateWithChildren(directoryItem);
-            
+
             // Simulate that the folder is visible and expanded so refresh will work
             viewModel.IsVisible = true;
             viewModel.IsExpanded = true;
-            
+
             // Wait for initial loading
             await Task.Delay(100);
 
             // Act
             viewModel.NewCommand.Execute(null);
-            
+
             // Wait for async operations
             await Task.Delay(500);
 
             // Assert
-            await _fileService.Received(1).CreateFileAsync(testPath, "newfile.md");
+            await _fileService.Received(1).WriteFileContentAsync(Path.Combine(testPath, "newfile.md"), string.Empty);
             _fileService.Received(1).CreateFileSystemItem(testPath, true);
-            
+
             Assert.Multiple(() =>
             {
                 Assert.That(directoryItem.Children, Has.Count.EqualTo(1), "Directory should have refreshed children");
