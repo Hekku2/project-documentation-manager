@@ -1,6 +1,8 @@
 using Business.Models;
 using Business.Services;
 using Console.Commands;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Spectre.Console.Cli;
 
@@ -19,10 +21,11 @@ public class CombineCommandTests
     [SetUp]
     public void Setup()
     {
-        _command = new CombineCommand();
         _collector = Substitute.For<IMarkdownFileCollectorService>();
         _combiner = Substitute.For<IMarkdownCombinationService>();
         _writer = Substitute.For<IMarkdownDocumentFileWriterService>();
+        var logger = NullLoggerFactory.Instance.CreateLogger<CombineCommand>();
+        _command = new CombineCommand(_collector, _combiner, _writer, logger);
 
         _testInputFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         _testOutputFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
@@ -72,7 +75,7 @@ public class CombineCommandTests
     }
 
     [Test]
-    public async Task ExecuteAsync_Should_Return_Success_When_No_Files_Found()
+    public async Task ExecuteAsync_Should_Return_Error_When_No_Files_Found()
     {
         _collector.CollectAllMarkdownFilesAsync(_testInputFolder)
             .Returns(Task.FromResult((Enumerable.Empty<MarkdownDocument>(), Enumerable.Empty<MarkdownDocument>())));
@@ -86,7 +89,7 @@ public class CombineCommandTests
         var context = new CommandContext(Substitute.For<IRemainingArguments>(), "combine", null);
         var result = await _command.ExecuteAsync(context, settings);
 
-        Assert.That(result, Is.EqualTo(0));
+        Assert.That(result, Is.EqualTo(1));
     }
 
     [Test]
@@ -120,7 +123,7 @@ public class CombineCommandTests
         var context = new CommandContext(Substitute.For<IRemainingArguments>(), "combine", null);
         var result = await _command.ExecuteAsync(context, settings);
 
-        Assert.Multiple(async () =>
+        await Assert.MultipleAsync(async () =>
         {
             Assert.That(result, Is.EqualTo(0));
             await _writer.Received(1).WriteDocumentsToFolderAsync(

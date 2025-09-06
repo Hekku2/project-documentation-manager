@@ -1,6 +1,8 @@
 using Business.Models;
 using Business.Services;
 using Console.Commands;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Spectre.Console.Cli;
 
@@ -17,9 +19,10 @@ public class ValidateCommandTests
     [SetUp]
     public void Setup()
     {
-        _command = new ValidateCommand();
         _collector = Substitute.For<IMarkdownFileCollectorService>();
         _combiner = Substitute.For<IMarkdownCombinationService>();
+        var logger = NullLoggerFactory.Instance.CreateLogger<ValidateCommand>();
+        _command = new ValidateCommand(_collector, _combiner, logger);
 
         _testInputFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(_testInputFolder);

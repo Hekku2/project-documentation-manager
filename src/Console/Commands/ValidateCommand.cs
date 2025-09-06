@@ -1,7 +1,5 @@
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -9,7 +7,10 @@ using Business.Services;
 
 namespace Console.Commands;
 
-public class ValidateCommand : AsyncCommand<ValidateCommand.Settings>
+public class ValidateCommand(
+    IMarkdownFileCollectorService collector,
+    IMarkdownCombinationService combiner,
+    ILogger<ValidateCommand> logger) : AsyncCommand<ValidateCommand.Settings>
 {
     public class Settings : CommandSettings
     {
@@ -20,13 +21,8 @@ public class ValidateCommand : AsyncCommand<ValidateCommand.Settings>
 
     public override async Task<int> ExecuteAsync([NotNull] CommandContext context, [NotNull] Settings settings)
     {
-        var host = CreateHost();
-        
         try
         {
-            var collector = host.Services.GetRequiredService<IMarkdownFileCollectorService>();
-            var combiner = host.Services.GetRequiredService<IMarkdownCombinationService>();
-            var logger = host.Services.GetRequiredService<ILogger<ValidateCommand>>();
 
             if (!Directory.Exists(settings.InputFolder))
             {
@@ -91,22 +87,5 @@ public class ValidateCommand : AsyncCommand<ValidateCommand.Settings>
             AnsiConsole.MarkupLine($"[red]Error: {ex.Message}[/]");
             return 1;
         }
-    }
-
-    private static IHost CreateHost()
-    {
-        return Host.CreateDefaultBuilder()
-            .ConfigureServices((context, services) =>
-            {
-                services.AddTransient<IMarkdownFileCollectorService, MarkdownFileCollectorService>();
-                services.AddTransient<IMarkdownCombinationService, MarkdownCombinationService>();
-                services.AddTransient<IMarkdownDocumentFileWriterService, MarkdownDocumentFileWriterService>();
-            })
-            .ConfigureLogging(logging =>
-            {
-                logging.ClearProviders();
-                logging.AddConsole();
-            })
-            .Build();
     }
 }

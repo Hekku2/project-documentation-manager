@@ -1,7 +1,5 @@
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -9,7 +7,11 @@ using Business.Services;
 
 namespace Console.Commands;
 
-public class CombineCommand : AsyncCommand<CombineCommand.Settings>
+public class CombineCommand(
+    IMarkdownFileCollectorService collector,
+    IMarkdownCombinationService combiner,
+    IMarkdownDocumentFileWriterService writer,
+    ILogger<CombineCommand> logger) : AsyncCommand<CombineCommand.Settings>
 {
     public class Settings : CommandSettings
     {
@@ -24,14 +26,8 @@ public class CombineCommand : AsyncCommand<CombineCommand.Settings>
 
     public override async Task<int> ExecuteAsync([NotNull] CommandContext context, [NotNull] Settings settings)
     {
-        var host = CreateHost();
-        
         try
         {
-            var collector = host.Services.GetRequiredService<IMarkdownFileCollectorService>();
-            var combiner = host.Services.GetRequiredService<IMarkdownCombinationService>();
-            var writer = host.Services.GetRequiredService<IMarkdownDocumentFileWriterService>();
-            var logger = host.Services.GetRequiredService<ILogger<CombineCommand>>();
 
             if (!Directory.Exists(settings.InputFolder))
             {
@@ -47,7 +43,7 @@ public class CombineCommand : AsyncCommand<CombineCommand.Settings>
             if (!templateFiles.Any())
             {
                 AnsiConsole.MarkupLine("[yellow]Warning: No markdown template files found[/]");
-                return 0;
+                return 1;
             }
 
             AnsiConsole.MarkupLine($"Found {templateFiles.Count()} template files and {sourceFiles.Count()} source files");
@@ -69,7 +65,7 @@ public class CombineCommand : AsyncCommand<CombineCommand.Settings>
 
             AnsiConsole.MarkupLine($"[green]✓ Markdown combination completed![/]");
             AnsiConsole.MarkupLine($"Output location: [blue]{Path.GetFullPath(settings.OutputFolder)}[/]");
-            
+
             return 0;
         }
         catch (Exception ex)
@@ -77,22 +73,5 @@ public class CombineCommand : AsyncCommand<CombineCommand.Settings>
             AnsiConsole.MarkupLine($"[red]Error: {ex.Message}[/]");
             return 1;
         }
-    }
-
-    private static IHost CreateHost()
-    {
-        return Host.CreateDefaultBuilder()
-            .ConfigureServices((context, services) =>
-            {
-                services.AddTransient<IMarkdownFileCollectorService, MarkdownFileCollectorService>();
-                services.AddTransient<IMarkdownCombinationService, MarkdownCombinationService>();
-                services.AddTransient<IMarkdownDocumentFileWriterService, MarkdownDocumentFileWriterService>();
-            })
-            .ConfigureLogging(logging =>
-            {
-                logging.ClearProviders();
-                logging.AddConsole();
-            })
-            .Build();
     }
 }
