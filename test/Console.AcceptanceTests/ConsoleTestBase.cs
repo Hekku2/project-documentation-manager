@@ -1,5 +1,4 @@
 using System.Text;
-using Microsoft.Extensions.Logging;
 
 namespace Console.AcceptanceTests;
 
@@ -10,33 +9,33 @@ public abstract class ConsoleTestBase
         var originalOut = System.Console.Out;
         var originalError = System.Console.Error;
         var originalLogLevel = Environment.GetEnvironmentVariable("Logging__LogLevel__Default");
-        
+
         var outputBuffer = new StringBuilder();
         var errorBuffer = new StringBuilder();
-        
+
         // Create persistent TextWriters that won't be disposed during execution
         var outputWriter = new PersistentStringWriter(outputBuffer);
         var errorWriter = new PersistentStringWriter(errorBuffer);
-        
+
         try
         {
             // Redirect console output
             System.Console.SetOut(outputWriter);
             System.Console.SetError(errorWriter);
-            
+
             // Set logging level to capture more output in tests
             Environment.SetEnvironmentVariable("Logging__LogLevel__Default", "Information");
-            
+
             // Call the Program.Main method directly
             var exitCode = await Program.Main(args);
-            
+
             // Give a small delay to ensure all output is captured
             await Task.Delay(50);
-            
+
             var output = outputBuffer.ToString();
             var error = errorBuffer.ToString();
             var combinedOutput = string.IsNullOrEmpty(error) ? output : $"{output}\nERROR: {error}";
-            
+
             return new CommandResult
             {
                 ExitCode = exitCode,
@@ -48,7 +47,7 @@ public abstract class ConsoleTestBase
             // Restore original console output first
             System.Console.SetOut(originalOut);
             System.Console.SetError(originalError);
-            
+
             // Restore original log level
             if (originalLogLevel != null)
                 Environment.SetEnvironmentVariable("Logging__LogLevel__Default", originalLogLevel);
@@ -56,7 +55,7 @@ public abstract class ConsoleTestBase
                 Environment.SetEnvironmentVariable("Logging__LogLevel__Default", null);
         }
     }
-    
+
     // Custom StringWriter that doesn't throw when disposed
     private class PersistentStringWriter : TextWriter
     {
@@ -94,7 +93,7 @@ public abstract class ConsoleTestBase
             base.Dispose(disposing);
         }
     }
-    
+
     protected record CommandResult
     {
         public required int ExitCode { get; init; }
