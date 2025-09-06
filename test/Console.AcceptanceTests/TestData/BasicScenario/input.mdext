@@ -1,0 +1,11 @@
+# Basic Test Document
+
+This is a test markdown template.
+
+## Content Section
+
+@include common/shared.mdsrc
+
+## Summary
+
+This document demonstrates basic template functionality.
