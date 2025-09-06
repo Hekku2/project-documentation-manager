@@ -2,6 +2,6 @@
 
 This template references a non-existent file:
 
-@include nonexistent/file.mdsrc
+<MarkDownExtension operation="insert" file="nonexistent/file.mdsrc" />
 
 This should cause a validation error.

@@ -4,7 +4,7 @@ This is a test markdown template.
 
 ## Content Section
 
-@include common/shared.mdsrc
+<MarkDownExtension operation="insert" file="common/shared.mdsrc" />
 
 ## Summary
 
