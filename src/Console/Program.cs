@@ -9,7 +9,7 @@ namespace Console;
 
 public static class Program
 {
-    private static async Task<int> Main(string[] args)
+    public static async Task<int> Main(string[] args)
     {
         var host = Host.CreateDefaultBuilder(args)
         .ConfigureServices((context, services) =>
