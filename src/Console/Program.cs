@@ -5,31 +5,39 @@ using Spectre.Console.Cli;
 using Console.Commands;
 using Business.Services;
 
-var host = Host.CreateDefaultBuilder(args)
-    .ConfigureServices((context, services) =>
-    {
-        services.AddTransient<IMarkdownFileCollectorService, MarkdownFileCollectorService>();
-        services.AddTransient<IMarkdownCombinationService, MarkdownCombinationService>();
-        services.AddTransient<IMarkdownDocumentFileWriterService, MarkdownDocumentFileWriterService>();
-        services.AddTransient<CombineCommand>();
-        services.AddTransient<ValidateCommand>();
-    })
-    .ConfigureLogging(logging =>
-    {
-        logging.ClearProviders();
-        logging.AddConsole();
-    })
-    .Build();
+namespace Console;
 
-var app = new CommandApp(new Console.TypeRegistrar(host.Services));
-
-app.Configure(config =>
+public static class Program
 {
-    config.AddCommand<CombineCommand>("combine")
-        .WithDescription("Combine markdown files from templates");
+    private static async Task<int> Main(string[] args)
+    {
+        var host = Host.CreateDefaultBuilder(args)
+        .ConfigureServices((context, services) =>
+        {
+            services.AddTransient<IMarkdownFileCollectorService, MarkdownFileCollectorService>();
+            services.AddTransient<IMarkdownCombinationService, MarkdownCombinationService>();
+            services.AddTransient<IMarkdownDocumentFileWriterService, MarkdownDocumentFileWriterService>();
+            services.AddTransient<CombineCommand>();
+            services.AddTransient<ValidateCommand>();
+        })
+        .ConfigureLogging(logging =>
+        {
+            logging.ClearProviders();
+            logging.AddConsole();
+        })
+        .Build();
 
-    config.AddCommand<ValidateCommand>("validate")
-        .WithDescription("Validate markdown templates and sources");
-});
+        var app = new CommandApp(new Console.TypeRegistrar(host.Services));
 
-return await app.RunAsync(args);
+        app.Configure(config =>
+        {
+            config.AddCommand<CombineCommand>("combine")
+                .WithDescription("Combine markdown files from templates");
+
+            config.AddCommand<ValidateCommand>("validate")
+                .WithDescription("Validate markdown templates and sources");
+        });
+
+        return await app.RunAsync(args);
+    }
+}
