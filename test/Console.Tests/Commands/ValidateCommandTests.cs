@@ -1,12 +1,10 @@
-using Business.Models;
-using Business.Services;
-using Console.Commands;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
+using ProjectDocumentationManager.Business.Models;
+using ProjectDocumentationManager.Business.Services;
+using ProjectDocumentationManager.Console.Commands;
 using Spectre.Console.Cli;
 
-namespace Console.Tests.Commands;
+namespace ProjectDocumentationManager.Console.Tests.Commands;
 
 [TestFixture]
 public class ValidateCommandTests
@@ -21,8 +19,7 @@ public class ValidateCommandTests
     {
         _collector = Substitute.For<IMarkdownFileCollectorService>();
         _combiner = Substitute.For<IMarkdownCombinationService>();
-        var logger = NullLoggerFactory.Instance.CreateLogger<ValidateCommand>();
-        _command = new ValidateCommand(_collector, _combiner, logger);
+        _command = new ValidateCommand(_collector, _combiner);
 
         _testInputFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(_testInputFolder);

@@ -1,13 +1,14 @@
-namespace Console.AcceptanceTests;
+namespace ProjectDocumentationManager.Console.AcceptanceTests;
 
 [TestFixture]
+[NonParallelizable]
 public class ValidateCommandAcceptanceTests : ConsoleTestBase
 {
 
     [Test]
     public async Task ValidateCommand_Should_Pass_For_Valid_Templates()
     {
-        var inputFolder = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData/BasicScenario");
+        var inputFolder = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "BasicScenario");
         var result = await RunConsoleCommandDirectlyAsync("validate", inputFolder);
 
         Assert.That(result.ExitCode, Is.EqualTo(0), $"Validation should pass: {result.Output}");
@@ -16,7 +17,7 @@ public class ValidateCommandAcceptanceTests : ConsoleTestBase
     [Test]
     public async Task ValidateCommand_Should_Fail_For_Invalid_Templates()
     {
-        var inputFolder = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData/ErrorScenario");
+        var inputFolder = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "ErrorScenario");
         var result = await RunConsoleCommandDirectlyAsync("validate", inputFolder);
 
         Assert.That(result.ExitCode, Is.EqualTo(1), "Validation should fail for invalid templates");
@@ -36,7 +37,7 @@ public class ValidateCommandAcceptanceTests : ConsoleTestBase
     {
         var emptyFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(emptyFolder);
-        
+
         try
         {
             var result = await RunConsoleCommandDirectlyAsync("validate", emptyFolder);
@@ -53,7 +54,7 @@ public class ValidateCommandAcceptanceTests : ConsoleTestBase
     [Test]
     public async Task ValidateCommand_Should_Show_Validation_Summary()
     {
-        var inputFolder = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData/BasicScenario");
+        var inputFolder = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "BasicScenario");
         var result = await RunConsoleCommandDirectlyAsync("validate", inputFolder);
 
         Assert.That(result.ExitCode, Is.EqualTo(0), "Validation should succeed for basic scenario");

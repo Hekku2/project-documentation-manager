@@ -1,17 +1,15 @@
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
-using Microsoft.Extensions.Logging;
 using Spectre.Console;
 using Spectre.Console.Cli;
-using Business.Services;
+using ProjectDocumentationManager.Business.Services;
 
-namespace Console.Commands;
+namespace ProjectDocumentationManager.Console.Commands;
 
 public class CombineCommand(
     IMarkdownFileCollectorService collector,
     IMarkdownCombinationService combiner,
-    IMarkdownDocumentFileWriterService writer,
-    ILogger<CombineCommand> logger) : AsyncCommand<CombineCommand.Settings>
+    IMarkdownDocumentFileWriterService writer) : AsyncCommand<CombineCommand.Settings>
 {
     public class Settings : CommandSettings
     {
@@ -28,14 +26,11 @@ public class CombineCommand(
     {
         try
         {
-
             if (!Directory.Exists(settings.InputFolder))
             {
                 AnsiConsole.MarkupLine($"[red]Error: Input folder '{settings.InputFolder}' does not exist[/]");
-                return 1;
+                return CommandConstants.CommandError;
             }
-
-            Directory.CreateDirectory(settings.OutputFolder);
 
             AnsiConsole.MarkupLine($"[green]Collecting markdown files from:[/] {settings.InputFolder}");
             var (templateFiles, sourceFiles) = await collector.CollectAllMarkdownFilesAsync(settings.InputFolder);
@@ -43,12 +38,11 @@ public class CombineCommand(
             if (!templateFiles.Any())
             {
                 AnsiConsole.MarkupLine("[yellow]Warning: No markdown template files found[/]");
-                return 1;
+                return CommandConstants.CommandError;
             }
 
             AnsiConsole.MarkupLine($"Found {templateFiles.Count()} template files and {sourceFiles.Count()} source files");
 
-            var processedDocuments = combiner.BuildDocumentation(templateFiles, sourceFiles);
             var validationResult = combiner.Validate(templateFiles, sourceFiles);
 
             if (!validationResult.IsValid)
@@ -58,20 +52,22 @@ public class CombineCommand(
                 {
                     AnsiConsole.MarkupLine($"  [red]- {error.Message}[/]");
                 }
-                return 1;
+                return CommandConstants.CommandError;
             }
 
+            var processedDocuments = combiner.BuildDocumentation(templateFiles, sourceFiles);
+            Directory.CreateDirectory(settings.OutputFolder);
             await writer.WriteDocumentsToFolderAsync(processedDocuments, settings.OutputFolder);
 
             AnsiConsole.MarkupLine($"[green]✓ Markdown combination completed![/]");
             AnsiConsole.MarkupLine($"Output location: [blue]{Path.GetFullPath(settings.OutputFolder)}[/]");
 
-            return 0;
+            return CommandConstants.CommandOk;
         }
         catch (Exception ex)
         {
             AnsiConsole.MarkupLine($"[red]Error: {ex.Message}[/]");
-            return 1;
+            return CommandConstants.CommandError;
         }
     }
 }

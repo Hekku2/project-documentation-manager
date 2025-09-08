@@ -1,12 +1,10 @@
-using Business.Models;
-using Business.Services;
-using Console.Commands;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
+using ProjectDocumentationManager.Business.Models;
+using ProjectDocumentationManager.Business.Services;
+using ProjectDocumentationManager.Console.Commands;
 using Spectre.Console.Cli;
 
-namespace Console.Tests.Commands;
+namespace ProjectDocumentationManager.Console.Tests.Commands;
 
 [TestFixture]
 public class CombineCommandTests
@@ -24,8 +22,7 @@ public class CombineCommandTests
         _collector = Substitute.For<IMarkdownFileCollectorService>();
         _combiner = Substitute.For<IMarkdownCombinationService>();
         _writer = Substitute.For<IMarkdownDocumentFileWriterService>();
-        var logger = NullLoggerFactory.Instance.CreateLogger<CombineCommand>();
-        _command = new CombineCommand(_collector, _combiner, _writer, logger);
+        _command = new CombineCommand(_collector, _combiner, _writer);
 
         _testInputFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         _testOutputFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());

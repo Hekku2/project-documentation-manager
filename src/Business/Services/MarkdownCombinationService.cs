@@ -1,8 +1,8 @@
 using System.Text.RegularExpressions;
-using Business.Models;
 using Microsoft.Extensions.Logging;
+using ProjectDocumentationManager.Business.Models;
 
-namespace Business.Services;
+namespace ProjectDocumentationManager.Business.Services;
 
 /// <summary>
 /// Service for building documentation by processing template files with insert directives
@@ -18,23 +18,23 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
     {
         if (templateDocuments == null)
             throw new ArgumentNullException(nameof(templateDocuments));
-        
+
         if (sourceDocuments == null)
             throw new ArgumentNullException(nameof(sourceDocuments));
 
         var templateList = templateDocuments.ToList();
         var sourceDictionary = sourceDocuments.ToDictionary(
-            doc => doc.FileName, 
-            doc => doc.Content, 
+            doc => doc.FileName,
+            doc => doc.Content,
             StringComparer.OrdinalIgnoreCase);
 
-        logger.LogInformation("Building documentation for {TemplateCount} templates using {SourceCount} source documents", 
+        logger.LogInformation("Building documentation for {TemplateCount} templates using {SourceCount} source documents",
             templateList.Count, sourceDictionary.Count);
 
         // Log all source documents for debugging
         if (sourceDictionary.Count > 0)
         {
-            logger.LogDebug("Available source documents: {SourceDocuments}", 
+            logger.LogDebug("Available source documents: {SourceDocuments}",
                 string.Join(", ", sourceDictionary.Keys));
         }
         else
@@ -49,18 +49,18 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
             try
             {
                 logger.LogDebug("Processing template: {TemplateFileName}", template.FileName);
-                
+
                 var processedContent = ProcessTemplate(template.Content, sourceDictionary, template.FileName);
                 var outputFileName = Path.ChangeExtension(template.FileName, ".md");
                 var resultDocument = new MarkdownDocument
-                { 
+                {
                     FileName = outputFileName,
                     FilePath = Path.ChangeExtension(template.FilePath, ".md"),
                     Content = processedContent
                 };
-                
+
                 results.Add(resultDocument);
-                
+
                 logger.LogDebug("Successfully processed template: {TemplateFileName}", template.FileName);
             }
             catch (Exception ex)
@@ -69,7 +69,7 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
                 // Add the template with original content on error, but with .md extension
                 var outputFileName = Path.ChangeExtension(template.FileName, ".md");
                 results.Add(new MarkdownDocument
-                { 
+                {
                     FileName = outputFileName,
                     FilePath = Path.ChangeExtension(template.FilePath, ".md"),
                     Content = template.Content
@@ -78,7 +78,7 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
         }
 
         logger.LogInformation("Documentation building completed. Processed {ProcessedCount} templates", results.Count);
-        
+
         return results;
     }
 
@@ -93,7 +93,7 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
         // Process insert directives - continue until no more directives are found (handles nested inserts)
         int maxIterations = 10; // Prevent infinite loops
         int iteration = 0;
-        
+
         while (iteration < maxIterations)
         {
             var matches = InsertDirectiveRegex.Matches(processedContent);
@@ -113,18 +113,18 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
 
                 if (sourceDictionary.TryGetValue(fileName, out var sourceContent))
                 {
-                    logger.LogDebug("Inserting content from {SourceFileName} into {TemplateFileName}", 
+                    logger.LogDebug("Inserting content from {SourceFileName} into {TemplateFileName}",
                         fileName, templateFileName);
-                    
+
                     processedContent = processedContent.Replace(fullDirective, sourceContent ?? string.Empty);
                     processedDirectives.Add(fullDirective);
                     anyReplaced = true;
                 }
                 else
                 {
-                    logger.LogWarning("Source document not found for insert directive: {FileName} in template {TemplateFileName}", 
+                    logger.LogWarning("Source document not found for insert directive: {FileName} in template {TemplateFileName}",
                         fileName, templateFileName);
-                    
+
                     // Replace with a comment indicating missing source
                     var replacementComment = $"<!-- Missing source: {fileName} -->";
                     processedContent = processedContent.Replace(fullDirective, replacementComment);
@@ -155,15 +155,15 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
         var lines = content.Split('\n');
         var processedDirectives = new HashSet<string>();
         var currentDirectives = new HashSet<string>();
-        
+
         for (int lineIndex = 0; lineIndex < lines.Length; lineIndex++)
         {
             var line = lines[lineIndex];
-            
+
             // First check for any MarkdownExtension directives (including malformed ones)
             var allDirectives = AnyMarkdownExtensionRegex.Matches(line);
             var validDirectives = InsertDirectiveRegex.Matches(line);
-            
+
             // Check for malformed directives
             if (allDirectives.Count > validDirectives.Count)
             {
@@ -171,12 +171,12 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
                 {
                     var directive = anyMatch.Value;
                     bool isValid = validDirectives.Cast<Match>().Any(validMatch => validMatch.Value == directive);
-                    
+
                     if (!isValid)
                     {
                         var lineNumber = lineIndex + 1;
                         string errorMessage;
-                        
+
                         if (!directive.Contains("operation="))
                         {
                             errorMessage = "MarkDownExtension directive is missing 'operation' attribute";
@@ -193,7 +193,7 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
                         {
                             errorMessage = "MarkDownExtension directive is malformed";
                         }
-                        
+
                         result.Errors.Add(new ValidationIssue
                         {
                             Message = errorMessage,
@@ -205,16 +205,16 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
                     }
                 }
             }
-            
+
             // Process valid directives
             var matches = validDirectives;
-            
+
             foreach (Match match in matches)
             {
                 var fullDirective = match.Value;
                 var fileName = match.Groups[1].Value.Trim();
                 var lineNumber = lineIndex + 1;
-                
+
                 // Check for malformed directive
                 if (string.IsNullOrWhiteSpace(fileName))
                 {
@@ -284,7 +284,7 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
         ValidateCircularReferences(templateDocument.FileName, currentDirectives, sourceDictionary, result, new HashSet<string>());
     }
 
-    private void ValidateCircularReferences(string currentFileName, HashSet<string> currentDirectives, 
+    private void ValidateCircularReferences(string currentFileName, HashSet<string> currentDirectives,
         Dictionary<string, string> sourceDictionary, ValidationResult result, HashSet<string> visitedFiles)
     {
         if (visitedFiles.Contains(currentFileName))
@@ -306,7 +306,7 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
             {
                 var nestedMatches = InsertDirectiveRegex.Matches(sourceContent);
                 var nestedDirectives = new HashSet<string>();
-                
+
                 foreach (Match match in nestedMatches)
                 {
                     var nestedFileName = match.Groups[1].Value.Trim();
@@ -325,7 +325,7 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
     {
         if (templateDocuments == null)
             throw new ArgumentNullException(nameof(templateDocuments));
-        
+
         if (sourceDocuments == null)
             throw new ArgumentNullException(nameof(sourceDocuments));
 
@@ -338,11 +338,11 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
         foreach (var template in templateList)
         {
             logger.LogDebug("Validating template: {TemplateFileName}", template.FileName);
-            
+
             var result = new ValidationResult();
             var sourceDictionary = sourceList.ToDictionary(
-                doc => doc.FileName, 
-                doc => doc.Content, 
+                doc => doc.FileName,
+                doc => doc.Content,
                 StringComparer.OrdinalIgnoreCase);
 
             if (!string.IsNullOrEmpty(template.Content))
@@ -350,7 +350,7 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
                 ValidateInsertDirectives(template, sourceDictionary, result);
             }
             var validationResult = result;
-            
+
             // Add template filename context to errors and warnings
             foreach (var error in validationResult.Errors)
             {
@@ -363,7 +363,7 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
                     SourceContext = error.SourceContext
                 });
             }
-            
+
             foreach (var warning in validationResult.Warnings)
             {
                 combinedResult.Warnings.Add(new ValidationIssue
@@ -377,7 +377,7 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
             }
         }
 
-        logger.LogInformation("Validation completed for all templates. Found {ErrorCount} errors and {WarningCount} warnings", 
+        logger.LogInformation("Validation completed for all templates. Found {ErrorCount} errors and {WarningCount} warnings",
             combinedResult.Errors.Count, combinedResult.Warnings.Count);
 
         return combinedResult;

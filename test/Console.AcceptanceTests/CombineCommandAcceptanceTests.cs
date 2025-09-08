@@ -1,6 +1,7 @@
-namespace Console.AcceptanceTests;
+namespace ProjectDocumentationManager.Console.AcceptanceTests;
 
 [TestFixture]
+[NonParallelizable]
 public class CombineCommandAcceptanceTests : ConsoleTestBase
 {
     private string _testOutputFolder = null!;
@@ -28,10 +29,10 @@ public class CombineCommandAcceptanceTests : ConsoleTestBase
         Assert.Multiple(() =>
         {
             Assert.That(result.ExitCode, Is.EqualTo(0), $"Command failed: {result.Output}");
-            
+
             var outputFile = Path.Combine(_testOutputFolder, "input.md");
             Assert.That(File.Exists(outputFile), Is.True, "Output file was not created");
-            
+
             var actualContent = File.ReadAllText(outputFile).Trim();
             var expectedContent = File.ReadAllText(Path.Combine(inputFolder, "expected-output.md")).Trim();
             Assert.That(actualContent, Is.EqualTo(expectedContent), "Output content does not match expected");
@@ -52,9 +53,9 @@ public class CombineCommandAcceptanceTests : ConsoleTestBase
     {
         var inputFolder = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData/BasicScenario");
         var newOutputFolder = Path.Combine(_testOutputFolder, "new-output");
-        
+
         Assert.That(Directory.Exists(newOutputFolder), Is.False, "Output directory should not exist initially");
-        
+
         var result = await RunConsoleCommandDirectlyAsync("combine", inputFolder, newOutputFolder);
 
         Assert.Multiple(() =>
@@ -69,7 +70,7 @@ public class CombineCommandAcceptanceTests : ConsoleTestBase
     {
         var emptyFolder = Path.Combine(_testOutputFolder, "empty");
         Directory.CreateDirectory(emptyFolder);
-        
+
         var result = await RunConsoleCommandDirectlyAsync("combine", emptyFolder, _testOutputFolder);
 
         Assert.That(result.ExitCode, Is.EqualTo(1), "Command should fail for empty folder with no template files");

@@ -1,7 +1,7 @@
-using Business.Models;
 using Microsoft.Extensions.Logging;
+using ProjectDocumentationManager.Business.Models;
 
-namespace Business.Services;
+namespace ProjectDocumentationManager.Business.Services;
 
 /// <summary>
 /// Service for writing MarkdownDocument collections to files in a specified folder
@@ -12,15 +12,15 @@ public class MarkdownDocumentFileWriterService(ILogger<MarkdownDocumentFileWrite
     {
         if (documents == null)
             throw new ArgumentNullException(nameof(documents));
-        
+
         if (outputFolder == null)
             throw new ArgumentNullException(nameof(outputFolder));
-        
+
         if (string.IsNullOrWhiteSpace(outputFolder))
             throw new ArgumentException("Output folder cannot be empty or whitespace", nameof(outputFolder));
 
         var documentList = documents.ToList();
-        logger.LogInformation("Starting to write {DocumentCount} documents to folder: {OutputFolder}", 
+        logger.LogInformation("Starting to write {DocumentCount} documents to folder: {OutputFolder}",
             documentList.Count, outputFolder);
 
         // Ensure the output directory exists
@@ -48,7 +48,7 @@ public class MarkdownDocumentFileWriterService(ILogger<MarkdownDocumentFileWrite
             }
 
             var filePath = Path.Combine(outputFolder, document.FileName);
-            
+
             try
             {
                 logger.LogDebug("Writing document to file: {FilePath}", filePath);
@@ -75,7 +75,7 @@ public class MarkdownDocumentFileWriterService(ILogger<MarkdownDocumentFileWrite
         try
         {
             await Task.WhenAll(writeTasks);
-            logger.LogInformation("Successfully wrote {DocumentCount} documents to folder: {OutputFolder}", 
+            logger.LogInformation("Successfully wrote {DocumentCount} documents to folder: {OutputFolder}",
                 documentList.Count(d => !string.IsNullOrWhiteSpace(d.FileName)), outputFolder);
         }
         catch (Exception ex)

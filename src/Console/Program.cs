@@ -2,10 +2,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Spectre.Console.Cli;
-using Console.Commands;
-using Business.Services;
+using ProjectDocumentationManager.Business.Services;
+using ProjectDocumentationManager.Console.Commands;
 
-namespace Console;
+namespace ProjectDocumentationManager.Console;
 
 public static class Program
 {
@@ -27,7 +27,7 @@ public static class Program
         })
         .Build();
 
-        var app = new CommandApp(new Console.TypeRegistrar(host.Services));
+        var app = new CommandApp(new TypeRegistrar(host.Services));
 
         app.Configure(config =>
         {

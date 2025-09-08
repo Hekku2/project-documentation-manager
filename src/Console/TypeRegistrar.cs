@@ -1,6 +1,6 @@
 using Spectre.Console.Cli;
 
-namespace Console;
+namespace ProjectDocumentationManager.Console;
 
 public sealed class TypeRegistrar(IServiceProvider serviceProvider) : ITypeRegistrar
 {

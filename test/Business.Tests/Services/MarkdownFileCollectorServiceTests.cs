@@ -1,9 +1,9 @@
-using Business.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using NUnit.Framework;
+using ProjectDocumentationManager.Business.Services;
 
-namespace Business.Tests.Services;
+namespace ProjectDocumentationManager.Business.Tests.Services;
 
 [TestFixture]
 public class MarkdownFileCollectorServiceTests

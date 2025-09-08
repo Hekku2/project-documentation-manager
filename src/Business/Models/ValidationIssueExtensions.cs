@@ -1,4 +1,4 @@
-namespace Business.Models;
+namespace ProjectDocumentationManager.Business.Models;
 
 public static class ValidationIssueExtensions
 {

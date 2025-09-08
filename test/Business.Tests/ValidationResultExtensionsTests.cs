@@ -1,7 +1,8 @@
-using Business.Models;
 using NUnit.Framework;
+using ProjectDocumentationManager.Business.Extensions;
+using ProjectDocumentationManager.Business.Models;
 
-namespace Business.Tests;
+namespace ProjectDocumentationManager.Business.Tests;
 
 [TestFixture]
 public class ValidationResultExtensionsTests

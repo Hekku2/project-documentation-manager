@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace Console.AcceptanceTests;
+namespace ProjectDocumentationManager.Console.AcceptanceTests;
 
 public abstract class ConsoleTestBase
 {

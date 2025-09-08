@@ -1,7 +1,7 @@
-using Business.Models;
 using Microsoft.Extensions.Logging;
+using ProjectDocumentationManager.Business.Models;
 
-namespace Business.Services;
+namespace ProjectDocumentationManager.Business.Services;
 
 /// <summary>
 /// Service for collecting markdown source and template files from a directory
@@ -14,50 +14,50 @@ public class MarkdownFileCollectorService(ILogger<MarkdownFileCollectorService> 
     public async Task<IEnumerable<MarkdownDocument>> CollectTemplateFilesAsync(string directoryPath)
     {
         ValidateDirectoryPath(directoryPath);
-        
+
         logger.LogDebug("Collecting template files (.mdext) from directory: {DirectoryPath}", directoryPath);
-        
+
         return await CollectFilesByExtensionAsync(directoryPath, TemplateFileExtension);
     }
 
     public async Task<IEnumerable<MarkdownDocument>> CollectSourceFilesAsync(string directoryPath)
     {
         ValidateDirectoryPath(directoryPath);
-        
+
         logger.LogDebug("Collecting source files (.mdsrc) from directory: {DirectoryPath}", directoryPath);
-        
+
         return await CollectFilesByExtensionAsync(directoryPath, SourceFileExtension);
     }
 
     public async Task<(IEnumerable<MarkdownDocument> TemplateFiles, IEnumerable<MarkdownDocument> SourceFiles)> CollectAllMarkdownFilesAsync(string directoryPath)
     {
         ValidateDirectoryPath(directoryPath);
-        
+
         logger.LogDebug("Collecting all markdown files (.mdext and .mdsrc) from directory: {DirectoryPath}", directoryPath);
-        
+
         var templateFilesTask = CollectTemplateFilesAsync(directoryPath);
         var sourceFilesTask = CollectSourceFilesAsync(directoryPath);
-        
+
         await Task.WhenAll(templateFilesTask, sourceFilesTask);
-        
+
         var templateFiles = await templateFilesTask;
         var sourceFiles = await sourceFilesTask;
-        
-        logger.LogInformation("Collected {TemplateCount} template files and {SourceCount} source files from: {DirectoryPath}", 
+
+        logger.LogInformation("Collected {TemplateCount} template files and {SourceCount} source files from: {DirectoryPath}",
             templateFiles.Count(), sourceFiles.Count(), directoryPath);
-        
+
         return (templateFiles, sourceFiles);
     }
 
     private async Task<IEnumerable<MarkdownDocument>> CollectFilesByExtensionAsync(string directoryPath, string extension)
     {
         var documents = new List<MarkdownDocument>();
-        
+
         try
         {
             var files = Directory.GetFiles(directoryPath, $"*{extension}", SearchOption.AllDirectories);
-            
-            logger.LogDebug("Found {FileCount} files with extension {Extension} in: {DirectoryPath}", 
+
+            logger.LogDebug("Found {FileCount} files with extension {Extension} in: {DirectoryPath}",
                 files.Length, extension, directoryPath);
 
             var readTasks = files.Select(async filePath =>
@@ -91,8 +91,8 @@ public class MarkdownFileCollectorService(ILogger<MarkdownFileCollectorService> 
             });
 
             documents.AddRange(await Task.WhenAll(readTasks));
-            
-            logger.LogInformation("Successfully collected {DocumentCount} {Extension} files from: {DirectoryPath}", 
+
+            logger.LogInformation("Successfully collected {DocumentCount} {Extension} files from: {DirectoryPath}",
                 documents.Count, extension, directoryPath);
         }
         catch (DirectoryNotFoundException ex)
@@ -118,7 +118,7 @@ public class MarkdownFileCollectorService(ILogger<MarkdownFileCollectorService> 
     {
         if (string.IsNullOrWhiteSpace(directoryPath))
             throw new ArgumentException("Directory path cannot be null or empty", nameof(directoryPath));
-            
+
         if (!Directory.Exists(directoryPath))
             throw new DirectoryNotFoundException($"Directory not found: {directoryPath}");
     }

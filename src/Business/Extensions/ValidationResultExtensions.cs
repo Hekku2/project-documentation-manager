@@ -1,4 +1,6 @@
-namespace Business.Models;
+using ProjectDocumentationManager.Business.Models;
+
+namespace ProjectDocumentationManager.Business.Extensions;
 
 public static class ValidationResultExtensions
 {

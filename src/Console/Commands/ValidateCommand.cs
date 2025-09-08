@@ -1,16 +1,14 @@
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
-using Microsoft.Extensions.Logging;
 using Spectre.Console;
 using Spectre.Console.Cli;
-using Business.Services;
+using ProjectDocumentationManager.Business.Services;
 
-namespace Console.Commands;
+namespace ProjectDocumentationManager.Console.Commands;
 
 public class ValidateCommand(
     IMarkdownFileCollectorService collector,
-    IMarkdownCombinationService combiner,
-    ILogger<ValidateCommand> logger) : AsyncCommand<ValidateCommand.Settings>
+    IMarkdownCombinationService combiner) : AsyncCommand<ValidateCommand.Settings>
 {
     public class Settings : CommandSettings
     {
@@ -27,7 +25,7 @@ public class ValidateCommand(
             if (!Directory.Exists(settings.InputFolder))
             {
                 AnsiConsole.MarkupLine($"[red]Error: Input folder '{settings.InputFolder}' does not exist[/]");
-                return 1;
+                return CommandConstants.CommandError;
             }
 
             AnsiConsole.MarkupLine($"[green]Validating markdown files in:[/] {settings.InputFolder}");
@@ -36,7 +34,7 @@ public class ValidateCommand(
             if (!templateFiles.Any())
             {
                 AnsiConsole.MarkupLine("[yellow]Warning: No markdown template files found[/]");
-                return 0;
+                return CommandConstants.CommandOk;
             }
 
             AnsiConsole.MarkupLine($"Found {templateFiles.Count()} template files and {sourceFiles.Count()} source files");
@@ -44,29 +42,14 @@ public class ValidateCommand(
             var validationResult = combiner.Validate(templateFiles, sourceFiles);
             var totalFiles = templateFiles.Count();
 
-            // Summary
-            var table = new Table();
-            table.AddColumn("Status");
-            table.AddColumn("Count");
-
-            if (validationResult.IsValid)
-            {
-                table.AddRow("[green]Valid files[/]", totalFiles.ToString());
-                table.AddRow("[red]Invalid files[/]", "0");
-            }
-            else
-            {
-                table.AddRow("[green]Valid files[/]", "0");
-                table.AddRow("[red]Invalid files[/]", totalFiles.ToString());
-            }
-            table.AddRow("Total files", totalFiles.ToString());
+            var table = CreateSummaryTable(validationResult, totalFiles);
 
             AnsiConsole.Write(table);
 
             if (!validationResult.IsValid)
             {
                 AnsiConsole.MarkupLine($"\n[red]Validation completed with errors[/]");
-                
+
                 if (validationResult.Errors.Any())
                 {
                     AnsiConsole.MarkupLine("\n[yellow]Issues found:[/]");
@@ -75,17 +58,38 @@ public class ValidateCommand(
                         AnsiConsole.MarkupLine($"[red]- {error.Message}[/]");
                     }
                 }
-                
-                return 1;
+
+                return CommandConstants.CommandError;
             }
 
             AnsiConsole.MarkupLine($"\n[green]✓ All {totalFiles} files validated successfully![/]");
-            return 0;
+            return CommandConstants.CommandOk;
         }
         catch (Exception ex)
         {
             AnsiConsole.MarkupLine($"[red]Error: {ex.Message}[/]");
-            return 1;
+            return CommandConstants.CommandError;
         }
+    }
+
+    private static Table CreateSummaryTable(Business.Models.ValidationResult validationResult, int totalFiles)
+    {
+        // Summary
+        var table = new Table();
+        table.AddColumn("Status");
+        table.AddColumn("Count");
+
+        if (validationResult.IsValid)
+        {
+            table.AddRow("[green]Valid files[/]", totalFiles.ToString());
+            table.AddRow("[red]Invalid files[/]", "0");
+        }
+        else
+        {
+            table.AddRow("[green]Valid files[/]", "0");
+            table.AddRow("[red]Invalid files[/]", totalFiles.ToString());
+        }
+        table.AddRow("Total files", totalFiles.ToString());
+        return table;
     }
 }
