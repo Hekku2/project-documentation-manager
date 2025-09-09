@@ -4,25 +4,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a C# project for creating a tool to manage project documentation. The main technology is Avalonia UI framework for cross-platform desktop applications. The project is designed to be run locally with both console and UI modes, where the UI helps with previewing features and editing.
+This is a C# console application for managing project documentation through markdown template processing. The tool processes `.mdext` template files and `.mdsrc` source files to generate combined markdown documentation. It's designed as a command-line tool that can be packaged and distributed as a .NET global tool.
 
 ## Technology Stack
 
 - **.NET 9.0** with C# and nullable reference types enabled
-- **Avalonia UI 11.3.3** for cross-platform desktop GUI
-- **NUnit 4.3.1** for testing with Avalonia.Headless for UI tests
+- **Spectre.Console 0.47.0** for rich command-line interface and styling
+- **Microsoft.Extensions.Hosting 9.0.0** for dependency injection and configuration
+- **NUnit 4.3.1** for testing framework
 - **NSubstitute 5.3.0** for mocking in tests
-- **Microsoft.Extensions.Hosting** for dependency injection and configuration
-- **Markdig 0.37.0** for markdown processing and rendering
-- Visual Studio solution structure
+- Console application with global tool packaging support
 
 ## Project Structure
 
 The solution follows a standard .NET structure with clear separation of concerns:
-- `src/Desktop/` - Main Avalonia desktop application with MVVM architecture
-- `src/Business/` - Core business logic for markdown processing
-- `test/Desktop.UITests/` - UI tests using Avalonia.Headless and NUnit  
-- `test/Business.Tests/` - Unit tests for business logic
+- `src/Console/` - Main console application with CLI commands using Spectre.Console
+- `src/Business/` - Core business logic for markdown processing and file operations
+- `test/Business.Tests/` - Unit tests for business logic services
+- `test/Console.Tests/` - Unit tests for console commands
+- `test/Console.AcceptanceTests/` - End-to-end acceptance tests with test data
 - `doc/` - Design documentation and project structure
 - `example-projects/` - Sample projects demonstrating markdown template features
 
@@ -33,14 +33,28 @@ The solution follows a standard .NET structure with clear separation of concerns
 # Build entire solution
 dotnet build
 
-# Build specific project
-dotnet build src/Desktop/Desktop.csproj
+# Build console project specifically
+dotnet build src/Console/Console.csproj
+
+# Build business logic project
+dotnet build src/Business/Business.csproj
 ```
 
 ### Running
 ```bash
-# Run desktop application
-dotnet run --project src/Desktop/Desktop.csproj
+# Run console application with combine command
+dotnet run --project src/Console/Console.csproj -- combine --input ./example-projects/basic-features --output ./output
+
+# Run console application with validate command  
+dotnet run --project src/Console/Console.csproj -- validate --input ./example-projects/basic-features
+
+# Install as global tool (after building)
+dotnet pack src/Console/Console.csproj
+dotnet tool install --global --add-source ./src/Console/nupkg ProjectDocumentationManager.Console
+
+# Run as global tool
+project-docs combine --input ./example-projects/basic-features --output ./output
+project-docs validate --input ./example-projects/basic-features
 ```
 
 ### Testing
@@ -48,20 +62,20 @@ dotnet run --project src/Desktop/Desktop.csproj
 # Run all tests
 dotnet test
 
-# Run UI tests specifically
-dotnet test test/Desktop.UITests/Desktop.UITests.csproj
-
-# Run business logic tests
+# Run business logic tests specifically
 dotnet test test/Business.Tests/Business.Tests.csproj
+
+# Run console command tests
+dotnet test test/Console.Tests/Console.Tests.csproj
+
+# Run acceptance tests
+dotnet test test/Console.AcceptanceTests/Console.AcceptanceTests.csproj
 
 # Run specific test by name
 dotnet test --filter "TestMethodName"
 
-# Run tests with specific pattern
-dotnet test --filter "MainWindow_Should_Allow_Folder_Expansion"
-
-# Run log-related tests
-dotnet test --filter "FullyQualifiedName~Log"
+# Run tests with pattern matching
+dotnet test --filter "FullyQualifiedName~MarkdownCombination"
 ```
 
 ### Development
@@ -75,62 +89,47 @@ dotnet clean
 
 ## Architecture Overview
 
-### Dependency Injection & Configuration
-The application uses Microsoft.Extensions.Hosting for DI container and configuration management:
-- `Program.cs` sets up the host builder with services and configuration
-- `appsettings.json` contains application configuration including `ApplicationOptions`
-- Services are registered in `Program.CreateHostBuilder()` and accessed via DI
-- `App.ServiceProvider` provides access to services from the Avalonia application
-- Hybrid hosting model: .NET Host + Avalonia UI integration with shared service provider
+### Console Application Architecture
+The console application uses **Spectre.Console.Cli** for command-line interface:
+- `Program.cs` sets up the host builder with DI services and configures Spectre.Console CommandApp
+- Commands inherit from Spectre.Console.Cli base classes with proper argument/option handling
+- `TypeRegistrar` bridges Microsoft.Extensions.DependencyInjection with Spectre.Console DI
+- Commands: `CombineCommand` (processes templates) and `ValidateCommand` (validates templates)
 
 ### Business Logic Architecture
 The `Business` project contains the core markdown processing functionality:
 - **Services Layer**: `IMarkdownFileCollectorService`, `IMarkdownCombinationService`, `IMarkdownDocumentFileWriterService`
-- **Models**: `MarkdownDocument` for representing markdown files
+- **Models**: `MarkdownDocument` for representing markdown files with filename, path, and content
 - **Template System**: Processes `.mdext` template files with `.mdsrc` source inclusions
 - **File Processing**: Collects, combines, and writes processed markdown documentation
+- **Validation**: Validates template syntax and source file references
 
-### MVVM Pattern
-- **ViewModels**: All inherit from `ViewModelBase` which implements `INotifyPropertyChanged`
-- **Views**: AXAML files with code-behind, use compiled bindings for performance
-- **Models**: Simple data classes like `FileSystemItem`, `EditorTab`
-- **Services**: Business logic layer (e.g., `IFileService`, `FileService`)
-- **Commands**: `RelayCommand` implementation for UI actions and event handling
+### Dependency Injection & Configuration
+The application uses Microsoft.Extensions.Hosting for DI container:
+- Services registered in `Program.CreateDefaultBuilder()` configuration
+- Business services registered as transient dependencies
+- Commands registered as transient for Spectre.Console.Cli integration
+- Logging configured with console provider for development feedback
 
-### File System Management
-The application features a file explorer with lazy loading:
-- **FileSystemItemViewModel**: Implements lazy loading of child directories
-- **Background Loading**: Children loaded asynchronously when folders are expanded
-- **TreeView Layout**: Uses DockPanel to fill available vertical space
-- **Loading States**: Visual indicators for loading operations
-
-### Configuration System
-- `ApplicationOptions` class defines available settings
-- `appsettings.json` provides default configuration
-- Configuration bound to strongly-typed options via `IOptions<T>`
-- Current settings: `DefaultProjectFolder`, `DefaultOutputFolder`, `Hotkeys`
-
-### Dynamic Logging System
-The application implements a sophisticated logging architecture:
-- **IDynamicLoggerProvider**: Allows adding logger providers after host creation
-- **UILoggerProvider**: Displays logs in the application's UI log output panel
-- **Thread-Safe UI Updates**: Uses `Dispatcher.UIThread.Post()` for UI marshaling
-- **Runtime Reconfiguration**: Logging providers can be added after host startup
-- **Dual Output**: Logs appear in both console (development) and UI (user-facing)
+### File Processing Pipeline
+1. **Collection**: `IMarkdownFileCollectorService` recursively finds `.mdext` and `.mdsrc` files
+2. **Combination**: `IMarkdownCombinationService` processes template syntax and includes source content  
+3. **Writing**: `IMarkdownDocumentFileWriterService` outputs processed markdown files
+4. **Validation**: Template syntax validation and source file reference checking
 
 ## Testing Strategy
 
-### UI Testing with Avalonia.Headless
-- Tests use `[AvaloniaTest]` attribute for UI components
-- **NSubstitute** for mocking services like `IFileService`
-- **Async Testing**: Proper delays and waiting for lazy loading operations
-- **Comprehensive Coverage**: Tests for TreeView expansion, lazy loading, and UI layout
+### Unit Testing Patterns
+- Use `NSubstitute.For<IInterface>()` for creating mocks of service dependencies
+- Use `Assert.Multiple()` for grouping related assertions in test methods
+- Mock data structures use modern C# collection expressions and required properties
+- Tests verify both service behavior and data transformation logic
 
-### Test Patterns
-- Use `NSubstitute.For<IInterface>()` for creating mocks
-- Use `Assert.Multiple()` for grouping related assertions
-- Mock data structures use modern C# collection expressions
-- Tests verify both UI state and underlying data model state
+### Acceptance Testing
+- End-to-end tests using real file system operations with test data
+- `ConsoleTestBase` provides common test infrastructure for command execution
+- Test data organized in `TestData/` with realistic scenarios (BasicScenario, ErrorScenario)
+- Tests verify complete workflows from input files to output generation
 
 ### Logger Testing Guidelines
 - **Use NullLoggerFactory**: Use `NullLoggerFactory.Instance.CreateLogger<T>()` for all test scenarios
@@ -139,48 +138,36 @@ The application implements a sophisticated logging architecture:
 - **Example pattern**:
   ```csharp
   // Preferred: NullLogger (no overhead, no verification needed)
-  var logger = NullLoggerFactory.Instance.CreateLogger<MyClass>();
-  var myClass = new MyClass(logger);
+  var logger = NullLoggerFactory.Instance.CreateLogger<MyService>();
+  var service = new MyService(logger);
   
   // Avoid: Mocking or verifying logger calls
-  var logger = Substitute.For<ILogger<MyClass>>();
+  var logger = Substitute.For<ILogger<MyService>>();
   logger.Received().LogInformation("message"); // Don't do this
   ```
 
 ## Key Implementation Details
 
-### Lazy Loading Implementation
-- `FileSystemItemViewModel` loads children only when `IsExpanded` is set to true
-- Uses `Task.Run()` for background loading with `Dispatcher.UIThread.Post()` for UI updates
-- Placeholder "Loading..." items shown until real children are loaded
-- `_childrenLoaded` flag prevents duplicate loading operations
+### Template Processing System
+- `.mdext` files are template files containing markdown with special include syntax
+- `.mdsrc` files are source files containing reusable markdown content
+- Template syntax allows including source files with path resolution
+- Recursive directory scanning for file collection with async/await patterns
+- Error handling for missing source files and circular dependencies
 
-### TreeView Expansion Logic
-- Root folder auto-expands via `isRoot` parameter in constructor
-- Child folders remain collapsed by default
-- Expansion triggers lazy loading of children
-- Loading state indicators (⏳) shown during background operations
+### Command-Line Interface
+- **Spectre.Console.Cli** provides rich command parsing and validation
+- Commands use strongly-typed settings classes with attributes for arguments/options
+- Built-in help generation and error handling with styled console output
+- Support for input/output directory specification and validation
 
-### Editor Tab System
-- **Multi-Tab Interface**: Similar to VS Code with tab bar and content area
-- **Active Tab Management**: Only one tab active at a time with visual highlighting
-- **File Loading**: Async file content loading with tab creation
-- **Tab Operations**: Close, select, and switch between tabs seamlessly
-
-### UI Layout Architecture
-- **Split Layout**: File explorer (left) + editor area (right) with splitter
-- **Dual Panel Editor**: File editor (top) + log output (bottom) with tabs
-- **Responsive Design**: DockPanel and Grid layouts for proper space utilization
-- **Theme Integration**: Dark theme with consistent color scheme throughout
+### Global Tool Packaging
+- `PackAsTool=true` and `ToolCommandName=project-docs` enable global tool installation
+- Package metadata configured for NuGet distribution
+- Tool can be installed globally and used from any directory
+- Version management through standard .NET packaging
 
 ## Development Guidelines
-
-- The project emphasizes learning Avalonia UI framework
-- Focus on markdown rendering capabilities
-- Maintain both console and UI interaction modes
-- Ensure comprehensive end-to-end test coverage for major features
-- Use NSubstitute for mocking in tests rather than custom mock classes
-- Follow MVVM pattern with proper separation of concerns
 
 ### Data Model Design Guidelines
 - **Prefer `required` keyword**: For data transfer objects and models, use `required` for non-nullable properties that don't have meaningful default values
@@ -189,13 +176,11 @@ The application implements a sophisticated logging architecture:
 - **Self-documenting code**: `required` clearly indicates essential vs optional properties
 - **Example pattern**:
   ```csharp
-  public class ExampleDto
+  public class MarkdownDocument
   {
-      public required string Id { get; set; }           // Essential, no meaningful default
-      public required string Name { get; set; }         // Essential, no meaningful default
-      public string Description { get; set; } = "";     // Optional, empty is meaningful
-      public bool IsActive { get; set; } = false;       // Optional, false is meaningful
-      public DateTime? LastModified { get; set; }       // Optional, null is meaningful
+      public required string FileName { get; init; }     // Essential, no meaningful default
+      public required string FilePath { get; init; }     // Essential, no meaningful default  
+      public required string Content { get; init; }      // Essential, no meaningful default
   }
   ```
 
@@ -204,36 +189,6 @@ The application implements a sophisticated logging architecture:
 - **Dependency injection scenarios**: Primary constructors work well with DI containers and reduce boilerplate
 - **Use parameters directly**: Reference constructor parameters directly instead of creating private fields when possible
 - **Avoid when complex initialization needed**: Use traditional constructors when complex setup logic is required
-- **Example patterns**:
-  ```csharp
-  // Preferred: Primary constructor using parameters directly
-  public class FileService(ILogger<FileService> logger, IOptions<AppOptions> options) : IFileService
-  {
-      public void DoSomething()
-      {
-          logger.LogInformation("Using logger parameter directly");
-          var setting = options.Value.SomeSetting;
-      }
-  }
-  
-  // Only create private fields if you need to transform the parameter
-  public class ServiceWithTransformation(IOptions<AppOptions> options) : IService
-  {
-      private readonly AppOptions _options = options.Value; // Transformation needed
-  }
-  
-  // Use traditional constructor when complex initialization is needed
-  public class ComplexService
-  {
-      public ComplexService(ILogger<ComplexService> logger, IConfiguration config)
-      {
-          _logger = logger;
-          // Complex initialization logic
-          _settings = ProcessConfiguration(config);
-          InitializeComponents();
-      }
-  }
-  ```
 
 ### Test-Driven Development Requirements
 - **CRITICAL**: After ANY code change, feature addition, or modification, ALWAYS run `dotnet test` to ensure all tests pass
@@ -245,11 +200,23 @@ The application implements a sophisticated logging architecture:
 ### Code Validation Process
 - **Build Validation**: Use `dotnet build` to verify code compiles without errors
 - **Test Validation**: Use `dotnet test` to ensure functionality works as expected
-- **DO NOT**: Run the desktop application (`dotnet run --project src/Desktop/Desktop.csproj`) for validation purposes
-- The desktop application is for manual testing and demonstration, not automated validation
 - **CRITICAL BUILD REQUIREMENT**: ALWAYS run `dotnet build` on the ENTIRE solution after ANY code changes to ensure nothing is broken
 - **Full Solution Validation**: Never assume that individual project builds or test runs guarantee the whole solution builds correctly
 - **Immediate Fix Requirement**: If `dotnet build` fails, all build errors must be fixed immediately before proceeding with any other tasks
+
+## Template File Format
+
+### Template Files (.mdext)
+Template files use standard markdown with special include syntax for embedding source files.
+
+### Source Files (.mdsrc) 
+Source files contain reusable markdown content that can be included in templates.
+
+### Processing Rules
+- Recursive directory scanning for template and source file discovery
+- Path resolution for source file includes relative to template file location
+- Validation of template syntax and source file references
+- Output generation maintains directory structure from input
 
 ## important-instruction-reminders
 Do what has been asked; nothing more, nothing less.

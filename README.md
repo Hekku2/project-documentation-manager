@@ -7,7 +7,7 @@ code lines as a positive of code quality.
 Personal project for creating a tool for managing project documentation.
 
 Purposes of this project
- * Learn Avalonia
+ * Learn Spectre
  * Learn to better utilize AI help
  * Investigate markdown rendering.
 

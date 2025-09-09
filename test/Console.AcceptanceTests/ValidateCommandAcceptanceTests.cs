@@ -11,7 +11,7 @@ public class ValidateCommandAcceptanceTests : ConsoleTestBase
         var inputFolder = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "BasicScenario");
         var result = await RunConsoleCommandDirectlyAsync("validate", inputFolder);
 
-        Assert.That(result.ExitCode, Is.EqualTo(0), $"Validation should pass: {result.Output}");
+        Assert.That(result.ExitCode, Is.EqualTo(SuccessExitCode), $"Validation should pass: {result.Output}");
     }
 
     [Test]
@@ -20,7 +20,7 @@ public class ValidateCommandAcceptanceTests : ConsoleTestBase
         var inputFolder = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "ErrorScenario");
         var result = await RunConsoleCommandDirectlyAsync("validate", inputFolder);
 
-        Assert.That(result.ExitCode, Is.EqualTo(1), "Validation should fail for invalid templates");
+        Assert.That(result.ExitCode, Is.EqualTo(ErrorExitCode), "Validation should fail for invalid templates");
     }
 
     [Test]
@@ -29,7 +29,7 @@ public class ValidateCommandAcceptanceTests : ConsoleTestBase
         var nonExistentFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         var result = await RunConsoleCommandDirectlyAsync("validate", nonExistentFolder);
 
-        Assert.That(result.ExitCode, Is.EqualTo(1), "Command should fail for nonexistent folder");
+        Assert.That(result.ExitCode, Is.EqualTo(ErrorExitCode), "Command should fail for nonexistent folder");
     }
 
     [Test]
@@ -42,7 +42,7 @@ public class ValidateCommandAcceptanceTests : ConsoleTestBase
         {
             var result = await RunConsoleCommandDirectlyAsync("validate", emptyFolder);
 
-            Assert.That(result.ExitCode, Is.EqualTo(0), "Command should succeed for empty folder");
+            Assert.That(result.ExitCode, Is.EqualTo(SuccessExitCode), "Command should succeed for empty folder");
         }
         finally
         {
@@ -57,7 +57,7 @@ public class ValidateCommandAcceptanceTests : ConsoleTestBase
         var inputFolder = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "BasicScenario");
         var result = await RunConsoleCommandDirectlyAsync("validate", inputFolder);
 
-        Assert.That(result.ExitCode, Is.EqualTo(0), "Validation should succeed for basic scenario");
+        Assert.That(result.ExitCode, Is.EqualTo(SuccessExitCode), "Validation should succeed for basic scenario");
     }
 
 }

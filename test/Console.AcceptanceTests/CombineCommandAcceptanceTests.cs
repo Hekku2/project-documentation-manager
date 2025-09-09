@@ -28,7 +28,7 @@ public class CombineCommandAcceptanceTests : ConsoleTestBase
 
         Assert.Multiple(() =>
         {
-            Assert.That(result.ExitCode, Is.EqualTo(0), $"Command failed: {result.Output}");
+            Assert.That(result.ExitCode, Is.EqualTo(SuccessExitCode), $"Command failed: {result.Output}");
 
             var outputFile = Path.Combine(_testOutputFolder, "input.md");
             Assert.That(File.Exists(outputFile), Is.True, "Output file was not created");
@@ -45,7 +45,7 @@ public class CombineCommandAcceptanceTests : ConsoleTestBase
         var nonExistentFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         var result = await RunConsoleCommandDirectlyAsync("combine", nonExistentFolder, _testOutputFolder);
 
-        Assert.That(result.ExitCode, Is.EqualTo(1), "Command should fail for nonexistent folder");
+        Assert.That(result.ExitCode, Is.EqualTo(ErrorExitCode), "Command should fail for nonexistent folder");
     }
 
     [Test]
@@ -60,7 +60,7 @@ public class CombineCommandAcceptanceTests : ConsoleTestBase
 
         Assert.Multiple(() =>
         {
-            Assert.That(result.ExitCode, Is.EqualTo(0), "Command should succeed");
+            Assert.That(result.ExitCode, Is.EqualTo(SuccessExitCode), "Command should succeed");
             Assert.That(Directory.Exists(newOutputFolder), Is.True, "Output directory should be created");
         });
     }
@@ -73,7 +73,7 @@ public class CombineCommandAcceptanceTests : ConsoleTestBase
 
         var result = await RunConsoleCommandDirectlyAsync("combine", emptyFolder, _testOutputFolder);
 
-        Assert.That(result.ExitCode, Is.EqualTo(1), "Command should fail for empty folder with no template files");
+        Assert.That(result.ExitCode, Is.EqualTo(ErrorExitCode), "Command should fail for empty folder with no template files");
     }
 
 }

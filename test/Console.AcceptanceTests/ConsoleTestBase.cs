@@ -4,6 +4,8 @@ namespace ProjectDocumentationManager.Console.AcceptanceTests;
 
 public abstract class ConsoleTestBase
 {
+    protected const int SuccessExitCode = 0;
+    protected const int ErrorExitCode = 1;
     protected static async Task<CommandResult> RunConsoleCommandDirectlyAsync(params string[] args)
     {
         var originalOut = System.Console.Out;
