@@ -28,10 +28,10 @@ public sealed class TypeRegistrar : ITypeRegistrar
         _builder.ConfigureServices((_, services) => services.AddSingleton(service, implementation));
     }
 
-    public void RegisterLazy(Type service, Func<object> func)
+    public void RegisterLazy(Type service, Func<object> factory)
     {
-        if (func is null) throw new ArgumentNullException(nameof(func));
+        if (factory is null) throw new ArgumentNullException(nameof(factory));
 
-        _builder.ConfigureServices((_, services) => services.AddSingleton(service, _ => func()));
+        _builder.ConfigureServices((_, services) => services.AddSingleton(service, _ => factory()));
     }
 }

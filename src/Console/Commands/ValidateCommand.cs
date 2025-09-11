@@ -7,6 +7,7 @@ using ProjectDocumentationManager.Business.Services;
 namespace ProjectDocumentationManager.Console.Commands;
 
 public class ValidateCommand(
+    IAnsiConsole ansiConsole,
     IMarkdownFileCollectorService collector,
     IMarkdownCombinationService combiner) : AsyncCommand<ValidateCommand.Settings>
 {
@@ -24,50 +25,50 @@ public class ValidateCommand(
 
             if (!Directory.Exists(settings.InputFolder))
             {
-                AnsiConsole.MarkupLine($"[red]Error: Input folder '{settings.InputFolder}' does not exist[/]");
+                ansiConsole.MarkupLine($"[red]Error: Input folder '{settings.InputFolder}' does not exist[/]");
                 return CommandConstants.CommandError;
             }
 
-            AnsiConsole.MarkupLine($"[green]Validating markdown files in:[/] {settings.InputFolder}");
+            ansiConsole.MarkupLine($"[green]Validating markdown files in:[/] {settings.InputFolder}");
             var (templateFiles, sourceFiles) = await collector.CollectAllMarkdownFilesAsync(settings.InputFolder);
 
             if (!templateFiles.Any())
             {
-                AnsiConsole.MarkupLine("[yellow]Warning: No markdown template files found[/]");
+                ansiConsole.MarkupLine("[yellow]Warning: No markdown template files found[/]");
                 return CommandConstants.CommandOk;
             }
 
-            AnsiConsole.MarkupLine($"Found {templateFiles.Count()} template files and {sourceFiles.Count()} source files");
+            ansiConsole.MarkupLine($"Found {templateFiles.Count()} template files and {sourceFiles.Count()} source files");
 
             var validationResult = combiner.Validate(templateFiles, sourceFiles);
             var totalFiles = templateFiles.Count();
 
             var table = CreateSummaryTable(validationResult, totalFiles);
 
-            AnsiConsole.Write(table);
+            ansiConsole.Write(table);
 
             if (!validationResult.IsValid)
             {
-                AnsiConsole.MarkupLine($"\n[red]Validation completed with errors[/]");
+                ansiConsole.MarkupLine($"\n[red]Validation completed with errors[/]");
 
                 if (validationResult.Errors.Any())
                 {
-                    AnsiConsole.MarkupLine("\n[yellow]Issues found:[/]");
+                    ansiConsole.MarkupLine("\n[yellow]Issues found:[/]");
                     foreach (var error in validationResult.Errors)
                     {
-                        AnsiConsole.MarkupLine($"[red]- {error.Message}[/]");
+                        ansiConsole.MarkupLine($"[red]- {error.Message}[/]");
                     }
                 }
 
                 return CommandConstants.CommandError;
             }
 
-            AnsiConsole.MarkupLine($"\n[green]✓ All {totalFiles} files validated successfully![/]");
+            ansiConsole.MarkupLine($"\n[green]✓ All {totalFiles} files validated successfully![/]");
             return CommandConstants.CommandOk;
         }
         catch (Exception ex)
         {
-            AnsiConsole.MarkupLine($"[red]Error: {ex.Message}[/]");
+            ansiConsole.MarkupLine($"[red]Error: {ex.Message}[/]");
             return CommandConstants.CommandError;
         }
     }

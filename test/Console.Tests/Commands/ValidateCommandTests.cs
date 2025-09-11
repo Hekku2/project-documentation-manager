@@ -10,6 +10,7 @@ namespace ProjectDocumentationManager.Console.Tests.Commands;
 public class ValidateCommandTests
 {
     private ValidateCommand _command = null!;
+    private Spectre.Console.IAnsiConsole _ansiConsole = null!;
     private IMarkdownFileCollectorService _collector = null!;
     private IMarkdownCombinationService _combiner = null!;
     private string _testInputFolder = null!;
@@ -17,9 +18,10 @@ public class ValidateCommandTests
     [SetUp]
     public void Setup()
     {
+        _ansiConsole = Substitute.For<Spectre.Console.IAnsiConsole>();
         _collector = Substitute.For<IMarkdownFileCollectorService>();
         _combiner = Substitute.For<IMarkdownCombinationService>();
-        _command = new ValidateCommand(_collector, _combiner);
+        _command = new ValidateCommand(_ansiConsole, _collector, _combiner);
 
         _testInputFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(_testInputFolder);
