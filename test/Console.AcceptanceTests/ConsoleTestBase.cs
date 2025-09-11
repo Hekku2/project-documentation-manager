@@ -4,96 +4,66 @@ namespace ProjectDocumentationManager.Console.AcceptanceTests;
 
 public abstract class ConsoleTestBase
 {
+    private static readonly SemaphoreSlim _gate = new(1, 1);
     protected const int SuccessExitCode = 0;
     protected const int ErrorExitCode = 1;
     protected static async Task<CommandResult> RunConsoleCommandDirectlyAsync(params string[] args)
     {
-        var originalOut = System.Console.Out;
-        var originalError = System.Console.Error;
-        var originalLogLevel = Environment.GetEnvironmentVariable("Logging__LogLevel__Default");
-
-        var outputBuffer = new StringBuilder();
-        var errorBuffer = new StringBuilder();
-
-        // Create persistent TextWriters that won't be disposed during execution
-        var outputWriter = new PersistentStringWriter(outputBuffer);
-        var errorWriter = new PersistentStringWriter(errorBuffer);
+        await _gate.WaitAsync();
 
         try
         {
-            // Redirect console output
-            System.Console.SetOut(outputWriter);
-            System.Console.SetError(errorWriter);
+            using var process = new System.Diagnostics.Process();
+            var consolePath = Path.Combine(AppContext.BaseDirectory, "Console.dll");
 
-            // Set logging level to capture more output in tests
-            Environment.SetEnvironmentVariable("Logging__LogLevel__Default", "Information");
+            process.StartInfo.FileName = "dotnet";
+            process.StartInfo.Arguments = $"\"{consolePath}\" " + string.Join(" ", args.Select(arg => $"\"{arg}\""));
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.RedirectStandardOutput = true;
+            process.StartInfo.RedirectStandardError = true;
+            process.StartInfo.CreateNoWindow = true;
 
-            // Call the Program.Main method directly
-            var exitCode = await Program.Main(args);
+            var outputBuilder = new StringBuilder();
+            var errorBuilder = new StringBuilder();
 
-            // Give a small delay to ensure all output is captured
-            await Task.Delay(50);
+            process.OutputDataReceived += (_, e) =>
+            {
+                if (e.Data != null)
+                    outputBuilder.AppendLine(e.Data);
+            };
 
-            var output = outputBuffer.ToString();
-            var error = errorBuffer.ToString();
+            process.ErrorDataReceived += (_, e) =>
+            {
+                if (e.Data != null)
+                    errorBuilder.AppendLine(e.Data);
+            };
+
+            process.Start();
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+
+            await process.WaitForExitAsync();
+
+            var output = StripAnsiColorCodes(outputBuilder.ToString());
+            var error = StripAnsiColorCodes(errorBuilder.ToString());
             var combinedOutput = string.IsNullOrEmpty(error) ? output : $"{output}\nERROR: {error}";
 
             return new CommandResult
             {
-                ExitCode = exitCode,
+                ExitCode = process.ExitCode,
                 Output = combinedOutput.Trim()
             };
         }
         finally
         {
-            // Restore original console output first
-            System.Console.SetOut(originalOut);
-            System.Console.SetError(originalError);
-
-            // Restore original log level
-            if (originalLogLevel != null)
-                Environment.SetEnvironmentVariable("Logging__LogLevel__Default", originalLogLevel);
-            else
-                Environment.SetEnvironmentVariable("Logging__LogLevel__Default", null);
+            _gate.Release();
         }
     }
 
-    // Custom StringWriter that doesn't throw when disposed
-    private class PersistentStringWriter : TextWriter
+    private static string StripAnsiColorCodes(string input)
     {
-        private readonly StringBuilder _buffer;
-        private bool _disposed;
-
-        public PersistentStringWriter(StringBuilder buffer)
-        {
-            _buffer = buffer;
-        }
-
-        public override Encoding Encoding => Encoding.UTF8;
-
-        public override void Write(char value)
-        {
-            if (!_disposed)
-                _buffer.Append(value);
-        }
-
-        public override void Write(string? value)
-        {
-            if (!_disposed && value != null)
-                _buffer.Append(value);
-        }
-
-        public override void WriteLine(string? value)
-        {
-            if (!_disposed)
-                _buffer.AppendLine(value);
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            _disposed = true;
-            base.Dispose(disposing);
-        }
+        // Remove ANSI escape sequences (color codes)
+        return System.Text.RegularExpressions.Regex.Replace(input, @"\x1b\[[0-9;]*m", string.Empty);
     }
 
     protected record CommandResult

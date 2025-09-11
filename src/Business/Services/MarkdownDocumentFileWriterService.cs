@@ -65,23 +65,10 @@ public class MarkdownDocumentFileWriterService(ILogger<MarkdownDocumentFileWrite
                 logger.LogError(ex, "IO error writing file: {FilePath}", filePath);
                 throw new IOException($"Failed to write file: {filePath}", ex);
             }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Unexpected error writing file: {FilePath}", filePath);
-                throw;
-            }
         });
 
-        try
-        {
-            await Task.WhenAll(writeTasks);
-            logger.LogInformation("Successfully wrote {DocumentCount} documents to folder: {OutputFolder}",
-                documentList.Count(d => !string.IsNullOrWhiteSpace(d.FileName)), outputFolder);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error occurred while writing documents to folder: {OutputFolder}", outputFolder);
-            throw;
-        }
+        await Task.WhenAll(writeTasks);
+        logger.LogInformation("Successfully wrote {DocumentCount} documents to folder: {OutputFolder}",
+            documentList.Count(d => !string.IsNullOrWhiteSpace(d.FileName)), outputFolder);
     }
 }

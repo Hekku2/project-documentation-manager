@@ -13,6 +13,7 @@ public class CombineCommandTests
     private IMarkdownFileCollectorService _collector = null!;
     private IMarkdownCombinationService _combiner = null!;
     private IMarkdownDocumentFileWriterService _writer = null!;
+    private Spectre.Console.IAnsiConsole _ansiConsole = null!;
     private string _testInputFolder = null!;
     private string _testOutputFolder = null!;
 
@@ -22,7 +23,8 @@ public class CombineCommandTests
         _collector = Substitute.For<IMarkdownFileCollectorService>();
         _combiner = Substitute.For<IMarkdownCombinationService>();
         _writer = Substitute.For<IMarkdownDocumentFileWriterService>();
-        _command = new CombineCommand(_collector, _combiner, _writer);
+        _ansiConsole = Substitute.For<Spectre.Console.IAnsiConsole>();
+        _command = new CombineCommand(_collector, _combiner, _writer, _ansiConsole);
 
         _testInputFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         _testOutputFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());

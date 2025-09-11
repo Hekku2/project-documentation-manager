@@ -9,7 +9,8 @@ namespace ProjectDocumentationManager.Console.Commands;
 public class CombineCommand(
     IMarkdownFileCollectorService collector,
     IMarkdownCombinationService combiner,
-    IMarkdownDocumentFileWriterService writer) : AsyncCommand<CombineCommand.Settings>
+    IMarkdownDocumentFileWriterService writer,
+    IAnsiConsole ansiConsole) : AsyncCommand<CombineCommand.Settings>
 {
     public class Settings : CommandSettings
     {
@@ -28,29 +29,29 @@ public class CombineCommand(
         {
             if (!Directory.Exists(settings.InputFolder))
             {
-                AnsiConsole.MarkupLine($"[red]Error: Input folder '{settings.InputFolder}' does not exist[/]");
+                ansiConsole.MarkupLine($"[red]Error: Input folder '{settings.InputFolder}' does not exist[/]");
                 return CommandConstants.CommandError;
             }
 
-            AnsiConsole.MarkupLine($"[green]Collecting markdown files from:[/] {settings.InputFolder}");
+            ansiConsole.MarkupLine($"[green]Collecting markdown files from:[/] {settings.InputFolder}");
             var (templateFiles, sourceFiles) = await collector.CollectAllMarkdownFilesAsync(settings.InputFolder);
 
             if (!templateFiles.Any())
             {
-                AnsiConsole.MarkupLine("[yellow]Warning: No markdown template files found[/]");
+                ansiConsole.MarkupLine("[yellow]Warning: No markdown template files found[/]");
                 return CommandConstants.CommandError;
             }
 
-            AnsiConsole.MarkupLine($"Found {templateFiles.Count()} template files and {sourceFiles.Count()} source files");
+            ansiConsole.MarkupLine($"Found {templateFiles.Count()} template files and {sourceFiles.Count()} source files");
 
             var validationResult = combiner.Validate(templateFiles, sourceFiles);
 
             if (!validationResult.IsValid)
             {
-                AnsiConsole.MarkupLine("[red]Validation errors found:[/]");
+                ansiConsole.MarkupLine("[red]Validation errors found:[/]");
                 foreach (var error in validationResult.Errors)
                 {
-                    AnsiConsole.MarkupLine($"  [red]- {error.Message}[/]");
+                    ansiConsole.MarkupLine($"  [red]- {error.Message}[/]");
                 }
                 return CommandConstants.CommandError;
             }
@@ -59,14 +60,14 @@ public class CombineCommand(
             Directory.CreateDirectory(settings.OutputFolder);
             await writer.WriteDocumentsToFolderAsync(processedDocuments, settings.OutputFolder);
 
-            AnsiConsole.MarkupLine($"[green]✓ Markdown combination completed![/]");
-            AnsiConsole.MarkupLine($"Output location: [blue]{Path.GetFullPath(settings.OutputFolder)}[/]");
+            ansiConsole.MarkupLine($"[green]✓ Markdown combination completed![/]");
+            ansiConsole.MarkupLine($"Output location: [blue]{Path.GetFullPath(settings.OutputFolder)}[/]");
 
             return CommandConstants.CommandOk;
         }
         catch (Exception ex)
         {
-            AnsiConsole.MarkupLine($"[red]Error: {ex.Message}[/]");
+            ansiConsole.MarkupLine($"[red]Error: {ex.Message}[/]");
             return CommandConstants.CommandError;
         }
     }

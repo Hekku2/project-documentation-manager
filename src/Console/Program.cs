@@ -11,7 +11,7 @@ public static class Program
 {
     public static async Task<int> Main(string[] args)
     {
-        var host = Host.CreateDefaultBuilder(args)
+        var hostBuilder = Host.CreateDefaultBuilder(args)
         .ConfigureServices((context, services) =>
         {
             services.AddTransient<IMarkdownFileCollectorService, MarkdownFileCollectorService>();
@@ -24,10 +24,9 @@ public static class Program
         {
             logging.ClearProviders();
             logging.AddConsole();
-        })
-        .Build();
+        });
 
-        var app = new CommandApp(new TypeRegistrar(host.Services));
+        var app = new CommandApp(new TypeRegistrar(hostBuilder));
 
         app.Configure(config =>
         {
@@ -38,6 +37,8 @@ public static class Program
                 .WithDescription("Validate markdown templates and sources");
         });
 
-        return await app.RunAsync(args);
+
+        var code = await app.RunAsync(args);
+        return code;
     }
 }

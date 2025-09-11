@@ -1,10 +1,11 @@
+using System.Runtime;
+
 namespace ProjectDocumentationManager.Console.AcceptanceTests;
 
 [TestFixture]
 [NonParallelizable]
 public class ValidateCommandAcceptanceTests : ConsoleTestBase
 {
-
     [Test]
     public async Task ValidateCommand_Should_Pass_For_Valid_Templates()
     {
@@ -57,7 +58,16 @@ public class ValidateCommandAcceptanceTests : ConsoleTestBase
         var inputFolder = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "BasicScenario");
         var result = await RunConsoleCommandDirectlyAsync("validate", inputFolder);
 
-        Assert.That(result.ExitCode, Is.EqualTo(SuccessExitCode), "Validation should succeed for basic scenario");
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(SuccessExitCode), "Validation should succeed for basic scenario");
+            var output = result.Output;
+            Assert.That(output, Is.Not.Empty, "Command output should not be empty");
+            Assert.That(output, Does.Contain("Found 1 template files and 1 source files"), "Validation completion message missing");
+            Assert.That(output, Does.Contain("│ Valid files   │ 1     │"), "Validation result summary missing");
+            Assert.That(output, Does.Contain("│ Invalid files │ 0     │"), "Validation result summary missing");
+            Assert.That(output, Does.Contain("│ Total files   │ 1     │"), "Validation result summary missing");
+        });
     }
 
 }

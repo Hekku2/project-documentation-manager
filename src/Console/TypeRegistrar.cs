@@ -1,47 +1,37 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Spectre.Console.Cli;
 
 namespace ProjectDocumentationManager.Console;
 
-public sealed class TypeRegistrar(IServiceProvider serviceProvider) : ITypeRegistrar
+public sealed class TypeRegistrar : ITypeRegistrar
 {
+    private readonly IHostBuilder _builder;
+
+    public TypeRegistrar(IHostBuilder builder)
+    {
+        _builder = builder;
+    }
+
     public ITypeResolver Build()
     {
-        return new TypeResolver(serviceProvider);
+        return new TypeResolver(_builder.Build());
     }
 
     public void Register(Type service, Type implementation)
     {
-        // Not needed since we're using Microsoft.Extensions.DependencyInjection
+        _builder.ConfigureServices((_, services) => services.AddSingleton(service, implementation));
     }
 
     public void RegisterInstance(Type service, object implementation)
     {
-        // Not needed since we're using Microsoft.Extensions.DependencyInjection
+        _builder.ConfigureServices((_, services) => services.AddSingleton(service, implementation));
     }
 
-    public void RegisterLazy(Type service, Func<object> factory)
+    public void RegisterLazy(Type service, Func<object> func)
     {
-        // Not needed since we're using Microsoft.Extensions.DependencyInjection
-    }
-}
+        if (func is null) throw new ArgumentNullException(nameof(func));
 
-public sealed class TypeResolver(IServiceProvider serviceProvider) : ITypeResolver, IDisposable
-{
-    public object? Resolve(Type? type)
-    {
-        if (type == null)
-        {
-            return null;
-        }
-
-        return serviceProvider.GetService(type);
-    }
-
-    public void Dispose()
-    {
-        if (serviceProvider is IDisposable disposable)
-        {
-            disposable.Dispose();
-        }
+        _builder.ConfigureServices((_, services) => services.AddSingleton(service, _ => func()));
     }
 }
