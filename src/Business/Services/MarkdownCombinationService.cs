@@ -350,6 +350,11 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
                 ValidateInsertDirectives(template, sourceDictionary, result);
             }
             var validationResult = result;
+            if (validationResult.IsValid)
+            {
+                combinedResult.ValidFilesCount++;
+                logger.LogDebug("Template {TemplateFileName} is valid", template.FileName);
+            }
 
             // Add template filename context to errors and warnings
             foreach (var error in validationResult.Errors)

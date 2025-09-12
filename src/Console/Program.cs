@@ -14,9 +14,9 @@ public static class Program
         var hostBuilder = Host.CreateDefaultBuilder(args)
         .ConfigureServices((context, services) =>
         {
-            services.AddTransient<IMarkdownFileCollectorService, MarkdownFileCollectorService>();
-            services.AddTransient<IMarkdownCombinationService, MarkdownCombinationService>();
-            services.AddTransient<IMarkdownDocumentFileWriterService, MarkdownDocumentFileWriterService>();
+            services.AddSingleton<IMarkdownFileCollectorService, MarkdownFileCollectorService>();
+            services.AddSingleton<IMarkdownCombinationService, MarkdownCombinationService>();
+            services.AddSingleton<IMarkdownDocumentFileWriterService, MarkdownDocumentFileWriterService>();
             services.AddTransient<CombineCommand>();
             services.AddTransient<ValidateCommand>();
         })

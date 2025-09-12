@@ -80,16 +80,10 @@ public class ValidateCommand(
         table.AddColumn("Status");
         table.AddColumn("Count");
 
-        if (validationResult.IsValid)
-        {
-            table.AddRow("[green]Valid files[/]", totalFiles.ToString());
-            table.AddRow("[red]Invalid files[/]", "0");
-        }
-        else
-        {
-            table.AddRow("[green]Valid files[/]", "0");
-            table.AddRow("[red]Invalid files[/]", totalFiles.ToString());
-        }
+        table.AddRow("[green]Valid files[/]", validationResult.ValidFilesCount.ToString());
+        table.AddRow("[yellow]Files with warnings[/]", validationResult.WarningFilesCount.ToString());
+        table.AddRow("[red]Invalid files[/]", validationResult.InvalidFilesCount.ToString());
+
         table.AddRow("Total files", totalFiles.ToString());
         return table;
     }
