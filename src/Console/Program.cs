@@ -19,8 +19,6 @@ public static class Program
             services.AddSingleton<IMarkdownCombinationService, MarkdownCombinationService>();
             services.AddSingleton<IMarkdownDocumentFileWriterService, MarkdownDocumentFileWriterService>();
             services.AddTransient<IFileSystemService, FileSystemService>();
-            services.AddTransient<CombineCommand>();
-            services.AddTransient<ValidateCommand>();
         })
         .ConfigureLogging(logging =>
         {
