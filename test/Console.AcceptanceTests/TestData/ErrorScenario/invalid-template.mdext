@@ -1,0 +1,7 @@
+# Invalid Template
+
+This template references a non-existent file:
+
+<MarkDownExtension operation="insert" file="nonexistent/file.mdsrc" />
+
+This should cause a validation error.

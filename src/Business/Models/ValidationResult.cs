@@ -1,4 +1,4 @@
-namespace Business.Models;
+namespace ProjectDocumentationManager.Business.Models;
 
 /// <summary>
 /// Represents the result of a validation operation with errors and warnings
@@ -6,18 +6,13 @@ namespace Business.Models;
 public class ValidationResult
 {
     public bool IsValid => !Errors.Any();
+
+    public int ValidFilesCount { get; set; }
+
+    public int InvalidFilesCount => Errors.Select(e => e.SourceFile).Distinct().Count();
+
+    public int WarningFilesCount => Warnings.Select(e => e.SourceFile).Distinct().Count();
+
     public List<ValidationIssue> Errors { get; init; } = new();
     public List<ValidationIssue> Warnings { get; init; } = new();
-}
-
-/// <summary>
-/// Represents a validation issue (error or warning)
-/// </summary>
-public class ValidationIssue
-{
-    public required string Message { get; init; }
-    public string? DirectivePath { get; init; }
-    public string? SourceFile { get; init; }
-    public int? LineNumber { get; init; }
-    public string? SourceContext { get; init; }
 }

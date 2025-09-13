@@ -1,6 +1,6 @@
-using Business.Models;
+using ProjectDocumentationManager.Business.Models;
 
-namespace Business.Services;
+namespace ProjectDocumentationManager.Business.Services;
 
 /// <summary>
 /// Service for building documentation by processing template files with insert directives
