@@ -67,7 +67,7 @@ public class CombineCommandTests
             OutputFolder = _testOutputFolder
         };
 
-        var context = new CommandContext(Substitute.For<IRemainingArguments>(), "combine", null);
+        var context = new CommandContext([], Substitute.For<IRemainingArguments>(), "combine", null);
         var result = await _command.ExecuteAsync(context, settings);
 
         Assert.That(result, Is.EqualTo(1));
@@ -85,7 +85,7 @@ public class CombineCommandTests
             OutputFolder = _testOutputFolder
         };
 
-        var context = new CommandContext(Substitute.For<IRemainingArguments>(), "combine", null);
+        var context = new CommandContext([], Substitute.For<IRemainingArguments>(), "combine", null);
         var result = await _command.ExecuteAsync(context, settings);
 
         Assert.That(result, Is.EqualTo(1));
@@ -119,7 +119,7 @@ public class CombineCommandTests
             OutputFolder = _testOutputFolder
         };
 
-        var context = new CommandContext(Substitute.For<IRemainingArguments>(), "combine", null);
+        var context = new CommandContext([], Substitute.For<IRemainingArguments>(), "combine", null);
         var result = await _command.ExecuteAsync(context, settings);
 
         await Assert.MultipleAsync(async () =>
@@ -157,7 +157,7 @@ public class CombineCommandTests
             OutputFolder = _testOutputFolder
         };
 
-        var context = new CommandContext(Substitute.For<IRemainingArguments>(), "combine", null);
+        var context = new CommandContext([], Substitute.For<IRemainingArguments>(), "combine", null);
         var result = await _command.ExecuteAsync(context, settings);
 
         Assert.Multiple(async () =>
@@ -197,7 +197,7 @@ public class CombineCommandTests
             OutputFolder = _testOutputFolder
         };
 
-        var context = new CommandContext(Substitute.For<IRemainingArguments>(), "combine", null);
+        var context = new CommandContext(["combine"], Substitute.For<IRemainingArguments>(), "combine", null);
         await _command.ExecuteAsync(context, settings);
 
         Assert.That(Directory.Exists(_testOutputFolder), Is.True);

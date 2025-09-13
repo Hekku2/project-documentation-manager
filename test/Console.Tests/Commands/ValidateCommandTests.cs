@@ -53,7 +53,7 @@ public class ValidateCommandTests
             InputFolder = "/nonexistent/folder"
         };
 
-        var context = new CommandContext(Substitute.For<IRemainingArguments>(), "validate", null);
+        var context = new CommandContext([], Substitute.For<IRemainingArguments>(), "validate", null);
         var result = await _command.ExecuteAsync(context, settings);
 
         Assert.That(result, Is.EqualTo(1));
@@ -70,7 +70,7 @@ public class ValidateCommandTests
             InputFolder = _testInputFolder
         };
 
-        var context = new CommandContext(Substitute.For<IRemainingArguments>(), "validate", null);
+        var context = new CommandContext([], Substitute.For<IRemainingArguments>(), "validate", null);
         var result = await _command.ExecuteAsync(context, settings);
 
         Assert.That(result, Is.EqualTo(0));
@@ -99,7 +99,7 @@ public class ValidateCommandTests
             InputFolder = _testInputFolder
         };
 
-        var context = new CommandContext(Substitute.For<IRemainingArguments>(), "validate", null);
+        var context = new CommandContext([], Substitute.For<IRemainingArguments>(), "validate", null);
         var result = await _command.ExecuteAsync(context, settings);
 
         Assert.That(result, Is.EqualTo(0));
@@ -131,7 +131,7 @@ public class ValidateCommandTests
             InputFolder = _testInputFolder
         };
 
-        var context = new CommandContext(Substitute.For<IRemainingArguments>(), "validate", null);
+        var context = new CommandContext([], Substitute.For<IRemainingArguments>(), "validate", null);
         var result = await _command.ExecuteAsync(context, settings);
 
         Assert.That(result, Is.EqualTo(1));
@@ -166,7 +166,7 @@ public class ValidateCommandTests
             InputFolder = _testInputFolder
         };
 
-        var context = new CommandContext(Substitute.For<IRemainingArguments>(), "validate", null);
+        var context = new CommandContext([], Substitute.For<IRemainingArguments>(), "validate", null);
         var result = await _command.ExecuteAsync(context, settings);
 
         Assert.That(result, Is.EqualTo(1));
@@ -194,7 +194,7 @@ public class ValidateCommandTests
             InputFolder = _testInputFolder
         };
 
-        var context = new CommandContext(Substitute.For<IRemainingArguments>(), "validate", null);
+        var context = new CommandContext([], Substitute.For<IRemainingArguments>(), "validate", null);
         await _command.ExecuteAsync(context, settings);
 
         await Assert.MultipleAsync(async () =>
