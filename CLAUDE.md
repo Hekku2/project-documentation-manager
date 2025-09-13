@@ -9,10 +9,14 @@ This is a C# console application for managing project documentation through mark
 ## Technology Stack
 
 - **.NET 9.0** with C# and nullable reference types enabled
-- **Spectre.Console 0.47.0** for rich command-line interface and styling
-- **Microsoft.Extensions.Hosting 9.0.0** for dependency injection and configuration
-- **NUnit 4.3.1** for testing framework
+- **Spectre.Console 0.51.1** for rich command-line interface and styling
+- **Spectre.Console.Cli 0.51.1** for command-line parsing and routing
+- **Microsoft.Extensions.Hosting 9.0.9** for dependency injection and configuration
+- **Microsoft.Extensions.Logging 9.0.9** with console provider for structured logging
+- **NUnit 4.4.0** for testing framework
 - **NSubstitute 5.3.0** for mocking in tests
+- **Microsoft.NET.Test.Sdk 17.14.1** for test execution
+- **coverlet.collector 6.0.4** for code coverage analysis
 - Console application with global tool packaging support
 
 ## Project Structure
@@ -95,6 +99,7 @@ The console application uses **Spectre.Console.Cli** for command-line interface:
 - Commands inherit from Spectre.Console.Cli base classes with proper argument/option handling
 - `TypeRegistrar` bridges Microsoft.Extensions.DependencyInjection with Spectre.Console DI
 - Commands: `CombineCommand` (processes templates) and `ValidateCommand` (validates templates)
+- **File System Abstraction**: `IFileSystemService` abstracts file system operations from commands for better testability
 
 ### Business Logic Architecture
 The `Business` project contains the core markdown processing functionality:
@@ -107,7 +112,8 @@ The `Business` project contains the core markdown processing functionality:
 ### Dependency Injection & Configuration
 The application uses Microsoft.Extensions.Hosting for DI container:
 - Services registered in `Program.CreateDefaultBuilder()` configuration
-- Business services registered as transient dependencies
+- Business services registered as singleton dependencies
+- Console services (`IFileSystemService`) registered as transient dependencies
 - Commands registered as transient for Spectre.Console.Cli integration
 - Logging configured with console provider for development feedback
 
@@ -124,6 +130,7 @@ The application uses Microsoft.Extensions.Hosting for DI container:
 - Use `Assert.Multiple()` for grouping related assertions in test methods
 - Mock data structures use modern C# collection expressions and required properties
 - Tests verify both service behavior and data transformation logic
+- **File System Testing**: Command tests use mocked `IFileSystemService` while service implementation tests use real file system operations
 
 ### Acceptance Testing
 - End-to-end tests using real file system operations with test data
@@ -160,6 +167,7 @@ The application uses Microsoft.Extensions.Hosting for DI container:
 - Commands use strongly-typed settings classes with attributes for arguments/options
 - Built-in help generation and error handling with styled console output
 - Support for input/output directory specification and validation
+- **File System Operations**: Commands delegate file system operations to `IFileSystemService` for better testability and separation of concerns
 
 ### Global Tool Packaging
 - `PackAsTool=true` and `ToolCommandName=project-docs` enable global tool installation
@@ -217,6 +225,13 @@ Source files contain reusable markdown content that can be included in templates
 - Path resolution for source file includes relative to template file location
 - Validation of template syntax and source file references
 - Output generation maintains directory structure from input
+
+### File System Service Architecture
+The Console project includes a dedicated file system service abstraction:
+- **`IFileSystemService`**: Interface defining directory operations (`DirectoryExists`, `EnsureDirectoryExists`, `GetFullPath`)
+- **`FileSystemService`**: Implementation wrapping standard .NET file system operations
+- **Purpose**: Enables command testing without real file system dependencies, improves separation of concerns
+- **Testing Strategy**: Commands use mocked service, while service implementation is tested with real file operations
 
 ## important-instruction-reminders
 Do what has been asked; nothing more, nothing less.
