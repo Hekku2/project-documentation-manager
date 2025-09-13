@@ -45,13 +45,13 @@ public class MarkdownCombinationServiceTests
     public void BuildDocumentation_WithTemplateWithoutInserts_ReturnsUnchangedTemplate()
     {
         // Arrange
-        var templateDocuments = new List<MarkdownDocument>
+        var documents = new List<MarkdownDocument>
         {
             new() { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\nThis is regular content without inserts." }
         };
 
         // Act
-        var result = _service.BuildDocumentation(templateDocuments).ToList();
+        var result = _service.BuildDocumentation(documents).ToList();
 
         // Assert
         Assert.That(result, Has.Count.EqualTo(1));
@@ -66,14 +66,14 @@ public class MarkdownCombinationServiceTests
     public void BuildDocumentation_WithBasicInsert_ReplacesInsertDirective()
     {
         // Arrange
-        var templateDocuments = new List<MarkdownDocument>
+        var documents = new List<MarkdownDocument>
         {
             new() { FileName = "windows-features.mdext", FilePath = "/test/windows-features.mdext", Content = " * windows feature\n <MarkDownExtension operation=\"insert\" file=\"common-features.mdsrc\" />" },
             new() { FileName = "common-features.mdsrc", FilePath = "/test/common-features.mdsrc", Content = " * common feature" }
         };
 
         // Act
-        var result = _service.BuildDocumentation(templateDocuments).ToList();
+        var result = _service.BuildDocumentation(documents).ToList();
 
         // Assert
         Assert.That(result, Has.Count.EqualTo(1));
@@ -88,19 +88,16 @@ public class MarkdownCombinationServiceTests
     public void BuildDocumentation_WithMultipleInserts_ReplacesAllDirectives()
     {
         // Arrange
-        var templateDocuments = new List<MarkdownDocument>
+        var documents = new List<MarkdownDocument>
         {
-            new() { FileName = "combined.mdext", FilePath = "/test/combined.mdext", Content = "# Features\n\n<MarkDownExtension operation=\"insert\" file=\"intro.mdsrc\" />\n\n<MarkDownExtension operation=\"insert\" file=\"details.mdsrc\" />\n\n<MarkDownExtension operation=\"insert\" file=\"conclusion.mdsrc\" />" }
-        };
-        var sourceDocuments = new List<MarkdownDocument>
-        {
+            new() { FileName = "combined.mdext", FilePath = "/test/combined.mdext", Content = "# Features\n\n<MarkDownExtension operation=\"insert\" file=\"intro.mdsrc\" />\n\n<MarkDownExtension operation=\"insert\" file=\"details.mdsrc\" />\n\n<MarkDownExtension operation=\"insert\" file=\"conclusion.mdsrc\" />" },
             new() { FileName = "intro.mdsrc", FilePath = "/test/intro.mdsrc", Content = "This is the introduction." },
             new() { FileName = "details.mdsrc", FilePath = "/test/details.mdsrc", Content = "Here are the details." },
             new() { FileName = "conclusion.mdsrc", FilePath = "/test/conclusion.mdsrc", Content = "This is the conclusion." }
         };
 
         // Act
-        var result = _service.BuildDocumentation(templateDocuments.Concat(sourceDocuments)).ToList();
+        var result = _service.BuildDocumentation(documents).ToList();
 
         // Assert
         Assert.That(result, Has.Count.EqualTo(1));
@@ -115,18 +112,15 @@ public class MarkdownCombinationServiceTests
     public void BuildDocumentation_WithMultipleTemplates_ProcessesAllTemplates()
     {
         // Arrange
-        var templateDocuments = new List<MarkdownDocument>
+        var documents = new List<MarkdownDocument>
         {
             new() { FileName = "windows-features.mdext", FilePath = "/test/windows-features.mdext", Content = " * windows feature\n <MarkDownExtension operation=\"insert\" file=\"common-features.mdsrc\" />" },
-            new() { FileName = "ubuntu-features.mdext", FilePath = "/test/ubuntu-features.mdext", Content = " * linux feature\n <MarkDownExtension operation=\"insert\" file=\"common-features.mdsrc\" />" }
-        };
-        var sourceDocuments = new List<MarkdownDocument>
-        {
+            new() { FileName = "ubuntu-features.mdext", FilePath = "/test/ubuntu-features.mdext", Content = " * linux feature\n <MarkDownExtension operation=\"insert\" file=\"common-features.mdsrc\" />" },
             new() { FileName = "common-features.mdsrc", FilePath = "/test/common-features.mdsrc", Content = " * common feature" }
         };
 
         // Act
-        var result = _service.BuildDocumentation(templateDocuments.Concat(sourceDocuments)).ToList();
+        var result = _service.BuildDocumentation(documents).ToList();
 
         // Assert
         Assert.That(result, Has.Count.EqualTo(2));
@@ -142,14 +136,13 @@ public class MarkdownCombinationServiceTests
     public void BuildDocumentation_WithMissingSourceDocument_ReplacesWithComment()
     {
         // Arrange
-        var templateDocuments = new List<MarkdownDocument>
+        var documents = new List<MarkdownDocument>
         {
             new() { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"missing-file.mdsrc\" />\n\nEnd." }
         };
-        var sourceDocuments = new List<MarkdownDocument>();
 
         // Act
-        var result = _service.BuildDocumentation(templateDocuments.Concat(sourceDocuments)).ToList();
+        var result = _service.BuildDocumentation(documents).ToList();
 
         // Assert
         Assert.That(result, Has.Count.EqualTo(1));
@@ -161,18 +154,15 @@ public class MarkdownCombinationServiceTests
     public void BuildDocumentation_WithNestedInserts_ProcessesRecursively()
     {
         // Arrange
-        var templateDocuments = new List<MarkdownDocument>
+        var documents = new List<MarkdownDocument>
         {
-            new() { FileName = "main.mdext", FilePath = "/test/main.mdext", Content = "# Main\n\n<MarkDownExtension operation=\"insert\" file=\"level1.mdsrc\" />" }
-        };
-        var sourceDocuments = new List<MarkdownDocument>
-        {
+            new() { FileName = "main.mdext", FilePath = "/test/main.mdext", Content = "# Main\n\n<MarkDownExtension operation=\"insert\" file=\"level1.mdsrc\" />" },
             new() { FileName = "level1.mdsrc", FilePath = "/test/level1.mdsrc", Content = "## Level 1\n\n<MarkDownExtension operation=\"insert\" file=\"level2.mdsrc\" />" },
             new() { FileName = "level2.mdsrc", FilePath = "/test/level2.mdsrc", Content = "### Level 2 Content" }
         };
 
         // Act
-        var result = _service.BuildDocumentation(templateDocuments.Concat(sourceDocuments)).ToList();
+        var result = _service.BuildDocumentation(documents).ToList();
 
         // Assert
         Assert.That(result, Has.Count.EqualTo(1));
@@ -187,17 +177,14 @@ public class MarkdownCombinationServiceTests
     public void BuildDocumentation_WithCaseInsensitiveFilenames_MatchesCorrectly()
     {
         // Arrange
-        var templateDocuments = new List<MarkdownDocument>
+        var documents = new List<MarkdownDocument>
         {
-            new() { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "<MarkDownExtension operation=\"insert\" file=\"COMMON-FEATURES.MDSRC\" />" }
-        };
-        var sourceDocuments = new List<MarkdownDocument>
-        {
+            new() { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "<MarkDownExtension operation=\"insert\" file=\"COMMON-FEATURES.MDSRC\" />" },
             new() { FileName = "common-features.mdsrc", FilePath = "/test/common-features.mdsrc", Content = "Common content" }
         };
 
         // Act
-        var result = _service.BuildDocumentation(templateDocuments.Concat(sourceDocuments)).ToList();
+        var result = _service.BuildDocumentation(documents).ToList();
 
         // Assert
         Assert.That(result, Has.Count.EqualTo(1));
@@ -208,17 +195,14 @@ public class MarkdownCombinationServiceTests
     public void BuildDocumentation_WithInsertDirectiveWithSpaces_ProcessesCorrectly()
     {
         // Arrange
-        var templateDocuments = new List<MarkdownDocument>
+        var documents = new List<MarkdownDocument>
         {
-            new() { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "Before\n<MarkDownExtension operation=\"insert\" file=\"common-features.mdsrc\" />\nAfter" }
-        };
-        var sourceDocuments = new List<MarkdownDocument>
-        {
+            new() { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "Before\n<MarkDownExtension operation=\"insert\" file=\"common-features.mdsrc\" />\nAfter" },
             new() { FileName = "common-features.mdsrc", FilePath = "/test/common-features.mdsrc", Content = "Inserted content" }
         };
 
         // Act
-        var result = _service.BuildDocumentation(templateDocuments.Concat(sourceDocuments)).ToList();
+        var result = _service.BuildDocumentation(documents).ToList();
 
         // Assert
         Assert.That(result, Has.Count.EqualTo(1));
@@ -229,17 +213,14 @@ public class MarkdownCombinationServiceTests
     public void BuildDocumentation_WithDuplicateInserts_ReplacesAllOccurrences()
     {
         // Arrange
-        var templateDocuments = new List<MarkdownDocument>
+        var documents = new List<MarkdownDocument>
         {
-            new() { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "Start\n<MarkDownExtension operation=\"insert\" file=\"common.mdsrc\" />\nMiddle\n<MarkDownExtension operation=\"insert\" file=\"common.mdsrc\" />\nEnd" }
-        };
-        var sourceDocuments = new List<MarkdownDocument>
-        {
+            new() { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "Start\n<MarkDownExtension operation=\"insert\" file=\"common.mdsrc\" />\nMiddle\n<MarkDownExtension operation=\"insert\" file=\"common.mdsrc\" />\nEnd" },
             new() { FileName = "common.mdsrc", FilePath = "/test/common.mdsrc", Content = "CONTENT" }
         };
 
         // Act
-        var result = _service.BuildDocumentation(templateDocuments.Concat(sourceDocuments)).ToList();
+        var result = _service.BuildDocumentation(documents).ToList();
 
         // Assert
         Assert.That(result, Has.Count.EqualTo(1));
@@ -251,17 +232,14 @@ public class MarkdownCombinationServiceTests
     public void BuildDocumentation_WithEmptySourceContent_InsertsEmptyString()
     {
         // Arrange
-        var templateDocuments = new List<MarkdownDocument>
+        var documents = new List<MarkdownDocument>
         {
-            new() { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "Before <MarkDownExtension operation=\"insert\" file=\"empty.mdsrc\" /> After" }
-        };
-        var sourceDocuments = new List<MarkdownDocument>
-        {
+            new() { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "Before <MarkDownExtension operation=\"insert\" file=\"empty.mdsrc\" /> After" },
             new() { FileName = "empty.mdsrc", FilePath = "/test/empty.mdsrc", Content = "" }
         };
 
         // Act
-        var result = _service.BuildDocumentation(templateDocuments.Concat(sourceDocuments)).ToList();
+        var result = _service.BuildDocumentation(documents).ToList();
 
         // Assert
         Assert.That(result, Has.Count.EqualTo(1));
@@ -276,13 +254,9 @@ public class MarkdownCombinationServiceTests
         var logger = NullLoggerFactory.Instance.CreateLogger<MarkdownCombinationService>();
         var service = new MarkdownCombinationService(logger);
 
-        var templateDocuments = new[]
+        var documents = new[]
         {
-            new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Template\n<MarkDownExtension operation=\"insert\" file=\"source1.mdsrc\" />\n<MarkDownExtension operation=\"insert\" file=\"source2.mdsrc\" />" }
-        };
-
-        var sourceDocuments = new[]
-        {
+            new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Template\n<MarkDownExtension operation=\"insert\" file=\"source1.mdsrc\" />\n<MarkDownExtension operation=\"insert\" file=\"source2.mdsrc\" />" },
             new MarkdownDocument { FileName = "source1.mdsrc", FilePath = "/test/source1.mdsrc", Content = "Source 1 content" },
             new MarkdownDocument { FileName = "source2.mdsrc", FilePath = "/test/source2.mdsrc", Content = "Source 2 content" },
             new MarkdownDocument { FileName = "source3.mdsrc", FilePath = "/test/source3.mdsrc", Content = "Source 3 content" } // This one won't be used
@@ -291,7 +265,7 @@ public class MarkdownCombinationServiceTests
         // Act & Assert - Should not throw any exceptions
         Assert.DoesNotThrow(() =>
         {
-            var result = service.BuildDocumentation(templateDocuments.Concat(sourceDocuments));
+            var result = service.BuildDocumentation(documents);
             var resultList = result.ToList(); // Force enumeration
 
             // Verify the functionality still works correctly
@@ -305,17 +279,15 @@ public class MarkdownCombinationServiceTests
     public void BuildDocumentation_Should_Handle_Empty_Source_Documents_Without_Errors()
     {
         // Arrange
-        var templateDocuments = new[]
+        var documents = new[]
         {
             new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Template with no inserts" }
         };
 
-        var sourceDocuments = new MarkdownDocument[0]; // Empty array
-
         // Act & Assert - Should not throw any exceptions
         Assert.DoesNotThrow(() =>
         {
-            var result = _service.BuildDocumentation(templateDocuments.Concat(sourceDocuments));
+            var result = _service.BuildDocumentation(documents);
             var resultList = result.ToList(); // Force enumeration
 
             // Verify the functionality still works correctly
@@ -328,19 +300,15 @@ public class MarkdownCombinationServiceTests
     public void BuildDocumentation_Should_Change_Mdext_Extension_To_Md()
     {
         // Arrange
-        var templateDocuments = new[]
+        var documents = new[]
         {
             new MarkdownDocument { FileName = "template1.mdext", FilePath = "/test/template1.mdext", Content = "# Template 1" },
-            new MarkdownDocument { FileName = "subfolder/template2.mdext", FilePath = "/test/subfolder/template2.mdext", Content = "# Template 2\n<MarkDownExtension operation=\"insert\" file=\"source.mdsrc\" />" }
-        };
-
-        var sourceDocuments = new[]
-        {
+            new MarkdownDocument { FileName = "subfolder/template2.mdext", FilePath = "/test/subfolder/template2.mdext", Content = "# Template 2\n<MarkDownExtension operation=\"insert\" file=\"source.mdsrc\" />" },
             new MarkdownDocument { FileName = "source.mdsrc", FilePath = "/test/source.mdsrc", Content = "Source content" }
         };
 
         // Act
-        var result = _service.BuildDocumentation(templateDocuments.Concat(sourceDocuments));
+        var result = _service.BuildDocumentation(documents);
         var resultList = result.ToList();
 
         // Assert
@@ -362,15 +330,13 @@ public class MarkdownCombinationServiceTests
     public void BuildDocumentation_Should_Change_Extension_To_Md_Even_On_Processing_Error()
     {
         // Arrange
-        var templateDocuments = new[]
+        var documents = new[]
         {
             new MarkdownDocument { FileName = "error-template.mdext", FilePath = "/test/error-template.mdext", Content = "# Template\n<MarkDownExtension operation=\"insert\" file=\"missing.mdsrc\" />" }
         };
 
-        var sourceDocuments = new MarkdownDocument[0]; // Empty - will cause missing source
-
         // Act
-        var result = _service.BuildDocumentation(templateDocuments.Concat(sourceDocuments));
+        var result = _service.BuildDocumentation(documents);
         var resultList = result.ToList();
 
         // Assert
@@ -388,11 +354,13 @@ public class MarkdownCombinationServiceTests
     public void Validate_WithMissingSourceFile_ReturnsErrorResult()
     {
         // Arrange
-        var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"missing.mdsrc\" />" };
-        var sourceDocuments = new List<MarkdownDocument>();
+        var documents = new List<MarkdownDocument>
+        {
+            new() { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"missing.mdsrc\" />" }
+        };
 
         // Act
-        var result = _service.Validate(new[] { templateDocument }.Concat(sourceDocuments));
+        var result = _service.Validate(documents);
 
         // Assert
         Assert.Multiple(() =>
@@ -411,11 +379,13 @@ public class MarkdownCombinationServiceTests
     public void Validate_WithEmptyFilename_ReturnsErrorResult()
     {
         // Arrange
-        var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"\" />" };
-        var sourceDocuments = new List<MarkdownDocument>();
+        var documents = new List<MarkdownDocument>
+        {
+            new() { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"\" />" }
+        };
 
         // Act
-        var result = _service.Validate(new[] { templateDocument }.Concat(sourceDocuments));
+        var result = _service.Validate(documents);
 
         // Assert
         Assert.Multiple(() =>
@@ -435,11 +405,13 @@ public class MarkdownCombinationServiceTests
         // Arrange - Use one or more invalid filename characters for the current platform
         var invalidChars = new string(Path.GetInvalidFileNameChars().Where(c => c != Path.DirectorySeparatorChar).Take(2).ToArray());
         var invalidFileName = $"invalid{invalidChars}file.mdsrc";
-        var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = $"# Title\n\n<MarkDownExtension operation=\"insert\" file=\"{invalidFileName}\" />" };
-        var sourceDocuments = new List<MarkdownDocument>();
+        var documents = new List<MarkdownDocument>
+        {
+            new() { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = $"# Title\n\n<MarkDownExtension operation=\"insert\" file=\"{invalidFileName}\" />" }
+        };
 
         // Act
-        var result = _service.Validate(new[] { templateDocument }.Concat(sourceDocuments));
+        var result = _service.Validate(documents);
 
         // Assert
         Assert.Multiple(() =>
@@ -457,20 +429,20 @@ public class MarkdownCombinationServiceTests
     public void Validate_WithDuplicateDirectives_ReturnsWarningResult()
     {
         // Arrange
-        var templateDocument = new MarkdownDocument
+        var documents = new List<MarkdownDocument>
         {
-            FileName = "template.mdext",
-            FilePath = "/test/template.mdext",
-            Content =
-                "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"common.mdsrc\" />\n\nSome content\n\n<MarkDownExtension operation=\"insert\" file=\"common.mdsrc\" />"
-        };
-        var sourceDocuments = new List<MarkdownDocument>
-        {
+            new()
+            {
+                FileName = "template.mdext",
+                FilePath = "/test/template.mdext",
+                Content =
+                    "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"common.mdsrc\" />\n\nSome content\n\n<MarkDownExtension operation=\"insert\" file=\"common.mdsrc\" />"
+            },
             new() { FileName = "common.mdsrc", FilePath = "/test/common.mdsrc", Content = "Common content" }
         };
 
         // Act
-        var result = _service.Validate(new[] { templateDocument }.Concat(sourceDocuments));
+        var result = _service.Validate(documents);
 
         // Assert
         Assert.Multiple(() =>
@@ -488,20 +460,20 @@ public class MarkdownCombinationServiceTests
     public void Validate_WithMultipleDirectivesOnSameLine_ValidatesEach()
     {
         // Arrange
-        var templateDocument = new MarkdownDocument
+        var documents = new List<MarkdownDocument>
         {
-            FileName = "template.mdext",
-            FilePath = "/test/template.mdext",
-            Content =
-                "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"valid.mdsrc\" /> and <MarkDownExtension operation=\"insert\" file=\"missing.mdsrc\" />"
-        };
-        var sourceDocuments = new List<MarkdownDocument>
-        {
+            new()
+            {
+                FileName = "template.mdext",
+                FilePath = "/test/template.mdext",
+                Content =
+                    "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"valid.mdsrc\" /> and <MarkDownExtension operation=\"insert\" file=\"missing.mdsrc\" />"
+            },
             new() { FileName = "valid.mdsrc", FilePath = "/test/valid.mdsrc", Content = "Valid content" }
         };
 
         // Act
-        var result = _service.Validate(new[] { templateDocument }.Concat(sourceDocuments));
+        var result = _service.Validate(documents);
 
         // Assert
         Assert.Multiple(() =>
@@ -519,15 +491,15 @@ public class MarkdownCombinationServiceTests
     public void Validate_WithCircularReference_ReturnsWarningResult()
     {
         // Arrange
-        var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"circular1.mdsrc\" />" };
-        var sourceDocuments = new List<MarkdownDocument>
+        var documents = new List<MarkdownDocument>
         {
+            new() { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"circular1.mdsrc\" />" },
             new() { FileName = "circular1.mdsrc", FilePath = "/test/circular1.mdsrc", Content = "Content <MarkDownExtension operation=\"insert\" file=\"circular2.mdsrc\" />" },
             new() { FileName = "circular2.mdsrc", FilePath = "/test/circular2.mdsrc", Content = "Content <MarkDownExtension operation=\"insert\" file=\"circular1.mdsrc\" />" }
         };
 
         // Act
-        var result = _service.Validate(new[] { templateDocument }.Concat(sourceDocuments));
+        var result = _service.Validate(documents);
 
         // Assert
         Assert.Multiple(() =>
@@ -544,14 +516,14 @@ public class MarkdownCombinationServiceTests
     public void Validate_WithMissingOperationAttribute_ReturnsErrorResult()
     {
         // Arrange
-        var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension file=\"common/common.mdsrc\" />" };
-        var sourceDocuments = new List<MarkdownDocument>
+        var documents = new List<MarkdownDocument>
         {
+            new() { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension file=\"common/common.mdsrc\" />" },
             new() { FileName = "common/common.mdsrc", FilePath = "/test/common/common.mdsrc", Content = "Common content" }
         };
 
         // Act
-        var result = _service.Validate(new[] { templateDocument }.Concat(sourceDocuments));
+        var result = _service.Validate(documents);
 
         // Assert
         Assert.Multiple(() =>
@@ -569,11 +541,13 @@ public class MarkdownCombinationServiceTests
     public void Validate_WithMissingFileAttribute_ReturnsErrorResult()
     {
         // Arrange
-        var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" />" };
-        var sourceDocuments = new List<MarkdownDocument>();
+        var documents = new List<MarkdownDocument>
+        {
+            new() { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" />" }
+        };
 
         // Act
-        var result = _service.Validate(new[] { templateDocument }.Concat(sourceDocuments));
+        var result = _service.Validate(documents);
 
         // Assert
         Assert.Multiple(() =>
@@ -591,11 +565,13 @@ public class MarkdownCombinationServiceTests
     public void Validate_WithInvalidOperationValue_ReturnsErrorResult()
     {
         // Arrange
-        var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"no-operation-like this\" />" };
-        var sourceDocuments = new List<MarkdownDocument>();
+        var documents = new List<MarkdownDocument>
+        {
+            new() { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"no-operation-like this\" />" }
+        };
 
         // Act
-        var result = _service.Validate(new[] { templateDocument }.Concat(sourceDocuments));
+        var result = _service.Validate(documents);
 
         // Assert
         Assert.Multiple(() =>
@@ -613,11 +589,13 @@ public class MarkdownCombinationServiceTests
     public void Validate_WithAllErrorCasesFromBasicErrors_ReturnsAppropriateErrors()
     {
         // Arrange - This matches the content from example-projects/errors/basic-errors.mdext
-        var templateDocument = new MarkdownDocument
+        var documents = new List<MarkdownDocument>
         {
-            FileName = "basic-errors.mdext",
-            FilePath = "/test/basic-errors.mdext",
-            Content = @"# Error showcase
+            new()
+            {
+                FileName = "basic-errors.mdext",
+                FilePath = "/test/basic-errors.mdext",
+                Content = @"# Error showcase
 
 This file is meant to be used as a testcase for showing errors
 
@@ -632,14 +610,12 @@ Missing file attribute
 
 Missing file
 <MarkDownExtension operation=""insert"" file=""im-not-found.mdsrc"" />"
-        };
-        var sourceDocuments = new List<MarkdownDocument>
-        {
+            },
             new() { FileName = "common/common.mdsrc", FilePath = "/test/common/common.mdsrc", Content = "Common content" }
         };
 
         // Act
-        var result = _service.Validate(new[] { templateDocument }.Concat(sourceDocuments));
+        var result = _service.Validate(documents);
 
         // Assert
         Assert.Multiple(() =>
@@ -667,14 +643,14 @@ Missing file
     public void Validate_WithMixedValidAndInvalidDirectives_ReturnsAppropriateResults()
     {
         // Arrange
-        var templateDocument = new MarkdownDocument { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"valid.mdsrc\" />\n<MarkDownExtension operation=\"insert\" file=\"missing.mdsrc\" />\n<MarkDownExtension operation=\"insert\" file=\"valid.mdsrc\" />\n<MarkDownExtension operation=\"insert\" file=\"\" />" };
-        var sourceDocuments = new List<MarkdownDocument>
+        var documents = new List<MarkdownDocument>
         {
+            new() { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\n<MarkDownExtension operation=\"insert\" file=\"valid.mdsrc\" />\n<MarkDownExtension operation=\"insert\" file=\"missing.mdsrc\" />\n<MarkDownExtension operation=\"insert\" file=\"valid.mdsrc\" />\n<MarkDownExtension operation=\"insert\" file=\"\" />" },
             new() { FileName = "valid.mdsrc", FilePath = "/test/valid.mdsrc", Content = "Valid content" }
         };
 
         // Act
-        var result = _service.Validate(new[] { templateDocument }.Concat(sourceDocuments));
+        var result = _service.Validate(documents);
 
         // Assert
         Assert.Multiple(() =>
@@ -724,19 +700,16 @@ Missing file
     public void Validate_WithValidTemplateDocuments_ReturnsValidResult()
     {
         // Arrange
-        var templateDocuments = new List<MarkdownDocument>
+        var documents = new List<MarkdownDocument>
         {
             new() { FileName = "template1.mdext", FilePath = "/test/template1.mdext", Content = "# Template 1\n<MarkDownExtension operation=\"insert\" file=\"source1.mdsrc\" />" },
-            new() { FileName = "template2.mdext", FilePath = "/test/template2.mdext", Content = "# Template 2\n<MarkDownExtension operation=\"insert\" file=\"source2.mdsrc\" />" }
-        };
-        var sourceDocuments = new List<MarkdownDocument>
-        {
+            new() { FileName = "template2.mdext", FilePath = "/test/template2.mdext", Content = "# Template 2\n<MarkDownExtension operation=\"insert\" file=\"source2.mdsrc\" />" },
             new() { FileName = "source1.mdsrc", FilePath = "/test/source1.mdsrc", Content = "Content 1" },
             new() { FileName = "source2.mdsrc", FilePath = "/test/source2.mdsrc", Content = "Content 2" }
         };
 
         // Act
-        var result = _service.Validate(templateDocuments.Concat(sourceDocuments));
+        var result = _service.Validate(documents);
 
         // Assert
         Assert.Multiple(() =>
@@ -751,18 +724,15 @@ Missing file
     public void Validate_WithErrorsInMultipleTemplates_CombinesAllErrors()
     {
         // Arrange
-        var templateDocuments = new List<MarkdownDocument>
+        var documents = new List<MarkdownDocument>
         {
             new() { FileName = "template1.mdext", FilePath = "/test/template1.mdext", Content = "# Template 1\n<MarkDownExtension operation=\"insert\" file=\"missing1.mdsrc\" />" },
-            new() { FileName = "template2.mdext", FilePath = "/test/template2.mdext", Content = "# Template 2\n<MarkDownExtension operation=\"insert\" file=\"missing2.mdsrc\" />" }
-        };
-        var sourceDocuments = new List<MarkdownDocument>
-        {
+            new() { FileName = "template2.mdext", FilePath = "/test/template2.mdext", Content = "# Template 2\n<MarkDownExtension operation=\"insert\" file=\"missing2.mdsrc\" />" },
             new() { FileName = "available.mdsrc", FilePath = "/test/available.mdsrc", Content = "Available content" }
         };
 
         // Act
-        var result = _service.Validate(templateDocuments.Concat(sourceDocuments));
+        var result = _service.Validate(documents);
 
         // Assert
         Assert.Multiple(() =>
@@ -779,18 +749,15 @@ Missing file
     public void Validate_WithMixedValidAndInvalidTemplates_ReturnsOnlyErrors()
     {
         // Arrange
-        var templateDocuments = new List<MarkdownDocument>
+        var documents = new List<MarkdownDocument>
         {
             new() { FileName = "valid.mdext", FilePath = "/test/valid.mdext", Content = "# Valid Template\n<MarkDownExtension operation=\"insert\" file=\"source1.mdsrc\" />" },
-            new() { FileName = "invalid.mdext", FilePath = "/test/invalid.mdext", Content = "# Invalid Template\n<MarkDownExtension operation=\"insert\" file=\"missing.mdsrc\" />" }
-        };
-        var sourceDocuments = new List<MarkdownDocument>
-        {
+            new() { FileName = "invalid.mdext", FilePath = "/test/invalid.mdext", Content = "# Invalid Template\n<MarkDownExtension operation=\"insert\" file=\"missing.mdsrc\" />" },
             new() { FileName = "source1.mdsrc", FilePath = "/test/source1.mdsrc", Content = "Available content" }
         };
 
         // Act
-        var result = _service.Validate(templateDocuments.Concat(sourceDocuments));
+        var result = _service.Validate(documents);
 
         // Assert
         Assert.Multiple(() =>
@@ -806,19 +773,16 @@ Missing file
     public void Validate_WithWarningsInMultipleTemplates_CombinesAllWarnings()
     {
         // Arrange
-        var templateDocuments = new List<MarkdownDocument>
+        var documents = new List<MarkdownDocument>
         {
             new() { FileName = "template1.mdext", FilePath = "/test/template1.mdext", Content = "# Template 1\n<MarkDownExtension operation=\"insert\" file=\"source1.mdsrc\" />\n<MarkDownExtension operation=\"insert\" file=\"source1.mdsrc\" />" },
-            new() { FileName = "template2.mdext", FilePath = "/test/template2.mdext", Content = "# Template 2\n<MarkDownExtension operation=\"insert\" file=\"source2.mdsrc\" />\n<MarkDownExtension operation=\"insert\" file=\"source2.mdsrc\" />" }
-        };
-        var sourceDocuments = new List<MarkdownDocument>
-        {
+            new() { FileName = "template2.mdext", FilePath = "/test/template2.mdext", Content = "# Template 2\n<MarkDownExtension operation=\"insert\" file=\"source2.mdsrc\" />\n<MarkDownExtension operation=\"insert\" file=\"source2.mdsrc\" />" },
             new() { FileName = "source1.mdsrc", FilePath = "/test/source1.mdsrc", Content = "Content 1" },
             new() { FileName = "source2.mdsrc", FilePath = "/test/source2.mdsrc", Content = "Content 2" }
         };
 
         // Act
-        var result = _service.Validate(templateDocuments.Concat(sourceDocuments));
+        var result = _service.Validate(documents);
 
         // Assert
         Assert.Multiple(() =>
