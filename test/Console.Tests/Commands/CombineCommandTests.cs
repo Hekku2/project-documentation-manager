@@ -103,10 +103,10 @@ public class CombineCommandTests
         _collector.CollectAllMarkdownFilesAsync(_testInputFolder)
             .Returns(Task.FromResult((templateFiles.AsEnumerable(), sourceFiles.AsEnumerable())));
 
-        _combiner.BuildDocumentation(templateFiles, sourceFiles)
+        _combiner.BuildDocumentation(Arg.Any<IEnumerable<MarkdownDocument>>())
             .Returns(processedFiles);
 
-        _combiner.Validate(templateFiles, sourceFiles)
+        _combiner.Validate(Arg.Any<IEnumerable<MarkdownDocument>>())
             .Returns(validResult);
 
         var settings = new CombineCommand.Settings
@@ -146,7 +146,7 @@ public class CombineCommandTests
         _collector.CollectAllMarkdownFilesAsync(_testInputFolder)
             .Returns(Task.FromResult((templateFiles.AsEnumerable(), sourceFiles.AsEnumerable())));
 
-        _combiner.Validate(templateFiles, sourceFiles)
+        _combiner.Validate(Arg.Any<IEnumerable<MarkdownDocument>>())
             .Returns(invalidResult);
 
         var settings = new CombineCommand.Settings
@@ -184,10 +184,10 @@ public class CombineCommandTests
         _collector.CollectAllMarkdownFilesAsync(_testInputFolder)
             .Returns(Task.FromResult((templateFiles.AsEnumerable(), sourceFiles.AsEnumerable())));
 
-        _combiner.BuildDocumentation(templateFiles, sourceFiles)
+        _combiner.BuildDocumentation(Arg.Any<IEnumerable<MarkdownDocument>>())
             .Returns(processedFiles);
 
-        _combiner.Validate(templateFiles, sourceFiles)
+        _combiner.Validate(Arg.Any<IEnumerable<MarkdownDocument>>())
             .Returns(validResult);
 
         var settings = new CombineCommand.Settings

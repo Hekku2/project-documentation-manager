@@ -12,16 +12,15 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
     private static readonly Regex InsertDirectiveRegex = new(@"<MarkDownExtension\s+operation=""insert""\s+file=""([^""]*)""\s*/>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     private static readonly Regex AnyMarkdownExtensionRegex = new(@"<MarkDownExtension[^>]*>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-    public IEnumerable<MarkdownDocument> BuildDocumentation(
-        IEnumerable<MarkdownDocument> templateDocuments,
-        IEnumerable<MarkdownDocument> sourceDocuments)
+    public IEnumerable<MarkdownDocument> BuildDocumentation(IEnumerable<MarkdownDocument> documents)
     {
-        if (templateDocuments == null)
-            throw new ArgumentNullException(nameof(templateDocuments));
+        if (documents == null)
+            throw new ArgumentNullException(nameof(documents));
 
-        if (sourceDocuments == null)
-            throw new ArgumentNullException(nameof(sourceDocuments));
-
+        var documentList = documents.ToList();
+        var templateDocuments = documentList.Where(doc => doc.FileName.EndsWith(".mdext", StringComparison.OrdinalIgnoreCase));
+        var sourceDocuments = documentList.Where(doc => doc.FileName.EndsWith(".mdsrc", StringComparison.OrdinalIgnoreCase));
+        
         var templateList = templateDocuments.ToList();
         var sourceDictionary = sourceDocuments.ToDictionary(
             doc => doc.FileName,
@@ -321,14 +320,15 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
         }
     }
 
-    public ValidationResult Validate(IEnumerable<MarkdownDocument> templateDocuments, IEnumerable<MarkdownDocument> sourceDocuments)
+    public ValidationResult Validate(IEnumerable<MarkdownDocument> documents)
     {
-        if (templateDocuments == null)
-            throw new ArgumentNullException(nameof(templateDocuments));
+        if (documents == null)
+            throw new ArgumentNullException(nameof(documents));
 
-        if (sourceDocuments == null)
-            throw new ArgumentNullException(nameof(sourceDocuments));
-
+        var documentList = documents.ToList();
+        var templateDocuments = documentList.Where(doc => doc.FileName.EndsWith(".mdext", StringComparison.OrdinalIgnoreCase));
+        var sourceDocuments = documentList.Where(doc => doc.FileName.EndsWith(".mdsrc", StringComparison.OrdinalIgnoreCase));
+        
         var templateList = templateDocuments.ToList();
         var sourceList = sourceDocuments.ToList();
         var combinedResult = new ValidationResult();

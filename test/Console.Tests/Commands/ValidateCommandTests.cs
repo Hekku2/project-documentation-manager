@@ -90,7 +90,7 @@ public class ValidateCommandTests
         _collector.CollectAllMarkdownFilesAsync(_testInputFolder)
             .Returns(Task.FromResult((templateFiles.AsEnumerable(), sourceFiles.AsEnumerable())));
 
-        _combiner.Validate(templateFiles, sourceFiles)
+        _combiner.Validate(Arg.Any<IEnumerable<MarkdownDocument>>())
             .Returns(validResult);
 
         var settings = new ValidateCommand.Settings
@@ -123,7 +123,7 @@ public class ValidateCommandTests
         _collector.CollectAllMarkdownFilesAsync(_testInputFolder)
             .Returns(Task.FromResult((templateFiles.AsEnumerable(), sourceFiles.AsEnumerable())));
 
-        _combiner.Validate(templateFiles, sourceFiles)
+        _combiner.Validate(Arg.Any<IEnumerable<MarkdownDocument>>())
             .Returns(invalidResult);
 
         var settings = new ValidateCommand.Settings
@@ -159,7 +159,7 @@ public class ValidateCommandTests
         _collector.CollectAllMarkdownFilesAsync(_testInputFolder)
             .Returns(Task.FromResult((templateFiles.AsEnumerable(), sourceFiles.AsEnumerable())));
 
-        _combiner.Validate(templateFiles, sourceFiles)
+        _combiner.Validate(Arg.Any<IEnumerable<MarkdownDocument>>())
             .Returns(invalidResult);
 
         var settings = new ValidateCommand.Settings
@@ -188,7 +188,7 @@ public class ValidateCommandTests
         _collector.CollectAllMarkdownFilesAsync(_testInputFolder)
             .Returns(Task.FromResult((templateFiles.AsEnumerable(), sourceFiles.AsEnumerable())));
 
-        _combiner.Validate(templateFiles, sourceFiles)
+        _combiner.Validate(Arg.Any<IEnumerable<MarkdownDocument>>())
             .Returns(validResult);
 
         var settings = new ValidateCommand.Settings
@@ -202,7 +202,7 @@ public class ValidateCommandTests
         await Assert.MultipleAsync(async () =>
         {
             await _collector.Received(1).CollectAllMarkdownFilesAsync(_testInputFolder);
-            _combiner.Received(1).Validate(templateFiles, sourceFiles);
+            _combiner.Received(1).Validate(Arg.Any<IEnumerable<MarkdownDocument>>());
         });
     }
 }

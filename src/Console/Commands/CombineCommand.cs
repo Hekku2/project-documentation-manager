@@ -46,7 +46,8 @@ public class CombineCommand(
 
             ansiConsole.MarkupLine($"Found {templateFiles.Count()} template files and {sourceFiles.Count()} source files");
 
-            var validationResult = combiner.Validate(templateFiles, sourceFiles);
+            var allDocuments = templateFiles.Concat(sourceFiles);
+            var validationResult = combiner.Validate(allDocuments);
 
             if (!validationResult.IsValid)
             {
@@ -58,7 +59,7 @@ public class CombineCommand(
                 return CommandConstants.CommandError;
             }
 
-            var processedDocuments = combiner.BuildDocumentation(templateFiles, sourceFiles);
+            var processedDocuments = combiner.BuildDocumentation(allDocuments);
             fileSystemService.EnsureDirectoryExists(settings.OutputFolder);
             await writer.WriteDocumentsToFolderAsync(processedDocuments, settings.OutputFolder);
 

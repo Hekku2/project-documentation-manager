@@ -42,7 +42,8 @@ public class ValidateCommand(
 
             ansiConsole.MarkupLine($"Found {templateFiles.Count()} template files and {sourceFiles.Count()} source files");
 
-            var validationResult = combiner.Validate(templateFiles, sourceFiles);
+            var allDocuments = templateFiles.Concat(sourceFiles);
+            var validationResult = combiner.Validate(allDocuments);
             var totalFiles = templateFiles.Count();
 
             var table = CreateSummaryTable(validationResult, totalFiles);
