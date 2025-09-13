@@ -2,6 +2,7 @@ using NSubstitute;
 using ProjectDocumentationManager.Business.Models;
 using ProjectDocumentationManager.Business.Services;
 using ProjectDocumentationManager.Console.Commands;
+using ProjectDocumentationManager.Console.Services;
 using Spectre.Console.Cli;
 
 namespace ProjectDocumentationManager.Console.Tests.Commands;
@@ -14,6 +15,7 @@ public class CombineCommandTests
     private IMarkdownCombinationService _combiner = null!;
     private IMarkdownDocumentFileWriterService _writer = null!;
     private Spectre.Console.IAnsiConsole _ansiConsole = null!;
+    private IFileSystemService _fileSystemService = null!;
     private string _testInputFolder = null!;
     private string _testOutputFolder = null!;
 
@@ -24,22 +26,11 @@ public class CombineCommandTests
         _combiner = Substitute.For<IMarkdownCombinationService>();
         _writer = Substitute.For<IMarkdownDocumentFileWriterService>();
         _ansiConsole = Substitute.For<Spectre.Console.IAnsiConsole>();
-        _command = new CombineCommand(_collector, _combiner, _writer, _ansiConsole);
+        _fileSystemService = Substitute.For<IFileSystemService>();
+        _command = new CombineCommand(_collector, _combiner, _writer, _ansiConsole, _fileSystemService);
 
-        _testInputFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-        _testOutputFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-
-        Directory.CreateDirectory(_testInputFolder);
-    }
-
-    [TearDown]
-    public void TearDown()
-    {
-        if (Directory.Exists(_testInputFolder))
-            Directory.Delete(_testInputFolder, true);
-
-        if (Directory.Exists(_testOutputFolder))
-            Directory.Delete(_testOutputFolder, true);
+        _testInputFolder = "/test/input/folder";
+        _testOutputFolder = "/test/output/folder";
     }
 
     [Test]
@@ -67,6 +58,8 @@ public class CombineCommandTests
             OutputFolder = _testOutputFolder
         };
 
+        _fileSystemService.DirectoryExists("/nonexistent/folder").Returns(false);
+
         var context = new CommandContext([], Substitute.For<IRemainingArguments>(), "combine", null);
         var result = await _command.ExecuteAsync(context, settings);
 
@@ -76,6 +69,7 @@ public class CombineCommandTests
     [Test]
     public async Task ExecuteAsync_Should_Return_Error_When_No_Files_Found()
     {
+        _fileSystemService.DirectoryExists(_testInputFolder).Returns(true);
         _collector.CollectAllMarkdownFilesAsync(_testInputFolder)
             .Returns(Task.FromResult((Enumerable.Empty<MarkdownDocument>(), Enumerable.Empty<MarkdownDocument>())));
 
@@ -104,6 +98,8 @@ public class CombineCommandTests
 
         var validResult = new ValidationResult();
 
+        _fileSystemService.DirectoryExists(_testInputFolder).Returns(true);
+        _fileSystemService.GetFullPath(_testOutputFolder).Returns("/full/path/to/output");
         _collector.CollectAllMarkdownFilesAsync(_testInputFolder)
             .Returns(Task.FromResult((templateFiles.AsEnumerable(), sourceFiles.AsEnumerable())));
 
@@ -125,6 +121,7 @@ public class CombineCommandTests
         await Assert.MultipleAsync(async () =>
         {
             Assert.That(result, Is.EqualTo(0));
+            _fileSystemService.Received(1).EnsureDirectoryExists(_testOutputFolder);
             await _writer.Received(1).WriteDocumentsToFolderAsync(
                 Arg.Any<IEnumerable<MarkdownDocument>>(),
                 _testOutputFolder);
@@ -145,6 +142,7 @@ public class CombineCommandTests
             Errors = [new ValidationIssue { Message = "Test error", SourceFile = "invalid.mdext", LineNumber = 1 }]
         };
 
+        _fileSystemService.DirectoryExists(_testInputFolder).Returns(true);
         _collector.CollectAllMarkdownFilesAsync(_testInputFolder)
             .Returns(Task.FromResult((templateFiles.AsEnumerable(), sourceFiles.AsEnumerable())));
 
@@ -160,7 +158,7 @@ public class CombineCommandTests
         var context = new CommandContext([], Substitute.For<IRemainingArguments>(), "combine", null);
         var result = await _command.ExecuteAsync(context, settings);
 
-        Assert.Multiple(async () =>
+        await Assert.MultipleAsync(async () =>
         {
             Assert.That(result, Is.EqualTo(1)); // Command fails with validation errors
             await _writer.DidNotReceive().WriteDocumentsToFolderAsync(
@@ -182,6 +180,7 @@ public class CombineCommandTests
 
         var validResult = new ValidationResult();
 
+        _fileSystemService.DirectoryExists(_testInputFolder).Returns(true);
         _collector.CollectAllMarkdownFilesAsync(_testInputFolder)
             .Returns(Task.FromResult((templateFiles.AsEnumerable(), sourceFiles.AsEnumerable())));
 
@@ -200,6 +199,6 @@ public class CombineCommandTests
         var context = new CommandContext(["combine"], Substitute.For<IRemainingArguments>(), "combine", null);
         await _command.ExecuteAsync(context, settings);
 
-        Assert.That(Directory.Exists(_testOutputFolder), Is.True);
+        _fileSystemService.Received(1).EnsureDirectoryExists(_testOutputFolder);
     }
 }

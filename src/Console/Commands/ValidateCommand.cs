@@ -3,13 +3,15 @@ using System.Diagnostics.CodeAnalysis;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using ProjectDocumentationManager.Business.Services;
+using ProjectDocumentationManager.Console.Services;
 
 namespace ProjectDocumentationManager.Console.Commands;
 
 public class ValidateCommand(
     IAnsiConsole ansiConsole,
     IMarkdownFileCollectorService collector,
-    IMarkdownCombinationService combiner) : AsyncCommand<ValidateCommand.Settings>
+    IMarkdownCombinationService combiner,
+    IFileSystemService fileSystemService) : AsyncCommand<ValidateCommand.Settings>
 {
     public class Settings : CommandSettings
     {
@@ -23,7 +25,7 @@ public class ValidateCommand(
         try
         {
 
-            if (!Directory.Exists(settings.InputFolder))
+            if (!fileSystemService.DirectoryExists(settings.InputFolder))
             {
                 ansiConsole.MarkupLine($"[red]Error: Input folder '{settings.InputFolder}' does not exist[/]");
                 return CommandConstants.CommandError;

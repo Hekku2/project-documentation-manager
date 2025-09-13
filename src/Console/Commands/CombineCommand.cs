@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using ProjectDocumentationManager.Business.Services;
+using ProjectDocumentationManager.Console.Services;
 
 namespace ProjectDocumentationManager.Console.Commands;
 
@@ -10,7 +11,8 @@ public class CombineCommand(
     IMarkdownFileCollectorService collector,
     IMarkdownCombinationService combiner,
     IMarkdownDocumentFileWriterService writer,
-    IAnsiConsole ansiConsole) : AsyncCommand<CombineCommand.Settings>
+    IAnsiConsole ansiConsole,
+    IFileSystemService fileSystemService) : AsyncCommand<CombineCommand.Settings>
 {
     public class Settings : CommandSettings
     {
@@ -27,7 +29,7 @@ public class CombineCommand(
     {
         try
         {
-            if (!Directory.Exists(settings.InputFolder))
+            if (!fileSystemService.DirectoryExists(settings.InputFolder))
             {
                 ansiConsole.MarkupLine($"[red]Error: Input folder '{settings.InputFolder}' does not exist[/]");
                 return CommandConstants.CommandError;
@@ -57,11 +59,11 @@ public class CombineCommand(
             }
 
             var processedDocuments = combiner.BuildDocumentation(templateFiles, sourceFiles);
-            Directory.CreateDirectory(settings.OutputFolder);
+            fileSystemService.EnsureDirectoryExists(settings.OutputFolder);
             await writer.WriteDocumentsToFolderAsync(processedDocuments, settings.OutputFolder);
 
             ansiConsole.MarkupLine($"[green]✓ Markdown combination completed![/]");
-            ansiConsole.MarkupLine($"Output location: [blue]{Path.GetFullPath(settings.OutputFolder)}[/]");
+            ansiConsole.MarkupLine($"Output location: [blue]{fileSystemService.GetFullPath(settings.OutputFolder)}[/]");
 
             return CommandConstants.CommandOk;
         }

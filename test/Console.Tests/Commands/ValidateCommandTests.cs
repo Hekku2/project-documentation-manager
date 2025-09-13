@@ -2,6 +2,7 @@ using NSubstitute;
 using ProjectDocumentationManager.Business.Models;
 using ProjectDocumentationManager.Business.Services;
 using ProjectDocumentationManager.Console.Commands;
+using ProjectDocumentationManager.Console.Services;
 using Spectre.Console.Cli;
 
 namespace ProjectDocumentationManager.Console.Tests.Commands;
@@ -13,6 +14,7 @@ public class ValidateCommandTests
     private Spectre.Console.IAnsiConsole _ansiConsole = null!;
     private IMarkdownFileCollectorService _collector = null!;
     private IMarkdownCombinationService _combiner = null!;
+    private IFileSystemService _fileSystemService = null!;
     private string _testInputFolder = null!;
 
     [SetUp]
@@ -21,17 +23,10 @@ public class ValidateCommandTests
         _ansiConsole = Substitute.For<Spectre.Console.IAnsiConsole>();
         _collector = Substitute.For<IMarkdownFileCollectorService>();
         _combiner = Substitute.For<IMarkdownCombinationService>();
-        _command = new ValidateCommand(_ansiConsole, _collector, _combiner);
+        _fileSystemService = Substitute.For<IFileSystemService>();
+        _command = new ValidateCommand(_ansiConsole, _collector, _combiner, _fileSystemService);
 
-        _testInputFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-        Directory.CreateDirectory(_testInputFolder);
-    }
-
-    [TearDown]
-    public void TearDown()
-    {
-        if (Directory.Exists(_testInputFolder))
-            Directory.Delete(_testInputFolder, true);
+        _testInputFolder = "/test/input/folder";
     }
 
     [Test]
@@ -53,6 +48,8 @@ public class ValidateCommandTests
             InputFolder = "/nonexistent/folder"
         };
 
+        _fileSystemService.DirectoryExists("/nonexistent/folder").Returns(false);
+
         var context = new CommandContext([], Substitute.For<IRemainingArguments>(), "validate", null);
         var result = await _command.ExecuteAsync(context, settings);
 
@@ -62,6 +59,7 @@ public class ValidateCommandTests
     [Test]
     public async Task ExecuteAsync_Should_Return_Success_When_No_Files_Found()
     {
+        _fileSystemService.DirectoryExists(_testInputFolder).Returns(true);
         _collector.CollectAllMarkdownFilesAsync(_testInputFolder)
             .Returns(Task.FromResult((Enumerable.Empty<MarkdownDocument>(), Enumerable.Empty<MarkdownDocument>())));
 
@@ -88,6 +86,7 @@ public class ValidateCommandTests
 
         var validResult = new ValidationResult();
 
+        _fileSystemService.DirectoryExists(_testInputFolder).Returns(true);
         _collector.CollectAllMarkdownFilesAsync(_testInputFolder)
             .Returns(Task.FromResult((templateFiles.AsEnumerable(), sourceFiles.AsEnumerable())));
 
@@ -120,6 +119,7 @@ public class ValidateCommandTests
             Errors = [new ValidationIssue { Message = "Validation error", SourceFile = "invalid.mdext", LineNumber = 1 }]
         };
 
+        _fileSystemService.DirectoryExists(_testInputFolder).Returns(true);
         _collector.CollectAllMarkdownFilesAsync(_testInputFolder)
             .Returns(Task.FromResult((templateFiles.AsEnumerable(), sourceFiles.AsEnumerable())));
 
@@ -155,6 +155,7 @@ public class ValidateCommandTests
             ]
         };
 
+        _fileSystemService.DirectoryExists(_testInputFolder).Returns(true);
         _collector.CollectAllMarkdownFilesAsync(_testInputFolder)
             .Returns(Task.FromResult((templateFiles.AsEnumerable(), sourceFiles.AsEnumerable())));
 
@@ -183,6 +184,7 @@ public class ValidateCommandTests
 
         var validResult = new ValidationResult();
 
+        _fileSystemService.DirectoryExists(_testInputFolder).Returns(true);
         _collector.CollectAllMarkdownFilesAsync(_testInputFolder)
             .Returns(Task.FromResult((templateFiles.AsEnumerable(), sourceFiles.AsEnumerable())));
 

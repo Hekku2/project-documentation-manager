@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Spectre.Console.Cli;
 using ProjectDocumentationManager.Business.Services;
 using ProjectDocumentationManager.Console.Commands;
+using ProjectDocumentationManager.Console.Services;
 
 namespace ProjectDocumentationManager.Console;
 
@@ -17,6 +18,7 @@ public static class Program
             services.AddSingleton<IMarkdownFileCollectorService, MarkdownFileCollectorService>();
             services.AddSingleton<IMarkdownCombinationService, MarkdownCombinationService>();
             services.AddSingleton<IMarkdownDocumentFileWriterService, MarkdownDocumentFileWriterService>();
+            services.AddTransient<IFileSystemService, FileSystemService>();
             services.AddTransient<CombineCommand>();
             services.AddTransient<ValidateCommand>();
         })
