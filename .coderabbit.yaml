@@ -26,7 +26,10 @@ reviews:
   auto_assign_reviewers: false
   poem: false
   labeling_instructions: []
-  path_filters: []
+  path_filters:
+      - '!**/bin/**'
+      - '!**/obj/**'
+      - '!**/.git/**'
   path_instructions:
     - path: "*.cs"
       instructions: "Use C# 12 version."
@@ -44,9 +47,9 @@ reviews:
     ignore_usernames: []
   finishing_touches:
     docstrings:
-      enabled: true
+      enabled: false
     unit_tests:
-      enabled: true
+      enabled: false
   pre_merge_checks:
     docstrings:
       mode: warning
@@ -68,12 +71,12 @@ reviews:
     shellcheck:
       enabled: true
     ruff:
-      enabled: true
+      enabled: false
     markdownlint:
       enabled: true
     github-checks:
       enabled: true
-      timeout_ms: 90000
+      timeout_ms: 240000
     languagetool:
       enabled: true
       enabled_rules: []
@@ -85,18 +88,18 @@ reviews:
     biome:
       enabled: true
     hadolint:
-      enabled: true
+      enabled: false
     swiftlint:
-      enabled: true
+      enabled: false
     phpstan:
-      enabled: true
+      enabled: false
       level: default
     phpmd:
-      enabled: true
+      enabled: false
     phpcs:
-      enabled: true
+      enabled: false
     golangci-lint:
-      enabled: true
+      enabled: false
     yamllint:
       enabled: true
     gitleaks:
@@ -104,13 +107,13 @@ reviews:
     checkov:
       enabled: true
     detekt:
-      enabled: true
+      enabled: false
     eslint:
-      enabled: true
+      enabled: false
     flake8:
-      enabled: true
+      enabled: false
     rubocop:
-      enabled: true
+      enabled: false
     buf:
       enabled: true
     regal:
@@ -118,35 +121,35 @@ reviews:
     actionlint:
       enabled: true
     pmd:
-      enabled: true
+      enabled: false
     cppcheck:
-      enabled: true
+      enabled: false
     semgrep:
       enabled: true
     circleci:
       enabled: true
     clippy:
-      enabled: true
+      enabled: false
     sqlfluff:
-      enabled: true
+      enabled: false
     prismaLint:
-      enabled: true
+      enabled: false
     pylint:
-      enabled: true
+      enabled: false
     oxc:
-      enabled: true
+      enabled: false
     shopifyThemeCheck:
-      enabled: true
+      enabled: false
     luacheck:
       enabled: true
     brakeman:
-      enabled: true
+      enabled: false
     dotenvLint:
       enabled: true
     htmlhint:
-      enabled: true
+      enabled: false
     checkmake:
-      enabled: true
+      enabled: false
     osvScanner:
       enabled: true
 chat:
