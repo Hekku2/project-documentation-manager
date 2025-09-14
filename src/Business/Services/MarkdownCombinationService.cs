@@ -19,16 +19,16 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
 
         var documentList = documents.ToList();
         var templateDocuments = documentList.Where(doc => doc.FileName.EndsWith(".mdext", StringComparison.OrdinalIgnoreCase));
-        var sourceDocuments = documentList.Where(doc => 
+        var sourceDocuments = documentList.Where(doc =>
             doc.FileName.EndsWith(".mdsrc", StringComparison.OrdinalIgnoreCase) ||
             doc.FileName.EndsWith(".md", StringComparison.OrdinalIgnoreCase) ||
             doc.FileName.EndsWith(".mdext", StringComparison.OrdinalIgnoreCase));
-        
+
         var templateList = templateDocuments.ToList();
         var sourceDictionary = sourceDocuments.ToDictionary(
-            doc => doc.FileName,
-            doc => doc.Content,
-            StringComparer.OrdinalIgnoreCase);
+            doc => NormalizePathKey(doc.FileName),
+             doc => doc.Content,
+             StringComparer.OrdinalIgnoreCase);
 
         logger.LogInformation("Building documentation for {TemplateCount} templates using {SourceCount} source documents",
             templateList.Count, sourceDictionary.Count);
@@ -113,10 +113,11 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
                 if (processedDirectives.Contains(fullDirective))
                     continue;
 
-                if (sourceDictionary.TryGetValue(fileName, out var sourceContent))
+                var normalizedFileName = NormalizePathKey(fileName);
+                if (sourceDictionary.TryGetValue(normalizedFileName, out var sourceContent))
                 {
                     logger.LogDebug("Inserting content from {SourceFileName} into {TemplateFileName}",
-                        fileName, templateFileName);
+                        normalizedFileName, templateFileName);
 
                     processedContent = processedContent.Replace(fullDirective, sourceContent ?? string.Empty);
                     processedDirectives.Add(fullDirective);
@@ -125,10 +126,10 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
                 else
                 {
                     logger.LogWarning("Source document not found for insert directive: {FileName} in template {TemplateFileName}",
-                        fileName, templateFileName);
+                        normalizedFileName, templateFileName);
 
                     // Replace with a comment indicating missing source
-                    var replacementComment = $"<!-- Missing source: {fileName} -->";
+                    var replacementComment = $"<!-- Missing source: {normalizedFileName} -->";
                     processedContent = processedContent.Replace(fullDirective, replacementComment);
                     processedDirectives.Add(fullDirective);
                     anyReplaced = true;
@@ -231,8 +232,10 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
                     continue;
                 }
 
-                // Check for invalid characters in path (allow forward slash for paths)
-                var invalidChars = Path.GetInvalidFileNameChars().Where(c => c != Path.DirectorySeparatorChar).ToArray();
+                // Check for invalid characters in path (allow both separators)
+                var invalidChars = Path.GetInvalidPathChars()
+                                    .Except([Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar])
+                                    .ToArray();
                 if (fileName.IndexOfAny(invalidChars) >= 0)
                 {
                     result.Errors.Add(new ValidationIssue
@@ -330,11 +333,11 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
 
         var documentList = documents.ToList();
         var templateDocuments = documentList.Where(doc => doc.FileName.EndsWith(".mdext", StringComparison.OrdinalIgnoreCase));
-        var sourceDocuments = documentList.Where(doc => 
+        var sourceDocuments = documentList.Where(doc =>
             doc.FileName.EndsWith(".mdsrc", StringComparison.OrdinalIgnoreCase) ||
             doc.FileName.EndsWith(".md", StringComparison.OrdinalIgnoreCase) ||
             doc.FileName.EndsWith(".mdext", StringComparison.OrdinalIgnoreCase));
-        
+
         var templateList = templateDocuments.ToList();
         var sourceList = sourceDocuments.ToList();
         var combinedResult = new ValidationResult();
@@ -393,4 +396,7 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
 
         return combinedResult;
     }
+
+    private static string NormalizePathKey(string path) =>
+        path.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
 }
