@@ -30,8 +30,6 @@ public class MarkdownFileCollectorServiceTests
         }
     }
 
-
-
     [Test]
     public async Task CollectAllMarkdownFilesAsync_Should_Collect_All_Types()
     {
@@ -49,7 +47,7 @@ public class MarkdownFileCollectorServiceTests
         var filesList = allFiles.ToList();
 
         // Assert
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(filesList, Has.Count.EqualTo(3), "Should collect all 3 markdown files");
 
@@ -71,13 +69,23 @@ public class MarkdownFileCollectorServiceTests
             Assert.That(template.Content, Does.Contain("Template"), "Template should have correct content");
             Assert.That(source.Content, Is.EqualTo("Source content"), "Source should have correct content");
             Assert.That(markdown.Content, Is.EqualTo("Regular markdown"), "Markdown should have correct content");
-        });
+        }
     }
 
+    [Test]
+    public async Task CollectAllMarkdownFilesAsync_Should_Recurse_And_Be_CaseInsensitive()
+    {
+        var subDir = Path.Combine(_testDirectory, "Sub");
+        Directory.CreateDirectory(subDir);
+        var upperMd = Path.Combine(subDir, "UPPER.MD");
+        await File.WriteAllTextAsync(upperMd, "Upper");
 
+        var files = (await _service.CollectAllMarkdownFilesAsync(_testDirectory)).ToList();
 
-
-
-
-
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(files.Any(f => f.FileName == Path.Combine("Sub", "UPPER.MD")), Is.True);
+            Assert.That(files.Count(f => f.FileName.EndsWith(".md", StringComparison.OrdinalIgnoreCase)), Is.GreaterThanOrEqualTo(1));
+        }
+    }
 }

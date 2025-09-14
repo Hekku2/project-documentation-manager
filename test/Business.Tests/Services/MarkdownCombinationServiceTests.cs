@@ -677,7 +677,6 @@ Missing file
         Assert.Throws<ArgumentNullException>(() => _service.Validate(null!));
     }
 
-
     [Test]
     public void Validate_WithEmptyDocuments_ReturnsValidResult()
     {
@@ -815,10 +814,10 @@ Missing file
         using (Assert.EnterMultipleScope())
         {
             Assert.That(result, Has.Count.EqualTo(2), "Should process main template and section3.mdext template");
-            
+
             var mainResult = result.First(r => r.FileName == "main.md");
             var section3Result = result.First(r => r.FileName == "section3.md");
-            
+
             var processedContent = mainResult.Content;
             Assert.That(processedContent, Does.Contain("# Main Document"), "Should contain main document header");
             Assert.That(processedContent, Does.Contain("## Section 1"), "Should contain .md file content");
@@ -831,7 +830,7 @@ Missing file
             Assert.That(processedContent, Does.Contain("Nested content from another .md file"), "Should include nested .md file content");
             Assert.That(processedContent, Does.Contain("## End"), "Should contain final content from main template");
             Assert.That(processedContent, Does.Not.Contain("<MarkDownExtension"), "Should not contain any unprocessed directives");
-            
+
             // Verify that section3.mdext was also processed as a template
             Assert.That(section3Result.Content, Does.Contain("## Section 3"), "Section3 template should be processed");
             Assert.That(section3Result.Content, Does.Contain("### Subsection"), "Section3 template should contain nested content");
