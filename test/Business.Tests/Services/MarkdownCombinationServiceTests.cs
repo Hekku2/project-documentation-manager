@@ -795,5 +795,48 @@ Missing file
         });
     }
 
+    [Test]
+    public void BuildDocumentation_WithMdAndMdextFilesAsInsertSources_ProcessesAllFileTypesCorrectly()
+    {
+        // Arrange - This test verifies that .md, .mdsrc, and .mdext files are all supported as insert sources
+        var documents = new List<MarkdownDocument>
+        {
+            new() { FileName = "main.mdext", FilePath = "/test/main.mdext", Content = "# Main Document\n\n<MarkDownExtension operation=\"insert\" file=\"section1.md\" />\n\n<MarkDownExtension operation=\"insert\" file=\"section2.mdsrc\" />\n\n<MarkDownExtension operation=\"insert\" file=\"section3.mdext\" />\n\n## End" },
+            new() { FileName = "section1.md", FilePath = "/test/section1.md", Content = "## Section 1\nThis content comes from a .md file." },
+            new() { FileName = "section2.mdsrc", FilePath = "/test/section2.mdsrc", Content = "## Section 2\nThis content comes from a .mdsrc file." },
+            new() { FileName = "section3.mdext", FilePath = "/test/section3.mdext", Content = "## Section 3\nThis content comes from a .mdext file.\n\n<MarkDownExtension operation=\"insert\" file=\"subsection.md\" />" },
+            new() { FileName = "subsection.md", FilePath = "/test/subsection.md", Content = "### Subsection\nNested content from another .md file." }
+        };
+
+        // Act
+        var result = _service.BuildDocumentation(documents).ToList();
+
+        // Assert - All file types (.md, .mdsrc, .mdext) are treated as valid source files for inserts
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result, Has.Count.EqualTo(2), "Should process main template and section3.mdext template");
+            
+            var mainResult = result.First(r => r.FileName == "main.md");
+            var section3Result = result.First(r => r.FileName == "section3.md");
+            
+            var processedContent = mainResult.Content;
+            Assert.That(processedContent, Does.Contain("# Main Document"), "Should contain main document header");
+            Assert.That(processedContent, Does.Contain("## Section 1"), "Should contain .md file content");
+            Assert.That(processedContent, Does.Contain("This content comes from a .md file"), "Should include .md file content");
+            Assert.That(processedContent, Does.Contain("## Section 2"), "Should contain .mdsrc content");
+            Assert.That(processedContent, Does.Contain("This content comes from a .mdsrc file"), "Should include .mdsrc file content");
+            Assert.That(processedContent, Does.Contain("## Section 3"), "Should contain .mdext content");
+            Assert.That(processedContent, Does.Contain("This content comes from a .mdext file"), "Should include .mdext file content");
+            Assert.That(processedContent, Does.Contain("### Subsection"), "Should contain nested content from .mdext source");
+            Assert.That(processedContent, Does.Contain("Nested content from another .md file"), "Should include nested .md file content");
+            Assert.That(processedContent, Does.Contain("## End"), "Should contain final content from main template");
+            Assert.That(processedContent, Does.Not.Contain("<MarkDownExtension"), "Should not contain any unprocessed directives");
+            
+            // Verify that section3.mdext was also processed as a template
+            Assert.That(section3Result.Content, Does.Contain("## Section 3"), "Section3 template should be processed");
+            Assert.That(section3Result.Content, Does.Contain("### Subsection"), "Section3 template should contain nested content");
+        }
+    }
+
     #endregion
 }
