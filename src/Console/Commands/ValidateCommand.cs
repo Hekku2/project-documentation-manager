@@ -32,7 +32,11 @@ public class ValidateCommand(
             }
 
             ansiConsole.MarkupLine($"[green]Validating markdown files in:[/] {settings.InputFolder}");
-            var (templateFiles, sourceFiles) = await collector.CollectAllMarkdownFilesAsync(settings.InputFolder);
+            var allDocuments = await collector.CollectAllMarkdownFilesAsync(settings.InputFolder);
+
+            var templateFiles = allDocuments.Where(doc => doc.FileName.EndsWith(".mdext"));
+            var sourceFiles = allDocuments.Where(doc => doc.FileName.EndsWith(".mdsrc"));
+            var markdownFiles = allDocuments.Where(doc => doc.FileName.EndsWith(".md"));
 
             if (!templateFiles.Any())
             {
@@ -40,9 +44,8 @@ public class ValidateCommand(
                 return CommandConstants.CommandOk;
             }
 
-            ansiConsole.MarkupLine($"Found {templateFiles.Count()} template files and {sourceFiles.Count()} source files");
+            ansiConsole.MarkupLine($"Found {templateFiles.Count()} template files, {sourceFiles.Count()} source files, and {markdownFiles.Count()} markdown files");
 
-            var allDocuments = templateFiles.Concat(sourceFiles);
             var validationResult = combiner.Validate(allDocuments);
             var totalFiles = templateFiles.Count();
 

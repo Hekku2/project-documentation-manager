@@ -61,7 +61,7 @@ public class ValidateCommandTests
     {
         _fileSystemService.DirectoryExists(_testInputFolder).Returns(true);
         _collector.CollectAllMarkdownFilesAsync(_testInputFolder)
-            .Returns(Task.FromResult((Enumerable.Empty<MarkdownDocument>(), Enumerable.Empty<MarkdownDocument>())));
+            .Returns(Task.FromResult(Enumerable.Empty<MarkdownDocument>()));
 
         var settings = new ValidateCommand.Settings
         {
@@ -81,14 +81,11 @@ public class ValidateCommandTests
         var templateDoc2 = new MarkdownDocument { FileName = "file2.mdext", Content = "Content 2", FilePath = "file2.mdext" };
         var sourceDoc = new MarkdownDocument { FileName = "source.mdsrc", Content = "Source content", FilePath = "source.mdsrc" };
 
-        var templateFiles = new[] { templateDoc1, templateDoc2 };
-        var sourceFiles = new[] { sourceDoc };
-
         var validResult = new ValidationResult();
 
         _fileSystemService.DirectoryExists(_testInputFolder).Returns(true);
         _collector.CollectAllMarkdownFilesAsync(_testInputFolder)
-            .Returns(Task.FromResult((templateFiles.AsEnumerable(), sourceFiles.AsEnumerable())));
+            .Returns(Task.FromResult((IEnumerable<MarkdownDocument>)[templateDoc1, templateDoc2, sourceDoc]));
 
         _combiner.Validate(Arg.Any<IEnumerable<MarkdownDocument>>())
             .Returns(validResult);
@@ -111,9 +108,6 @@ public class ValidateCommandTests
         var templateDoc2 = new MarkdownDocument { FileName = "invalid.mdext", Content = "Invalid content", FilePath = "invalid.mdext" };
         var sourceDoc = new MarkdownDocument { FileName = "source.mdsrc", Content = "Source content", FilePath = "source.mdsrc" };
 
-        var templateFiles = new[] { templateDoc1, templateDoc2 };
-        var sourceFiles = new[] { sourceDoc };
-
         var invalidResult = new ValidationResult
         {
             Errors = [new ValidationIssue { Message = "Validation error", SourceFile = "invalid.mdext", LineNumber = 1 }]
@@ -121,7 +115,7 @@ public class ValidateCommandTests
 
         _fileSystemService.DirectoryExists(_testInputFolder).Returns(true);
         _collector.CollectAllMarkdownFilesAsync(_testInputFolder)
-            .Returns(Task.FromResult((templateFiles.AsEnumerable(), sourceFiles.AsEnumerable())));
+            .Returns(Task.FromResult((IEnumerable<MarkdownDocument>)[templateDoc1, templateDoc2, sourceDoc]));
 
         _combiner.Validate(Arg.Any<IEnumerable<MarkdownDocument>>())
             .Returns(invalidResult);
@@ -144,9 +138,6 @@ public class ValidateCommandTests
         var templateDoc2 = new MarkdownDocument { FileName = "invalid2.mdext", Content = "Invalid content 2", FilePath = "invalid2.mdext" };
         var sourceDoc = new MarkdownDocument { FileName = "source.mdsrc", Content = "Source content", FilePath = "source.mdsrc" };
 
-        var templateFiles = new[] { templateDoc1, templateDoc2 };
-        var sourceFiles = new[] { sourceDoc };
-
         var invalidResult = new ValidationResult
         {
             Errors = [
@@ -157,7 +148,7 @@ public class ValidateCommandTests
 
         _fileSystemService.DirectoryExists(_testInputFolder).Returns(true);
         _collector.CollectAllMarkdownFilesAsync(_testInputFolder)
-            .Returns(Task.FromResult((templateFiles.AsEnumerable(), sourceFiles.AsEnumerable())));
+            .Returns(Task.FromResult((IEnumerable<MarkdownDocument>)[templateDoc1, templateDoc2, sourceDoc]));
 
         _combiner.Validate(Arg.Any<IEnumerable<MarkdownDocument>>())
             .Returns(invalidResult);
@@ -179,14 +170,11 @@ public class ValidateCommandTests
         var templateDoc = new MarkdownDocument { FileName = "test.mdext", Content = "Test content", FilePath = "test.mdext" };
         var sourceDoc = new MarkdownDocument { FileName = "source.mdsrc", Content = "Source content", FilePath = "source.mdsrc" };
 
-        var templateFiles = new[] { templateDoc };
-        var sourceFiles = new[] { sourceDoc };
-
         var validResult = new ValidationResult();
 
         _fileSystemService.DirectoryExists(_testInputFolder).Returns(true);
         _collector.CollectAllMarkdownFilesAsync(_testInputFolder)
-            .Returns(Task.FromResult((templateFiles.AsEnumerable(), sourceFiles.AsEnumerable())));
+            .Returns(Task.FromResult((IEnumerable<MarkdownDocument>)[templateDoc, sourceDoc]));
 
         _combiner.Validate(Arg.Any<IEnumerable<MarkdownDocument>>())
             .Returns(validResult);

@@ -71,7 +71,7 @@ public class CombineCommandTests
     {
         _fileSystemService.DirectoryExists(_testInputFolder).Returns(true);
         _collector.CollectAllMarkdownFilesAsync(_testInputFolder)
-            .Returns(Task.FromResult((Enumerable.Empty<MarkdownDocument>(), Enumerable.Empty<MarkdownDocument>())));
+            .Returns(Task.FromResult(Enumerable.Empty<MarkdownDocument>()));
 
         var settings = new CombineCommand.Settings
         {
@@ -92,8 +92,6 @@ public class CombineCommandTests
         var sourceDoc = new MarkdownDocument { FileName = "source.mdsrc", Content = "Source content", FilePath = "source.mdsrc" };
         var processedDoc = new MarkdownDocument { FileName = "test.md", Content = "Processed content", FilePath = "test.md" };
 
-        var templateFiles = new[] { templateDoc };
-        var sourceFiles = new[] { sourceDoc };
         var processedFiles = new[] { processedDoc };
 
         var validResult = new ValidationResult();
@@ -101,7 +99,7 @@ public class CombineCommandTests
         _fileSystemService.DirectoryExists(_testInputFolder).Returns(true);
         _fileSystemService.GetFullPath(_testOutputFolder).Returns("/full/path/to/output");
         _collector.CollectAllMarkdownFilesAsync(_testInputFolder)
-            .Returns(Task.FromResult((templateFiles.AsEnumerable(), sourceFiles.AsEnumerable())));
+            .Returns(Task.FromResult((IEnumerable<MarkdownDocument>)[templateDoc, sourceDoc]));
 
         _combiner.BuildDocumentation(Arg.Any<IEnumerable<MarkdownDocument>>())
             .Returns(processedFiles);
@@ -134,9 +132,6 @@ public class CombineCommandTests
         var templateDoc = new MarkdownDocument { FileName = "invalid.mdext", Content = "Invalid content", FilePath = "invalid.mdext" };
         var sourceDoc = new MarkdownDocument { FileName = "source.mdsrc", Content = "Source content", FilePath = "source.mdsrc" };
 
-        var templateFiles = new[] { templateDoc };
-        var sourceFiles = new[] { sourceDoc };
-
         var invalidResult = new ValidationResult
         {
             Errors = [new ValidationIssue { Message = "Test error", SourceFile = "invalid.mdext", LineNumber = 1 }]
@@ -144,7 +139,7 @@ public class CombineCommandTests
 
         _fileSystemService.DirectoryExists(_testInputFolder).Returns(true);
         _collector.CollectAllMarkdownFilesAsync(_testInputFolder)
-            .Returns(Task.FromResult((templateFiles.AsEnumerable(), sourceFiles.AsEnumerable())));
+            .Returns(Task.FromResult((IEnumerable<MarkdownDocument>)[templateDoc, sourceDoc]));
 
         _combiner.Validate(Arg.Any<IEnumerable<MarkdownDocument>>())
             .Returns(invalidResult);
@@ -174,15 +169,13 @@ public class CombineCommandTests
         var sourceDoc = new MarkdownDocument { FileName = "source.mdsrc", Content = "Source content", FilePath = "source.mdsrc" };
         var processedDoc = new MarkdownDocument { FileName = "test.md", Content = "Processed content", FilePath = "test.md" };
 
-        var templateFiles = new[] { templateDoc };
-        var sourceFiles = new[] { sourceDoc };
         var processedFiles = new[] { processedDoc };
 
         var validResult = new ValidationResult();
 
         _fileSystemService.DirectoryExists(_testInputFolder).Returns(true);
         _collector.CollectAllMarkdownFilesAsync(_testInputFolder)
-            .Returns(Task.FromResult((templateFiles.AsEnumerable(), sourceFiles.AsEnumerable())));
+            .Returns(Task.FromResult((IEnumerable<MarkdownDocument>)[templateDoc, sourceDoc]));
 
         _combiner.BuildDocumentation(Arg.Any<IEnumerable<MarkdownDocument>>())
             .Returns(processedFiles);

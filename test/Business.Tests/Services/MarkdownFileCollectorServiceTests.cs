@@ -98,7 +98,7 @@ public class MarkdownFileCollectorServiceTests
     }
 
     [Test]
-    public async Task CollectAllMarkdownFilesAsync_Should_Collect_Both_Types()
+    public async Task CollectAllMarkdownFilesAsync_Should_Collect_All_Types()
     {
         // Arrange
         var templateFile = Path.Combine(_testDirectory, "template.mdext");
@@ -110,21 +110,32 @@ public class MarkdownFileCollectorServiceTests
         await File.WriteAllTextAsync(regularFile, "Regular markdown");
 
         // Act
-        var (templateFiles, sourceFiles) = await _service.CollectAllMarkdownFilesAsync(_testDirectory);
+        var allFiles = await _service.CollectAllMarkdownFilesAsync(_testDirectory);
+        var filesList = allFiles.ToList();
 
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(templateFiles.Count(), Is.EqualTo(1), "Should collect 1 template file");
-            Assert.That(sourceFiles.Count(), Is.EqualTo(1), "Should collect 1 source file");
+            Assert.That(filesList, Has.Count.EqualTo(3), "Should collect all 3 markdown files");
+
+            var templateFiles = filesList.Where(f => f.FileName.EndsWith(".mdext")).ToList();
+            var sourceFiles = filesList.Where(f => f.FileName.EndsWith(".mdsrc")).ToList();
+            var markdownFiles = filesList.Where(f => f.FileName.EndsWith(".md")).ToList();
+
+            Assert.That(templateFiles, Has.Count.EqualTo(1), "Should collect 1 template file");
+            Assert.That(sourceFiles, Has.Count.EqualTo(1), "Should collect 1 source file");
+            Assert.That(markdownFiles, Has.Count.EqualTo(1), "Should collect 1 markdown file");
 
             var template = templateFiles.First();
             var source = sourceFiles.First();
+            var markdown = markdownFiles.First();
 
             Assert.That(template.FileName, Is.EqualTo("template.mdext"), "Template should have correct filename");
             Assert.That(source.FileName, Is.EqualTo("source.mdsrc"), "Source should have correct filename");
+            Assert.That(markdown.FileName, Is.EqualTo("readme.md"), "Markdown should have correct filename");
             Assert.That(template.Content, Does.Contain("Template"), "Template should have correct content");
             Assert.That(source.Content, Is.EqualTo("Source content"), "Source should have correct content");
+            Assert.That(markdown.Content, Is.EqualTo("Regular markdown"), "Markdown should have correct content");
         });
     }
 
