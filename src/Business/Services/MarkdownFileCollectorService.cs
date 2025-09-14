@@ -12,23 +12,6 @@ public class MarkdownFileCollectorService(ILogger<MarkdownFileCollectorService> 
     private const string SourceFileExtension = ".mdsrc";
     private const string MarkdownFileExtension = ".md";
 
-    public async Task<IEnumerable<MarkdownDocument>> CollectTemplateFilesAsync(string directoryPath)
-    {
-        ValidateDirectoryPath(directoryPath);
-
-        logger.LogDebug("Collecting template files (.mdext) from directory: {DirectoryPath}", directoryPath);
-
-        return await CollectFilesByExtensionAsync(directoryPath, TemplateFileExtension);
-    }
-
-    public async Task<IEnumerable<MarkdownDocument>> CollectSourceFilesAsync(string directoryPath)
-    {
-        ValidateDirectoryPath(directoryPath);
-
-        logger.LogDebug("Collecting source files (.mdsrc) from directory: {DirectoryPath}", directoryPath);
-
-        return await CollectFilesByExtensionAsync(directoryPath, SourceFileExtension);
-    }
 
     public async Task<IEnumerable<MarkdownDocument>> CollectAllMarkdownFilesAsync(string directoryPath)
     {
@@ -36,17 +19,11 @@ public class MarkdownFileCollectorService(ILogger<MarkdownFileCollectorService> 
 
         logger.LogDebug("Collecting all markdown files (.md, .mdsrc, and .mdext) from directory: {DirectoryPath}", directoryPath);
 
-        var markdownFilesTask = CollectFilesByExtensionAsync(directoryPath, MarkdownFileExtension);
-        var templateFilesTask = CollectFilesByExtensionAsync(directoryPath, TemplateFileExtension);
-        var sourceFilesTask = CollectFilesByExtensionAsync(directoryPath, SourceFileExtension);
+        var allFiles = await CollectFilesByExtensionAsync(directoryPath, [MarkdownFileExtension, TemplateFileExtension, SourceFileExtension]);
 
-        await Task.WhenAll(markdownFilesTask, templateFilesTask, sourceFilesTask);
-
-        var markdownFiles = await markdownFilesTask;
-        var templateFiles = await templateFilesTask;
-        var sourceFiles = await sourceFilesTask;
-
-        var allFiles = markdownFiles.Concat(templateFiles).Concat(sourceFiles);
+        var markdownFiles = allFiles.Where(f => f.FileName.EndsWith(MarkdownFileExtension));
+        var templateFiles = allFiles.Where(f => f.FileName.EndsWith(TemplateFileExtension));
+        var sourceFiles = allFiles.Where(f => f.FileName.EndsWith(SourceFileExtension));
 
         logger.LogInformation("Collected {TotalCount} markdown files ({MarkdownCount} .md, {TemplateCount} .mdext, {SourceCount} .mdsrc) from: {DirectoryPath}",
             allFiles.Count(), markdownFiles.Count(), templateFiles.Count(), sourceFiles.Count(), directoryPath);
@@ -54,18 +31,20 @@ public class MarkdownFileCollectorService(ILogger<MarkdownFileCollectorService> 
         return allFiles;
     }
 
-    private async Task<IEnumerable<MarkdownDocument>> CollectFilesByExtensionAsync(string directoryPath, string extension)
+    private async Task<IEnumerable<MarkdownDocument>> CollectFilesByExtensionAsync(string directoryPath, string[] extensions)
     {
         var documents = new List<MarkdownDocument>();
 
         try
         {
-            var files = Directory.GetFiles(directoryPath, $"*{extension}", SearchOption.AllDirectories);
+            // Get all files in the directory first, then filter by extensions
+            var allFiles = Directory.GetFiles(directoryPath, "*", SearchOption.AllDirectories);
+            var filteredFiles = allFiles.Where(f => extensions.Any(ext => f.EndsWith(ext, StringComparison.OrdinalIgnoreCase))).ToArray();
 
-            logger.LogDebug("Found {FileCount} files with extension {Extension} in: {DirectoryPath}",
-                files.Length, extension, directoryPath);
+            logger.LogDebug("Found {FileCount} files with extensions [{Extensions}] in: {DirectoryPath}",
+                filteredFiles.Length, string.Join(", ", extensions), directoryPath);
 
-            var readTasks = files.Select(async filePath =>
+            var readTasks = filteredFiles.Select(async filePath =>
             {
                 try
                 {
@@ -97,8 +76,8 @@ public class MarkdownFileCollectorService(ILogger<MarkdownFileCollectorService> 
 
             documents.AddRange(await Task.WhenAll(readTasks));
 
-            logger.LogInformation("Successfully collected {DocumentCount} {Extension} files from: {DirectoryPath}",
-                documents.Count, extension, directoryPath);
+            logger.LogInformation("Successfully collected {DocumentCount} files with extensions [{Extensions}] from: {DirectoryPath}",
+                documents.Count, string.Join(", ", extensions), directoryPath);
         }
         catch (DirectoryNotFoundException ex)
         {
