@@ -91,66 +91,89 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
 
         var processedContent = templateContent;
         var processedDirectives = new HashSet<string>();
-
-        // Process insert directives - continue until no more directives are found (handles nested inserts)
-        int maxIterations = 10; // Prevent infinite loops
+        const int MaxIterations = 10;
         int iteration = 0;
 
-        while (iteration < maxIterations)
+        var directiveProcesses = true;
+        while (iteration < MaxIterations && directiveProcesses)
         {
-            var matches = InsertDirectiveRegex.Matches(processedContent);
+            var matches = FindInsertDirectives(processedContent);
             if (matches.Count == 0)
-                break; // No more directives to process
+                break;
 
-            bool anyReplaced = false;
-
-            foreach (Match match in matches)
-            {
-                var fullDirective = match.Value; // e.g., "<MarkDownExtension operation="insert" file="common-features.mdsrc" />"
-                var fileName = match.Groups[1].Value.Trim(); // e.g., "common-features.mdsrc"
-
-                // Skip if we've already processed this directive in this iteration
-                if (processedDirectives.Contains(fullDirective))
-                    continue;
-
-                var normalizedFileName = PathUtilities.NormalizePathKey(fileName);
-                if (sourceDictionary.TryGetValue(normalizedFileName, out var sourceContent))
-                {
-                    logger.LogDebug("Inserting content from {SourceFileName} into {TemplateFileName}",
-                        normalizedFileName, templateFileName);
-
-                    processedContent = processedContent.Replace(fullDirective, sourceContent ?? string.Empty);
-                    processedDirectives.Add(fullDirective);
-                    anyReplaced = true;
-                }
-                else
-                {
-                    logger.LogWarning("Source document not found for insert directive: {FileName} in template {TemplateFileName}",
-                        normalizedFileName, templateFileName);
-
-                    // Replace with a comment indicating missing source
-                    var replacementComment = $"<!-- Missing source: {normalizedFileName} -->";
-                    processedContent = processedContent.Replace(fullDirective, replacementComment);
-                    processedDirectives.Add(fullDirective);
-                    anyReplaced = true;
-                }
-            }
-
-            if (!anyReplaced)
-                break; // No directives were replaced, avoid infinite loop
-
+            directiveProcesses = ProcessDirectiveMatches(matches, ref processedContent, sourceDictionary, processedDirectives, templateFileName);
             iteration++;
         }
 
+        LogMaxIterationsWarningIfNeeded(iteration, MaxIterations, templateFileName);
+        return processedContent;
+    }
+
+    private static MatchCollection FindInsertDirectives(string content)
+    {
+        return InsertDirectiveRegex.Matches(content);
+    }
+
+    private bool ProcessDirectiveMatches(MatchCollection matches, ref string processedContent,
+        Dictionary<string, string> sourceDictionary, HashSet<string> processedDirectives, string templateFileName)
+    {
+        var anyReplaced = false;
+
+        foreach (Match match in matches)
+        {
+            if (ProcessSingleDirective(match, ref processedContent, sourceDictionary, processedDirectives, templateFileName))
+            {
+                anyReplaced = true;
+            }
+        }
+
+        return anyReplaced;
+    }
+
+    private bool ProcessSingleDirective(Match match, ref string processedContent,
+        Dictionary<string, string> sourceDictionary, HashSet<string> processedDirectives, string templateFileName)
+    {
+        var fullDirective = match.Value;
+        var fileName = match.Groups[1].Value.Trim();
+
+        if (processedDirectives.Contains(fullDirective))
+        {
+            // Skip already processed directives
+            return false;
+        }
+
+        var normalizedFileName = PathUtilities.NormalizePathKey(fileName);
+        string replacementContent = GetReplacementContent(normalizedFileName, sourceDictionary, templateFileName);
+
+        processedContent = processedContent.Replace(fullDirective, replacementContent);
+        processedDirectives.Add(fullDirective);
+        return true;
+    }
+
+    private string GetReplacementContent(string normalizedFileName, Dictionary<string, string> sourceDictionary, string templateFileName)
+    {
+        if (sourceDictionary.TryGetValue(normalizedFileName, out var sourceContent))
+        {
+            logger.LogDebug("Inserting content from {SourceFileName} into {TemplateFileName}",
+                normalizedFileName, templateFileName);
+            return sourceContent;
+        }
+        else
+        {
+            logger.LogWarning("Source document not found for insert directive: {FileName} in template {TemplateFileName}",
+                normalizedFileName, templateFileName);
+            return $"<!-- Missing source: {normalizedFileName} -->";
+        }
+    }
+
+    private void LogMaxIterationsWarningIfNeeded(int iteration, int maxIterations, string templateFileName)
+    {
         if (iteration >= maxIterations)
         {
             logger.LogWarning("Maximum iterations reached while processing template {TemplateFileName}. " +
                              "This might indicate circular references in insert directives.", templateFileName);
         }
-
-        return processedContent;
     }
-
 
     private void ValidateInsertDirectives(MarkdownDocument templateDocument, Dictionary<string, string> sourceDictionary, ValidationResult result)
     {
@@ -159,126 +182,31 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
         var processedDirectives = new HashSet<string>();
         var currentDirectives = new HashSet<string>();
 
-        for (int lineIndex = 0; lineIndex < lines.Length; lineIndex++)
+        for (var lineIndex = 0; lineIndex < lines.Length; lineIndex++)
         {
             var line = lines[lineIndex];
-
-            // First check for any MarkdownExtension directives (including malformed ones)
-            var allDirectives = AnyMarkdownExtensionRegex.Matches(line);
-            var validDirectives = InsertDirectiveRegex.Matches(line);
+            var lineNumber = lineIndex + 1;
 
             // Check for malformed directives
-            if (allDirectives.Count > validDirectives.Count)
-            {
-                foreach (Match anyMatch in allDirectives)
-                {
-                    var directive = anyMatch.Value;
-                    bool isValid = validDirectives.Cast<Match>().Any(validMatch => validMatch.Value == directive);
-
-                    if (!isValid)
-                    {
-                        var lineNumber = lineIndex + 1;
-                        string errorMessage;
-
-                        if (!directive.Contains("operation="))
-                        {
-                            errorMessage = "MarkDownExtension directive is missing 'operation' attribute";
-                        }
-                        else if (!directive.Contains("operation=\"insert\""))
-                        {
-                            errorMessage = "MarkDownExtension directive has invalid operation. Only 'insert' is supported";
-                        }
-                        else if (!directive.Contains("file="))
-                        {
-                            errorMessage = "MarkDownExtension directive is missing 'file' attribute";
-                        }
-                        else
-                        {
-                            errorMessage = "MarkDownExtension directive is malformed";
-                        }
-
-                        result.Errors.Add(new ValidationIssue
-                        {
-                            Message = errorMessage,
-                            DirectivePath = directive,
-                            SourceFile = templateDocument.FilePath,
-                            LineNumber = lineNumber,
-                            SourceContext = line.Trim()
-                        });
-                    }
-                }
-            }
+            ValidateMalformedDirectives(line, lineNumber, templateDocument, result);
 
             // Process valid directives
-            var matches = validDirectives;
-
-            foreach (Match match in matches)
+            var validDirectives = InsertDirectiveRegex.Matches(line);
+            foreach (Match match in validDirectives)
             {
                 var fullDirective = match.Value;
                 var fileName = match.Groups[1].Value.Trim();
-                var lineNumber = lineIndex + 1;
 
-                // Check for malformed directive
-                if (string.IsNullOrWhiteSpace(fileName))
-                {
-                    result.Errors.Add(new ValidationIssue
-                    {
-                        Message = "MarkDownExtension directive is missing filename",
-                        DirectivePath = fullDirective,
-                        SourceFile = templateDocument.FilePath,
-                        LineNumber = lineNumber,
-                        SourceContext = line.Trim()
-                    });
+                if (!ValidateDirectiveFileName(fileName, fullDirective, line, lineNumber, templateDocument, result))
                     continue;
-                }
 
-                // Check for invalid characters in path (allow both separators)
-                var invalidChars = Path.GetInvalidPathChars()
-                                    .Except([Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar])
-                                    .ToArray();
-                if (fileName.IndexOfAny(invalidChars) >= 0)
-                {
-                    result.Errors.Add(new ValidationIssue
-                    {
-                        Message = $"MarkDownExtension directive contains invalid filename characters: '{fileName}'",
-                        DirectivePath = fileName,
-                        SourceFile = templateDocument.FilePath,
-                        LineNumber = lineNumber,
-                        SourceContext = line.Trim()
-                    });
+                if (!ValidateFileNameCharacters(fileName, line, lineNumber, templateDocument, result))
                     continue;
-                }
 
-                // Check if source file exists
-                if (!sourceDictionary.ContainsKey(fileName))
-                {
-                    result.Errors.Add(new ValidationIssue
-                    {
-                        Message = $"Source document not found: '{fileName}'",
-                        DirectivePath = fileName,
-                        SourceFile = templateDocument.FilePath,
-                        LineNumber = lineNumber,
-                        SourceContext = line.Trim()
-                    });
+                if (!ValidateSourceFileExists(fileName, line, lineNumber, templateDocument, sourceDictionary, result))
                     continue;
-                }
 
-                // Check for duplicate directives in the same template
-                if (processedDirectives.Contains(fullDirective))
-                {
-                    result.Warnings.Add(new ValidationIssue
-                    {
-                        Message = $"Duplicate MarkDownExtension directive found: '{fullDirective}'",
-                        DirectivePath = fileName,
-                        SourceFile = templateDocument.FilePath,
-                        LineNumber = lineNumber,
-                        SourceContext = line.Trim()
-                    });
-                }
-                else
-                {
-                    processedDirectives.Add(fullDirective);
-                }
+                ValidateDuplicateDirective(fullDirective, fileName, line, lineNumber, templateDocument, processedDirectives, result);
 
                 // Track directives for potential circular reference detection
                 currentDirectives.Add(fileName);
@@ -287,6 +215,107 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
 
         // Check for potential circular references by validating nested directives
         ValidateCircularReferences(templateDocument.FileName, currentDirectives, sourceDictionary, result, new HashSet<string>());
+    }
+
+    private void ValidateMalformedDirectives(string line, int lineNumber, MarkdownDocument templateDocument, ValidationResult result)
+    {
+        var allDirectives = AnyMarkdownExtensionRegex.Matches(line);
+        var validDirectives = InsertDirectiveRegex.Matches(line);
+
+        if (allDirectives.Count <= validDirectives.Count) return;
+
+        foreach (var directive in allDirectives.Select(match => match.Value))
+        {
+            var isValid = validDirectives.Cast<Match>().Any(validMatch => validMatch.Value == directive);
+
+            if (!isValid)
+            {
+                var errorMessage = GetMalformedDirectiveErrorMessage(directive);
+                result.Errors.Add(new ValidationIssue
+                {
+                    Message = errorMessage,
+                    DirectivePath = directive,
+                    SourceFile = templateDocument.FilePath,
+                    LineNumber = lineNumber,
+                    SourceContext = line.Trim()
+                });
+            }
+        }
+    }
+
+    private static string GetMalformedDirectiveErrorMessage(string directive)
+    {
+        if (!directive.Contains("operation="))
+            return "MarkDownExtension directive is missing 'operation' attribute";
+        if (!directive.Contains("operation=\"insert\""))
+            return "MarkDownExtension directive has invalid operation. Only 'insert' is supported";
+        if (!directive.Contains("file="))
+            return "MarkDownExtension directive is missing 'file' attribute";
+        return "MarkDownExtension directive is malformed";
+    }
+
+    private static bool ValidateDirectiveFileName(string fileName, string fullDirective, string line, int lineNumber, MarkdownDocument templateDocument, ValidationResult result)
+    {
+        if (!string.IsNullOrWhiteSpace(fileName)) return true;
+
+        result.Errors.Add(new ValidationIssue
+        {
+            Message = "MarkDownExtension directive is missing filename",
+            DirectivePath = fullDirective,
+            SourceFile = templateDocument.FilePath,
+            LineNumber = lineNumber,
+            SourceContext = line.Trim()
+        });
+        return false;
+    }
+
+    private static bool ValidateFileNameCharacters(string fileName, string line, int lineNumber, MarkdownDocument templateDocument, ValidationResult result)
+    {
+        var invalidChars = Path.GetInvalidPathChars()
+                            .Except([Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar])
+                            .ToArray();
+
+        if (fileName.IndexOfAny(invalidChars) < 0) return true;
+
+        result.Errors.Add(new ValidationIssue
+        {
+            Message = $"MarkDownExtension directive contains invalid filename characters: '{fileName}'",
+            DirectivePath = fileName,
+            SourceFile = templateDocument.FilePath,
+            LineNumber = lineNumber,
+            SourceContext = line.Trim()
+        });
+        return false;
+    }
+
+    private static bool ValidateSourceFileExists(string fileName, string line, int lineNumber, MarkdownDocument templateDocument, Dictionary<string, string> sourceDictionary, ValidationResult result)
+    {
+        if (sourceDictionary.ContainsKey(fileName)) return true;
+
+        result.Errors.Add(new ValidationIssue
+        {
+            Message = $"Source document not found: '{fileName}'",
+            DirectivePath = fileName,
+            SourceFile = templateDocument.FilePath,
+            LineNumber = lineNumber,
+            SourceContext = line.Trim()
+        });
+        return false;
+    }
+
+    private static void ValidateDuplicateDirective(string fullDirective, string fileName, string line, int lineNumber, MarkdownDocument templateDocument, HashSet<string> processedDirectives, ValidationResult result)
+    {
+        if (!processedDirectives.Add(fullDirective))
+        {
+            result.Warnings.Add(new ValidationIssue
+            {
+                Message = $"Duplicate MarkDownExtension directive found: '{fullDirective}'",
+                DirectivePath = fileName,
+                SourceFile = templateDocument.FilePath,
+                LineNumber = lineNumber,
+                SourceContext = line.Trim()
+            });
+        }
     }
 
     private void ValidateCircularReferences(string currentFileName, HashSet<string> currentDirectives,
