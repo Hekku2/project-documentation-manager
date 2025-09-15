@@ -1,5 +1,3 @@
-using System.Runtime.InteropServices;
-
 namespace ProjectDocumentationManager.Console;
 
 /// <summary>
@@ -8,14 +6,14 @@ namespace ProjectDocumentationManager.Console;
 public static class PathUtilities
 {
     /// <summary>
-    /// Gets the appropriate string comparer for file paths based on the current platform
+    /// Gets the appropriate string comparer for file paths.
     /// For this application, we use case-insensitive comparison on all platforms for better user experience
     /// with markdown file references, even though Linux filesystems are case-sensitive
     /// </summary>
     public static StringComparer FilePathComparer => StringComparer.OrdinalIgnoreCase;
 
     /// <summary>
-    /// Gets the appropriate string comparison for file paths based on the current platform
+    /// Gets the appropriate string comparison for file paths.
     /// For this application, we use case-insensitive comparison on all platforms for better user experience
     /// with markdown file references, even though Linux filesystems are case-sensitive
     /// </summary>
