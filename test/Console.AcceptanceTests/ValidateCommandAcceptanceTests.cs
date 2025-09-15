@@ -63,7 +63,7 @@ public class ValidateCommandAcceptanceTests : ConsoleTestBase
             Assert.That(result.ExitCode, Is.EqualTo(SuccessExitCode), "Validation should succeed for basic scenario");
             var output = result.Output;
             Assert.That(output, Is.Not.Empty, "Command output should not be empty");
-            Assert.That(output, Does.Contain("Found 1 template files and 1 source files"), "Validation completion message missing");
+            Assert.That(output, Does.Match(@"Found 1 template file(s)?, 1 source file(s)?, and 1 markdown file(s)?"), "Validation completion message missing");
             Assert.That(output, Does.Contain("│ Valid files         │ 1     │"), "Validation result summary missing");
             Assert.That(output, Does.Contain("│ Files with warnings │ 0     │"), "Validation result summary missing");
             Assert.That(output, Does.Contain("│ Invalid files       │ 0     │"), "Validation result summary missing");

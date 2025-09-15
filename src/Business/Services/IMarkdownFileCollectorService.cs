@@ -8,29 +8,12 @@ namespace ProjectDocumentationManager.Business.Services;
 public interface IMarkdownFileCollectorService
 {
     /// <summary>
-    /// Collects all .mdext template files from the specified directory and its subdirectories
-    /// </summary>
-    /// <param name="directoryPath">Directory path to search for template files</param>
-    /// <returns>Collection of MarkdownDocument objects representing template files</returns>
-    /// <exception cref="ArgumentException">Thrown when directoryPath is null or empty</exception>
-    /// <exception cref="DirectoryNotFoundException">Thrown when directory doesn't exist</exception>
-    Task<IEnumerable<MarkdownDocument>> CollectTemplateFilesAsync(string directoryPath);
-
-    /// <summary>
-    /// Collects all .mdsrc source files from the specified directory and its subdirectories
-    /// </summary>
-    /// <param name="directoryPath">Directory path to search for source files</param>
-    /// <returns>Collection of MarkdownDocument objects representing source files</returns>
-    /// <exception cref="ArgumentException">Thrown when directoryPath is null or empty</exception>
-    /// <exception cref="DirectoryNotFoundException">Thrown when directory doesn't exist</exception>
-    Task<IEnumerable<MarkdownDocument>> CollectSourceFilesAsync(string directoryPath);
-
-    /// <summary>
-    /// Collects both template (.mdext) and source (.mdsrc) files from the specified directory
+    /// Collects all markdown files (.md, .mdsrc, and .mdext) from the specified directory
     /// </summary>
     /// <param name="directoryPath">Directory path to search for files</param>
-    /// <returns>Tuple containing collections of template and source documents</returns>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Collection of MarkdownDocument objects representing all markdown files</returns>
     /// <exception cref="ArgumentException">Thrown when directoryPath is null or empty</exception>
     /// <exception cref="DirectoryNotFoundException">Thrown when directory doesn't exist</exception>
-    Task<(IEnumerable<MarkdownDocument> TemplateFiles, IEnumerable<MarkdownDocument> SourceFiles)> CollectAllMarkdownFilesAsync(string directoryPath);
+    Task<IEnumerable<MarkdownDocument>> CollectAllMarkdownFilesAsync(string directoryPath, CancellationToken cancellationToken = default);
 }

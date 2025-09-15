@@ -36,7 +36,11 @@ public class CombineCommand(
             }
 
             ansiConsole.MarkupLine($"[green]Collecting markdown files from:[/] {settings.InputFolder}");
-            var (templateFiles, sourceFiles) = await collector.CollectAllMarkdownFilesAsync(settings.InputFolder);
+            var allDocuments = await collector.CollectAllMarkdownFilesAsync(settings.InputFolder);
+
+            var templateFiles = allDocuments.Where(doc => doc.FileName.EndsWith(".mdext"));
+            var sourceFiles = allDocuments.Where(doc => doc.FileName.EndsWith(".mdsrc"));
+            var markdownFiles = allDocuments.Where(doc => doc.FileName.EndsWith(".md"));
 
             if (!templateFiles.Any())
             {
@@ -44,9 +48,8 @@ public class CombineCommand(
                 return CommandConstants.CommandError;
             }
 
-            ansiConsole.MarkupLine($"Found {templateFiles.Count()} template files and {sourceFiles.Count()} source files");
-
-            var validationResult = combiner.Validate(templateFiles, sourceFiles);
+            ansiConsole.MarkupLine($"Found {templateFiles.Count()} template files, {sourceFiles.Count()} source files, and {markdownFiles.Count()} markdown files");
+            var validationResult = combiner.Validate(allDocuments);
 
             if (!validationResult.IsValid)
             {
@@ -58,7 +61,7 @@ public class CombineCommand(
                 return CommandConstants.CommandError;
             }
 
-            var processedDocuments = combiner.BuildDocumentation(templateFiles, sourceFiles);
+            var processedDocuments = combiner.BuildDocumentation(allDocuments);
             fileSystemService.EnsureDirectoryExists(settings.OutputFolder);
             await writer.WriteDocumentsToFolderAsync(processedDocuments, settings.OutputFolder);
 

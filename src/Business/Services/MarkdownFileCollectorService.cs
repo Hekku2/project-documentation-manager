@@ -10,90 +10,57 @@ public class MarkdownFileCollectorService(ILogger<MarkdownFileCollectorService> 
 {
     private const string TemplateFileExtension = ".mdext";
     private const string SourceFileExtension = ".mdsrc";
+    private const string MarkdownFileExtension = ".md";
 
-    public async Task<IEnumerable<MarkdownDocument>> CollectTemplateFilesAsync(string directoryPath)
+
+    public async Task<IEnumerable<MarkdownDocument>> CollectAllMarkdownFilesAsync(string directoryPath, CancellationToken cancellationToken = default)
     {
         ValidateDirectoryPath(directoryPath);
 
-        logger.LogDebug("Collecting template files (.mdext) from directory: {DirectoryPath}", directoryPath);
+        logger.LogDebug("Collecting all markdown files (.md, .mdsrc, and .mdext) from directory: {DirectoryPath}", directoryPath);
 
-        return await CollectFilesByExtensionAsync(directoryPath, TemplateFileExtension);
+        var allFiles = await CollectFilesByExtensionAsync(directoryPath, [MarkdownFileExtension, TemplateFileExtension, SourceFileExtension], cancellationToken);
+
+        var markdownFiles = allFiles.Where(f => f.FileName.EndsWith(MarkdownFileExtension));
+        var templateFiles = allFiles.Where(f => f.FileName.EndsWith(TemplateFileExtension));
+        var sourceFiles = allFiles.Where(f => f.FileName.EndsWith(SourceFileExtension));
+
+        logger.LogInformation("Collected {TotalCount} markdown files ({MarkdownCount} .md, {TemplateCount} .mdext, {SourceCount} .mdsrc) from: {DirectoryPath}",
+            allFiles.Count(), markdownFiles.Count(), templateFiles.Count(), sourceFiles.Count(), directoryPath);
+
+        return allFiles;
     }
 
-    public async Task<IEnumerable<MarkdownDocument>> CollectSourceFilesAsync(string directoryPath)
-    {
-        ValidateDirectoryPath(directoryPath);
-
-        logger.LogDebug("Collecting source files (.mdsrc) from directory: {DirectoryPath}", directoryPath);
-
-        return await CollectFilesByExtensionAsync(directoryPath, SourceFileExtension);
-    }
-
-    public async Task<(IEnumerable<MarkdownDocument> TemplateFiles, IEnumerable<MarkdownDocument> SourceFiles)> CollectAllMarkdownFilesAsync(string directoryPath)
-    {
-        ValidateDirectoryPath(directoryPath);
-
-        logger.LogDebug("Collecting all markdown files (.mdext and .mdsrc) from directory: {DirectoryPath}", directoryPath);
-
-        var templateFilesTask = CollectTemplateFilesAsync(directoryPath);
-        var sourceFilesTask = CollectSourceFilesAsync(directoryPath);
-
-        await Task.WhenAll(templateFilesTask, sourceFilesTask);
-
-        var templateFiles = await templateFilesTask;
-        var sourceFiles = await sourceFilesTask;
-
-        logger.LogInformation("Collected {TemplateCount} template files and {SourceCount} source files from: {DirectoryPath}",
-            templateFiles.Count(), sourceFiles.Count(), directoryPath);
-
-        return (templateFiles, sourceFiles);
-    }
-
-    private async Task<IEnumerable<MarkdownDocument>> CollectFilesByExtensionAsync(string directoryPath, string extension)
+    private async Task<IEnumerable<MarkdownDocument>> CollectFilesByExtensionAsync(string directoryPath, string[] extensions, CancellationToken cancellationToken = default)
     {
         var documents = new List<MarkdownDocument>();
 
         try
         {
-            var files = Directory.GetFiles(directoryPath, $"*{extension}", SearchOption.AllDirectories);
+            // Use bounded concurrency to avoid resource exhaustion
+            var maxConcurrency = Environment.ProcessorCount;
+            using var semaphore = new SemaphoreSlim(maxConcurrency, maxConcurrency);
 
-            logger.LogDebug("Found {FileCount} files with extension {Extension} in: {DirectoryPath}",
-                files.Length, extension, directoryPath);
+            var readTasks = new List<Task<MarkdownDocument>>();
 
-            var readTasks = files.Select(async filePath =>
+            // Stream files instead of materializing all paths
+            var filteredFiles = Directory.EnumerateFiles(directoryPath, "*", SearchOption.AllDirectories)
+                .Where(f => extensions.Any(ext => f.EndsWith(ext, StringComparison.OrdinalIgnoreCase)));
+
+            foreach (var filePath in filteredFiles)
             {
-                try
-                {
-                    logger.LogDebug("Reading file: {FilePath}", filePath);
+                cancellationToken.ThrowIfCancellationRequested();
+                var readTask = ReadFileWithSemaphoreAsync(filePath, directoryPath, semaphore, cancellationToken);
+                readTasks.Add(readTask);
+            }
 
-                    var content = await File.ReadAllTextAsync(filePath);
-                    var relativePath = Path.GetRelativePath(directoryPath, filePath);
-
-                    return new MarkdownDocument
-                    {
-                        FileName = relativePath,
-                        FilePath = filePath,
-                        Content = content
-                    };
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, "Error reading file: {FilePath}", filePath);
-                    // Return document with empty content on error
-                    var relativePath = Path.GetRelativePath(directoryPath, filePath);
-                    return new MarkdownDocument
-                    {
-                        FileName = relativePath,
-                        FilePath = filePath,
-                        Content = string.Empty
-                    };
-                }
-            });
+            logger.LogDebug("Found {FileCount} files with extensions [{Extensions}] in: {DirectoryPath}",
+                readTasks.Count, string.Join(", ", extensions), directoryPath);
 
             documents.AddRange(await Task.WhenAll(readTasks));
 
-            logger.LogInformation("Successfully collected {DocumentCount} {Extension} files from: {DirectoryPath}",
-                documents.Count, extension, directoryPath);
+            logger.LogInformation("Successfully collected {DocumentCount} files with extensions [{Extensions}] from: {DirectoryPath}",
+                documents.Count, string.Join(", ", extensions), directoryPath);
         }
         catch (DirectoryNotFoundException ex)
         {
@@ -112,6 +79,41 @@ public class MarkdownFileCollectorService(ILogger<MarkdownFileCollectorService> 
         }
 
         return documents;
+    }
+
+    private async Task<MarkdownDocument> ReadFileWithSemaphoreAsync(string filePath, string directoryPath, SemaphoreSlim semaphore, CancellationToken cancellationToken)
+    {
+        await semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            logger.LogDebug("Reading file: {FilePath}", filePath);
+
+            var content = await File.ReadAllTextAsync(filePath, cancellationToken);
+            var relativePath = Path.GetRelativePath(directoryPath, filePath);
+
+            return new MarkdownDocument
+            {
+                FileName = relativePath,
+                FilePath = filePath,
+                Content = content
+            };
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error reading file: {FilePath}", filePath);
+            // Return document with empty content on error
+            var relativePath = Path.GetRelativePath(directoryPath, filePath);
+            return new MarkdownDocument
+            {
+                FileName = relativePath,
+                FilePath = filePath,
+                Content = string.Empty
+            };
+        }
+        finally
+        {
+            semaphore.Release();
+        }
     }
 
     private static void ValidateDirectoryPath(string directoryPath)
