@@ -33,9 +33,9 @@ public class ValidateCommand(
             ansiConsole.MarkupLine($"[green]Validating markdown files in:[/] {settings.InputFolder}");
             var allDocuments = await collector.CollectAllMarkdownFilesAsync(settings.InputFolder);
             var docList = allDocuments.ToList();
-            var templateFiles = docList.Where(doc => doc.FileName.EndsWith(MarkdownFileExtensions.Template, System.StringComparison.OrdinalIgnoreCase)).ToList();
-            var sourceFiles = docList.Where(doc => doc.FileName.EndsWith(MarkdownFileExtensions.Source, System.StringComparison.OrdinalIgnoreCase)).ToList();
-            var markdownFiles = docList.Where(doc => doc.FileName.EndsWith(MarkdownFileExtensions.Markdown, System.StringComparison.OrdinalIgnoreCase)).ToList();
+            var templateFiles = docList.Where(doc => MarkdownFileExtensions.HasExtension(doc.FileName, MarkdownFileExtensions.Template)).ToList();
+            var sourceFiles = docList.Where(doc => MarkdownFileExtensions.HasExtension(doc.FileName, MarkdownFileExtensions.Source)).ToList();
+            var markdownFiles = docList.Where(doc => MarkdownFileExtensions.HasExtension(doc.FileName, MarkdownFileExtensions.Markdown)).ToList();
             if (!templateFiles.Any())
             {
                 ansiConsole.MarkupLine("[yellow]Warning: No markdown template files found[/]");

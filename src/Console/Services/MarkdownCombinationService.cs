@@ -18,11 +18,11 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
             throw new ArgumentNullException(nameof(documents));
 
         var documentList = documents.ToList();
-        var templateDocuments = documentList.Where(doc => doc.FileName.EndsWith(MarkdownFileExtensions.Template, StringComparison.OrdinalIgnoreCase));
+        var templateDocuments = documentList.Where(doc => MarkdownFileExtensions.HasExtension(doc.FileName, MarkdownFileExtensions.Template));
         var sourceDocuments = documentList.Where(doc =>
-            doc.FileName.EndsWith(MarkdownFileExtensions.Source, StringComparison.OrdinalIgnoreCase) ||
-            doc.FileName.EndsWith(MarkdownFileExtensions.Markdown, StringComparison.OrdinalIgnoreCase) ||
-            doc.FileName.EndsWith(MarkdownFileExtensions.Template, StringComparison.OrdinalIgnoreCase));
+            MarkdownFileExtensions.HasExtension(doc.FileName, MarkdownFileExtensions.Source) ||
+            MarkdownFileExtensions.HasExtension(doc.FileName, MarkdownFileExtensions.Markdown) ||
+            MarkdownFileExtensions.HasExtension(doc.FileName, MarkdownFileExtensions.Template));
 
         var templateList = templateDocuments.ToList();
         var sourceDictionary = sourceDocuments.ToDictionary(
@@ -361,11 +361,11 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
             throw new ArgumentNullException(nameof(documents));
 
         var documentList = documents.ToList();
-        var templateDocuments = documentList.Where(doc => doc.FileName.EndsWith(MarkdownFileExtensions.Template, StringComparison.OrdinalIgnoreCase));
+        var templateDocuments = documentList.Where(doc => MarkdownFileExtensions.HasExtension(doc.FileName, MarkdownFileExtensions.Template));
         var sourceDocuments = documentList.Where(doc =>
-            doc.FileName.EndsWith(MarkdownFileExtensions.Source, StringComparison.OrdinalIgnoreCase) ||
-            doc.FileName.EndsWith(MarkdownFileExtensions.Markdown, StringComparison.OrdinalIgnoreCase) ||
-            doc.FileName.EndsWith(MarkdownFileExtensions.Template, StringComparison.OrdinalIgnoreCase));
+            MarkdownFileExtensions.HasExtension(doc.FileName, MarkdownFileExtensions.Source) ||
+            MarkdownFileExtensions.HasExtension(doc.FileName, MarkdownFileExtensions.Markdown) ||
+            MarkdownFileExtensions.HasExtension(doc.FileName, MarkdownFileExtensions.Template));
 
         var templateList = templateDocuments.ToList();
         var sourceList = sourceDocuments.ToList();

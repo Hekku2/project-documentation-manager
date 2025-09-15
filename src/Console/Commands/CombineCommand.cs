@@ -37,9 +37,9 @@ public class CombineCommand(
             ansiConsole.MarkupLine($"[green]Collecting markdown files from:[/] {settings.InputFolder}");
             var allDocuments = await collector.CollectAllMarkdownFilesAsync(settings.InputFolder);
 
-            var templateFiles = allDocuments.Where(doc => doc.FileName.EndsWith(MarkdownFileExtensions.Template));
-            var sourceFiles = allDocuments.Where(doc => doc.FileName.EndsWith(MarkdownFileExtensions.Source));
-            var markdownFiles = allDocuments.Where(doc => doc.FileName.EndsWith(MarkdownFileExtensions.Markdown));
+            var templateFiles = allDocuments.Where(doc => MarkdownFileExtensions.HasExtension(doc.FileName, MarkdownFileExtensions.Template));
+            var sourceFiles = allDocuments.Where(doc => MarkdownFileExtensions.HasExtension(doc.FileName, MarkdownFileExtensions.Source));
+            var markdownFiles = allDocuments.Where(doc => MarkdownFileExtensions.HasExtension(doc.FileName, MarkdownFileExtensions.Markdown));
 
             if (!templateFiles.Any())
             {

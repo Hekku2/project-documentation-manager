@@ -17,9 +17,9 @@ public class MarkdownFileCollectorService(ILogger<MarkdownFileCollectorService> 
 
         var allFiles = await CollectFilesByExtensionAsync(directoryPath, [MarkdownFileExtensions.Markdown, MarkdownFileExtensions.Template, MarkdownFileExtensions.Source], cancellationToken);
 
-        var markdownFiles = allFiles.Where(f => f.FileName.EndsWith(MarkdownFileExtensions.Markdown));
-        var templateFiles = allFiles.Where(f => f.FileName.EndsWith(MarkdownFileExtensions.Template));
-        var sourceFiles = allFiles.Where(f => f.FileName.EndsWith(MarkdownFileExtensions.Source));
+        var markdownFiles = allFiles.Where(f => MarkdownFileExtensions.HasExtension(f.FileName, MarkdownFileExtensions.Markdown));
+        var templateFiles = allFiles.Where(f => MarkdownFileExtensions.HasExtension(f.FileName, MarkdownFileExtensions.Template));
+        var sourceFiles = allFiles.Where(f => MarkdownFileExtensions.HasExtension(f.FileName, MarkdownFileExtensions.Source));
 
         logger.LogInformation("Collected {TotalCount} markdown files ({MarkdownCount} .md, {TemplateCount} .mdext, {SourceCount} .mdsrc) from: {DirectoryPath}",
             allFiles.Count(), markdownFiles.Count(), templateFiles.Count(), sourceFiles.Count(), directoryPath);
@@ -41,7 +41,7 @@ public class MarkdownFileCollectorService(ILogger<MarkdownFileCollectorService> 
 
             // Stream files instead of materializing all paths
             var filteredFiles = Directory.EnumerateFiles(directoryPath, "*", SearchOption.AllDirectories)
-                .Where(f => extensions.Any(ext => f.EndsWith(ext, StringComparison.OrdinalIgnoreCase)));
+                .Where(f => extensions.Any(ext => MarkdownFileExtensions.HasExtension(f, ext)));
 
             foreach (var filePath in filteredFiles)
             {
