@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace ProjectDocumentationManager.Business;
+namespace ProjectDocumentationManager.Console;
 
 /// <summary>
 /// Utilities for cross-platform path handling and comparison

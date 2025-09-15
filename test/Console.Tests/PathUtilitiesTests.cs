@@ -1,6 +1,6 @@
 using NUnit.Framework;
 
-namespace ProjectDocumentationManager.Business.Tests;
+namespace ProjectDocumentationManager.Console.Tests;
 
 [TestFixture]
 public class PathUtilitiesTests

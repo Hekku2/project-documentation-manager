@@ -1,6 +1,5 @@
 using NSubstitute;
-using ProjectDocumentationManager.Business.Models;
-using ProjectDocumentationManager.Business.Services;
+using ProjectDocumentationManager.Console.Models;
 using ProjectDocumentationManager.Console.Commands;
 using ProjectDocumentationManager.Console.Services;
 using Spectre.Console.Cli;

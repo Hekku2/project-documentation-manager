@@ -1,12 +1,12 @@
 using Microsoft.Extensions.Logging;
-using ProjectDocumentationManager.Business.Models;
+using ProjectDocumentationManager.Console.Models;
 
-namespace ProjectDocumentationManager.Business.Services;
+namespace ProjectDocumentationManager.Console.Services;
 
 /// <summary>
 /// Service for writing MarkdownDocument collections to files in a specified folder
 /// </summary>
-public class MarkdownDocumentFileWriterService(ILogger<MarkdownDocumentFileWriterService> logger) : IMarkdownDocumentFileWriterService
+public class MarkdownDocumentFileWriterService(ILogger<MarkdownDocumentFileWriterService> logger, IFileSystemService fileSystemService) : IMarkdownDocumentFileWriterService
 {
     public async Task WriteDocumentsToFolderAsync(IEnumerable<MarkdownDocument> documents, string outputFolder)
     {
@@ -26,10 +26,10 @@ public class MarkdownDocumentFileWriterService(ILogger<MarkdownDocumentFileWrite
         // Ensure the output directory exists
         try
         {
-            if (!Directory.Exists(outputFolder))
+            if (!fileSystemService.DirectoryExists(outputFolder))
             {
                 logger.LogDebug("Creating output directory: {OutputFolder}", outputFolder);
-                Directory.CreateDirectory(outputFolder);
+                fileSystemService.EnsureDirectoryExists(outputFolder);
             }
         }
         catch (Exception ex)

@@ -2,8 +2,6 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using Spectre.Console;
 using Spectre.Console.Cli;
-using ProjectDocumentationManager.Business;
-using ProjectDocumentationManager.Business.Services;
 using ProjectDocumentationManager.Console.Services;
 
 namespace ProjectDocumentationManager.Console.Commands;
@@ -79,7 +77,7 @@ public class ValidateCommand(
         }
     }
 
-    private static Table CreateSummaryTable(Business.Models.ValidationResult validationResult, int totalFiles)
+    private static Table CreateSummaryTable(ProjectDocumentationManager.Console.Models.ValidationResult validationResult, int totalFiles)
     {
         // Summary
         var table = new Table();

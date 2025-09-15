@@ -1,4 +1,4 @@
-namespace ProjectDocumentationManager.Business.Models;
+namespace ProjectDocumentationManager.Console.Models;
 
 /// <summary>
 /// Represents a markdown document with its filename, full path, and content

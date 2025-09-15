@@ -1,10 +1,10 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using NUnit.Framework;
-using ProjectDocumentationManager.Business.Models;
-using ProjectDocumentationManager.Business.Services;
+using ProjectDocumentationManager.Console.Models;
+using ProjectDocumentationManager.Console.Services;
 
-namespace ProjectDocumentationManager.Business.Tests.Services;
+namespace ProjectDocumentationManager.Console.Tests.Services;
 
 [TestFixture]
 public class MarkdownCombinationServiceTests
