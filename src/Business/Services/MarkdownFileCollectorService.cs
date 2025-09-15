@@ -61,18 +61,11 @@ public class MarkdownFileCollectorService(ILogger<MarkdownFileCollectorService> 
         }
         catch (DirectoryNotFoundException ex)
         {
-            logger.LogError(ex, "Directory not found: {DirectoryPath}", directoryPath);
-            throw;
+            throw new DirectoryNotFoundException($"Directory not found: {directoryPath}", ex);
         }
         catch (UnauthorizedAccessException ex)
         {
-            logger.LogError(ex, "Access denied to directory: {DirectoryPath}", directoryPath);
-            throw;
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Unexpected error collecting files from directory: {DirectoryPath}", directoryPath);
-            throw;
+            throw new UnauthorizedAccessException($"Access denied to directory: {directoryPath}", ex);
         }
 
         return documents;
