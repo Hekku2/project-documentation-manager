@@ -1,10 +1,10 @@
-# Project Documentation Manager
+# Markdown Compiler
 
 NOTE: This project is developed mostly with AI. This means that the code quality
 and implemented solutions may not be optimal etc. I don't recommend taking these
 code lines as a positive of code quality.
 
-Personal project for creating a tool for managing project documentation.
+Personal project for creating a tool for compiling markdown templates and sources into documentation.
 
 Purposes of this project
  * Learn Spectre
@@ -39,6 +39,9 @@ dotnet test
 # Run UI tests
 dotnet test test/Desktop.UITests/Desktop.UITests.csproj
 
-# Run business logic tests
-dotnet test test/Business.Tests/Business.Tests.csproj
+# Run console unit tests
+dotnet test test/Console.Tests/Console.Tests.csproj
+
+# Run acceptance tests
+dotnet test test/Console.AcceptanceTests/Console.AcceptanceTests.csproj
 ```

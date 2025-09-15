@@ -1,0 +1,5 @@
+⚠️ **Important Security Note**
+
+Always validate and sanitize input data before processing. Never expose sensitive information in API responses.
+
+> **Best Practice**: Use environment variables for API keys and secrets.

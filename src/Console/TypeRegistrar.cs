@@ -2,7 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Spectre.Console.Cli;
 
-namespace ProjectDocumentationManager.Console;
+namespace MarkdownCompiler.Console;
 
 public sealed class TypeRegistrar : ITypeRegistrar
 {

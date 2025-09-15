@@ -1,6 +1,4 @@
-using System.Runtime;
-
-namespace ProjectDocumentationManager.Console.AcceptanceTests;
+namespace MarkdownCompiler.Console.AcceptanceTests;
 
 [TestFixture]
 [NonParallelizable]
@@ -64,7 +62,7 @@ public class ValidateCommandAcceptanceTests : ConsoleTestBase
             var output = result.Output;
             Assert.That(output, Is.Not.Empty, "Command output should not be empty");
             Assert.That(output, Does.Match(@"Found 1 template file(s)?, 1 source file(s)?, and 1 markdown file(s)?"), "Validation completion message missing");
-            Assert.That(output, Does.Contain("│ Valid files         │ 1     │"), "Validation result summary missing");
+            Assert.That(output, Does.Contain("│ Valid files         │ 2     │"), "Validation result summary missing");
             Assert.That(output, Does.Contain("│ Files with warnings │ 0     │"), "Validation result summary missing");
             Assert.That(output, Does.Contain("│ Invalid files       │ 0     │"), "Validation result summary missing");
             Assert.That(output, Does.Contain("│ Total files         │ 1     │"), "Validation result summary missing");

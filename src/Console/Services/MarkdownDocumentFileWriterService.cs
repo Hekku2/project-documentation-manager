@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging;
-using ProjectDocumentationManager.Console.Models;
+using MarkdownCompiler.Console.Models;
 
-namespace ProjectDocumentationManager.Console.Services;
+namespace MarkdownCompiler.Console.Services;
 
 /// <summary>
 /// Service for writing MarkdownDocument collections to files in a specified folder
@@ -51,6 +51,14 @@ public class MarkdownDocumentFileWriterService(ILogger<MarkdownDocumentFileWrite
 
             try
             {
+                // Ensure the directory for this file exists
+                var fileDirectory = Path.GetDirectoryName(filePath);
+                if (!string.IsNullOrEmpty(fileDirectory) && !fileSystemService.DirectoryExists(fileDirectory))
+                {
+                    logger.LogDebug("Creating directory for file: {FileDirectory}", fileDirectory);
+                    fileSystemService.EnsureDirectoryExists(fileDirectory);
+                }
+
                 logger.LogDebug("Writing document to file: {FilePath}", filePath);
                 await File.WriteAllTextAsync(filePath, document.Content ?? string.Empty);
                 logger.LogDebug("Successfully wrote document to: {FilePath}", filePath);

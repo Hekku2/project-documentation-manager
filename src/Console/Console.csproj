@@ -6,12 +6,12 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <PackAsTool>true</PackAsTool>
-    <ToolCommandName>project-docs</ToolCommandName>
-    <PackageId>ProjectDocumentationManager.Console</PackageId>
-    <RootNamespace>ProjectDocumentationManager.Console</RootNamespace>
+    <ToolCommandName>markdown-compiler</ToolCommandName>
+    <PackageId>MarkdownCompiler.Console</PackageId>
+    <RootNamespace>MarkdownCompiler.Console</RootNamespace>
     <PackageVersion>1.0.0</PackageVersion>
-    <Authors>Project Documentation Manager</Authors>
-    <Description>Console tool for managing project documentation with markdown templates</Description>
+    <Authors>Markdown Compiler</Authors>
+    <Description>Console tool for compiling markdown templates and sources into documentation</Description>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,8 +25,5 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.9" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="../Business/Business.csproj" />
-  </ItemGroup>
 
 </Project>

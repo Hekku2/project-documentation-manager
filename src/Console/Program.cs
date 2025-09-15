@@ -2,10 +2,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Spectre.Console.Cli;
-using ProjectDocumentationManager.Console.Commands;
-using ProjectDocumentationManager.Console.Services;
+using MarkdownCompiler.Console.Commands;
+using MarkdownCompiler.Console.Services;
 
-namespace ProjectDocumentationManager.Console;
+namespace MarkdownCompiler.Console;
 
 public static class Program
 {
@@ -15,7 +15,7 @@ public static class Program
         .ConfigureServices((context, services) =>
         {
             services.AddSingleton<IMarkdownFileCollectorService, MarkdownFileCollectorService>();
-            services.AddSingleton<IMarkdownCombinationService, MarkdownCombinationService>();
+            services.AddSingleton<IMarkdownCompilerService, MarkdownCompilerService>();
             services.AddSingleton<IMarkdownDocumentFileWriterService, MarkdownDocumentFileWriterService>();
             services.AddTransient<IFileSystemService, FileSystemService>();
         })

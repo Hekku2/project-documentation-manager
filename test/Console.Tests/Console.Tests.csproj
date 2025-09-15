@@ -6,7 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
-    <RootNamespace>ProjectDocumentationManager.Console.Tests</RootNamespace>
+    <RootNamespace>MarkdownCompiler.Console.Tests</RootNamespace>
+    <NoWarn>CS8602</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,7 +24,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Console\Console.csproj" />
-    <ProjectReference Include="..\..\src\Business\Business.csproj" />
   </ItemGroup>
 
   <ItemGroup>

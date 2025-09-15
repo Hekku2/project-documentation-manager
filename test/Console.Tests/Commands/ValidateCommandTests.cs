@@ -1,10 +1,10 @@
 using NSubstitute;
-using ProjectDocumentationManager.Console.Models;
-using ProjectDocumentationManager.Console.Commands;
-using ProjectDocumentationManager.Console.Services;
+using MarkdownCompiler.Console.Models;
+using MarkdownCompiler.Console.Commands;
+using MarkdownCompiler.Console.Services;
 using Spectre.Console.Cli;
 
-namespace ProjectDocumentationManager.Console.Tests.Commands;
+namespace MarkdownCompiler.Console.Tests.Commands;
 
 [TestFixture]
 public class ValidateCommandTests
@@ -12,7 +12,7 @@ public class ValidateCommandTests
     private ValidateCommand _command = null!;
     private Spectre.Console.IAnsiConsole _ansiConsole = null!;
     private IMarkdownFileCollectorService _collector = null!;
-    private IMarkdownCombinationService _combiner = null!;
+    private IMarkdownCompilerService _compiler = null!;
     private IFileSystemService _fileSystemService = null!;
     private string _testInputFolder = null!;
 
@@ -21,9 +21,9 @@ public class ValidateCommandTests
     {
         _ansiConsole = Substitute.For<Spectre.Console.IAnsiConsole>();
         _collector = Substitute.For<IMarkdownFileCollectorService>();
-        _combiner = Substitute.For<IMarkdownCombinationService>();
+        _compiler = Substitute.For<IMarkdownCompilerService>();
         _fileSystemService = Substitute.For<IFileSystemService>();
-        _command = new ValidateCommand(_ansiConsole, _collector, _combiner, _fileSystemService);
+        _command = new ValidateCommand(_ansiConsole, _collector, _compiler, _fileSystemService);
 
         _testInputFolder = "/test/input/folder";
     }
@@ -86,7 +86,7 @@ public class ValidateCommandTests
         _collector.CollectAllMarkdownFilesAsync(_testInputFolder)
             .Returns(Task.FromResult((IEnumerable<MarkdownDocument>)[templateDoc1, templateDoc2, sourceDoc]));
 
-        _combiner.Validate(Arg.Any<IEnumerable<MarkdownDocument>>())
+        _compiler.Validate(Arg.Any<IEnumerable<MarkdownDocument>>())
             .Returns(validResult);
 
         var settings = new ValidateCommand.Settings
@@ -116,7 +116,7 @@ public class ValidateCommandTests
         _collector.CollectAllMarkdownFilesAsync(_testInputFolder)
             .Returns(Task.FromResult((IEnumerable<MarkdownDocument>)[templateDoc1, templateDoc2, sourceDoc]));
 
-        _combiner.Validate(Arg.Any<IEnumerable<MarkdownDocument>>())
+        _compiler.Validate(Arg.Any<IEnumerable<MarkdownDocument>>())
             .Returns(invalidResult);
 
         var settings = new ValidateCommand.Settings
@@ -149,7 +149,7 @@ public class ValidateCommandTests
         _collector.CollectAllMarkdownFilesAsync(_testInputFolder)
             .Returns(Task.FromResult((IEnumerable<MarkdownDocument>)[templateDoc1, templateDoc2, sourceDoc]));
 
-        _combiner.Validate(Arg.Any<IEnumerable<MarkdownDocument>>())
+        _compiler.Validate(Arg.Any<IEnumerable<MarkdownDocument>>())
             .Returns(invalidResult);
 
         var settings = new ValidateCommand.Settings
@@ -175,7 +175,7 @@ public class ValidateCommandTests
         _collector.CollectAllMarkdownFilesAsync(_testInputFolder)
             .Returns(Task.FromResult((IEnumerable<MarkdownDocument>)[templateDoc, sourceDoc]));
 
-        _combiner.Validate(Arg.Any<IEnumerable<MarkdownDocument>>())
+        _compiler.Validate(Arg.Any<IEnumerable<MarkdownDocument>>())
             .Returns(validResult);
 
         var settings = new ValidateCommand.Settings
@@ -189,7 +189,7 @@ public class ValidateCommandTests
         await Assert.MultipleAsync(async () =>
         {
             await _collector.Received(1).CollectAllMarkdownFilesAsync(_testInputFolder);
-            _combiner.Received(1).Validate(Arg.Any<IEnumerable<MarkdownDocument>>());
+            _compiler.Received(1).Validate(Arg.Any<IEnumerable<MarkdownDocument>>());
         });
     }
 }

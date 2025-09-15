@@ -1,4 +1,4 @@
-namespace ProjectDocumentationManager.Console;
+namespace MarkdownCompiler.Console;
 
 /// <summary>
 /// Utilities for cross-platform path handling and comparison

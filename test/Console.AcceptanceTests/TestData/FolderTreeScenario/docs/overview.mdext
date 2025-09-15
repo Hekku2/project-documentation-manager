@@ -1,0 +1,15 @@
+# Documentation Overview
+
+Welcome to our comprehensive documentation suite. This overview helps you navigate between different sections.
+
+## Available Documentation
+
+### API Documentation
+- [Endpoints](api/endpoints.md) - Complete API reference
+- [Authentication](api/auth.md) - Security and access control
+
+### User Guides  
+- [Getting Started](guides/getting-started.md) - Quick start guide
+- [Advanced Features](guides/advanced.md) - Power user features
+
+<MarkDownExtension operation="insert" file="../shared/footers/common-footer.mdsrc" />

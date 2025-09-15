@@ -2,14 +2,14 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using Spectre.Console;
 using Spectre.Console.Cli;
-using ProjectDocumentationManager.Console.Services;
+using MarkdownCompiler.Console.Services;
 
-namespace ProjectDocumentationManager.Console.Commands;
+namespace MarkdownCompiler.Console.Commands;
 
 public class ValidateCommand(
     IAnsiConsole ansiConsole,
     IMarkdownFileCollectorService collector,
-    IMarkdownCombinationService combiner,
+    IMarkdownCompilerService compiler,
     IFileSystemService fileSystemService) : AsyncCommand<ValidateCommand.Settings>
 {
     public class Settings : CommandSettings
@@ -44,7 +44,7 @@ public class ValidateCommand(
 
             ansiConsole.MarkupLine($"Found {templateFiles.Count()} template files, {sourceFiles.Count()} source files, and {markdownFiles.Count()} markdown files");
 
-            var validationResult = combiner.Validate(allDocuments);
+            var validationResult = compiler.Validate(allDocuments);
             var totalFiles = templateFiles.Count();
 
             var table = CreateSummaryTable(validationResult, totalFiles);
@@ -60,7 +60,7 @@ public class ValidateCommand(
                     ansiConsole.MarkupLine("\n[yellow]Issues found:[/]");
                     foreach (var error in validationResult.Errors)
                     {
-                        ansiConsole.MarkupLine($"[red]- {error.Message}[/]");
+                        ansiConsole.MarkupLine($"[red]Error: {error.Message.EscapeMarkup()}[/]");
                     }
                 }
 
@@ -77,7 +77,7 @@ public class ValidateCommand(
         }
     }
 
-    private static Table CreateSummaryTable(ProjectDocumentationManager.Console.Models.ValidationResult validationResult, int totalFiles)
+    private static Table CreateSummaryTable(MarkdownCompiler.Console.Models.ValidationResult validationResult, int totalFiles)
     {
         // Summary
         var table = new Table();

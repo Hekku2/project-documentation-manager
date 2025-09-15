@@ -1,0 +1,17 @@
+<MarkDownExtension operation="insert" file="../../shared/headers/guide-header.mdsrc" />
+
+## Advanced Features
+
+Once you're comfortable with the basics, explore these advanced capabilities.
+
+### Batch Operations
+Process multiple requests efficiently using batch endpoints.
+
+<MarkDownExtension operation="insert" file="../../shared/snippets/warning-blocks.mdsrc" />
+
+### Webhooks
+Set up real-time notifications for important events.
+
+<MarkDownExtension operation="insert" file="../../shared/snippets/code-examples.mdsrc" />
+
+<MarkDownExtension operation="insert" file="../../shared/footers/common-footer.mdsrc" />

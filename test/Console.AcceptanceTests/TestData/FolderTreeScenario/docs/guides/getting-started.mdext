@@ -1,0 +1,17 @@
+<MarkDownExtension operation="insert" file="../../shared/headers/guide-header.mdsrc" />
+
+## Getting Started
+
+This guide will walk you through the initial setup and your first API calls.
+
+### Step 1: Setup
+Before you begin, ensure you have:
+- Valid API credentials
+- Development environment configured
+
+<MarkDownExtension operation="insert" file="../../shared/snippets/code-examples.mdsrc" />
+
+### Step 2: First Request
+Try making your first API call to verify everything is working.
+
+<MarkDownExtension operation="insert" file="../../shared/footers/common-footer.mdsrc" />

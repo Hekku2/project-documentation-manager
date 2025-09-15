@@ -1,4 +1,4 @@
-namespace ProjectDocumentationManager.Console.Models;
+namespace MarkdownCompiler.Console.Models;
 
 /// <summary>
 /// Represents a validation issue (error or warning)

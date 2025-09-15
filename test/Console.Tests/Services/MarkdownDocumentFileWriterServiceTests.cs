@@ -1,19 +1,17 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using NUnit.Framework;
-using NSubstitute;
-using ProjectDocumentationManager.Console.Models;
-using ProjectDocumentationManager.Console.Services;
+using MarkdownCompiler.Console.Models;
+using MarkdownCompiler.Console.Services;
 
-namespace ProjectDocumentationManager.Console.Tests.Services;
+namespace MarkdownCompiler.Console.Tests.Services;
 
 [TestFixture]
 public class MarkdownDocumentFileWriterServiceTests
 {
-    private ILogger<MarkdownDocumentFileWriterService> _mockLogger;
-    private IFileSystemService _fileSystemService;
-    private MarkdownDocumentFileWriterService _service;
-    private string _testOutputFolder;
+    private ILogger<MarkdownDocumentFileWriterService> _mockLogger = null!;
+    private IFileSystemService _fileSystemService = null!;
+    private MarkdownDocumentFileWriterService _service = null!;
+    private string _testOutputFolder = null!;
 
     [SetUp]
     public void SetUp()

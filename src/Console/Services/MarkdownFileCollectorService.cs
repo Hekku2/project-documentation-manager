@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging;
-using ProjectDocumentationManager.Console.Models;
+using MarkdownCompiler.Console.Models;
 
-namespace ProjectDocumentationManager.Console.Services;
+namespace MarkdownCompiler.Console.Services;
 
 /// <summary>
 /// Service for collecting markdown source and template files from a directory
