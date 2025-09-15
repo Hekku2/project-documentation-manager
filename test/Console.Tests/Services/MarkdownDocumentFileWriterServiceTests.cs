@@ -8,10 +8,10 @@ namespace MarkdownCompiler.Console.Tests.Services;
 [TestFixture]
 public class MarkdownDocumentFileWriterServiceTests
 {
-    private ILogger<MarkdownDocumentFileWriterService> _mockLogger;
-    private IFileSystemService _fileSystemService;
-    private MarkdownDocumentFileWriterService _service;
-    private string _testOutputFolder;
+    private ILogger<MarkdownDocumentFileWriterService> _mockLogger = null!;
+    private IFileSystemService _fileSystemService = null!;
+    private MarkdownDocumentFileWriterService _service = null!;
+    private string _testOutputFolder = null!;
 
     [SetUp]
     public void SetUp()

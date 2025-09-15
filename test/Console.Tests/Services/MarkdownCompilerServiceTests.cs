@@ -8,8 +8,8 @@ namespace MarkdownCompiler.Console.Tests.Services;
 [TestFixture]
 public class MarkdownCompilerServiceTests
 {
-    private ILogger<MarkdownCompilerService> _mockLogger;
-    private MarkdownCompilerService _service;
+    private ILogger<MarkdownCompilerService> _mockLogger = null!;
+    private MarkdownCompilerService _service = null!;
 
     [SetUp]
     public void SetUp()

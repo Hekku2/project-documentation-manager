@@ -7,6 +7,7 @@
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <RootNamespace>MarkdownCompiler.Console.Tests</RootNamespace>
+    <NoWarn>CS8602</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
