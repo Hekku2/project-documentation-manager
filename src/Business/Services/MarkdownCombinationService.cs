@@ -18,11 +18,11 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
             throw new ArgumentNullException(nameof(documents));
 
         var documentList = documents.ToList();
-        var templateDocuments = documentList.Where(doc => doc.FileName.EndsWith(".mdext", StringComparison.OrdinalIgnoreCase));
+        var templateDocuments = documentList.Where(doc => doc.FileName.EndsWith(MarkdownFileExtensions.Template, StringComparison.OrdinalIgnoreCase));
         var sourceDocuments = documentList.Where(doc =>
-            doc.FileName.EndsWith(".mdsrc", StringComparison.OrdinalIgnoreCase) ||
-            doc.FileName.EndsWith(".md", StringComparison.OrdinalIgnoreCase) ||
-            doc.FileName.EndsWith(".mdext", StringComparison.OrdinalIgnoreCase));
+            doc.FileName.EndsWith(MarkdownFileExtensions.Source, StringComparison.OrdinalIgnoreCase) ||
+            doc.FileName.EndsWith(MarkdownFileExtensions.Markdown, StringComparison.OrdinalIgnoreCase) ||
+            doc.FileName.EndsWith(MarkdownFileExtensions.Template, StringComparison.OrdinalIgnoreCase));
 
         var templateList = templateDocuments.ToList();
         var sourceDictionary = sourceDocuments.ToDictionary(
@@ -53,11 +53,11 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
                 logger.LogDebug("Processing template: {TemplateFileName}", template.FileName);
 
                 var processedContent = ProcessTemplate(template.Content, sourceDictionary, template.FileName);
-                var outputFileName = Path.ChangeExtension(template.FileName, ".md");
+                var outputFileName = Path.ChangeExtension(template.FileName, MarkdownFileExtensions.Markdown);
                 var resultDocument = new MarkdownDocument
                 {
                     FileName = outputFileName,
-                    FilePath = Path.ChangeExtension(template.FilePath, ".md"),
+                    FilePath = Path.ChangeExtension(template.FilePath, MarkdownFileExtensions.Markdown),
                     Content = processedContent
                 };
 
@@ -69,11 +69,11 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
             {
                 logger.LogError(ex, "Error processing template: {TemplateFileName} at {TemplateFilePath}", template.FileName, template.FilePath);
                 // Add the template with original content on error, but with .md extension
-                var outputFileName = Path.ChangeExtension(template.FileName, ".md");
+                var outputFileName = Path.ChangeExtension(template.FileName, MarkdownFileExtensions.Markdown);
                 results.Add(new MarkdownDocument
                 {
                     FileName = outputFileName,
-                    FilePath = Path.ChangeExtension(template.FilePath, ".md"),
+                    FilePath = Path.ChangeExtension(template.FilePath, MarkdownFileExtensions.Markdown),
                     Content = template.Content
                 });
             }
@@ -332,11 +332,11 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
             throw new ArgumentNullException(nameof(documents));
 
         var documentList = documents.ToList();
-        var templateDocuments = documentList.Where(doc => doc.FileName.EndsWith(".mdext", StringComparison.OrdinalIgnoreCase));
+        var templateDocuments = documentList.Where(doc => doc.FileName.EndsWith(MarkdownFileExtensions.Template, StringComparison.OrdinalIgnoreCase));
         var sourceDocuments = documentList.Where(doc =>
-            doc.FileName.EndsWith(".mdsrc", StringComparison.OrdinalIgnoreCase) ||
-            doc.FileName.EndsWith(".md", StringComparison.OrdinalIgnoreCase) ||
-            doc.FileName.EndsWith(".mdext", StringComparison.OrdinalIgnoreCase));
+            doc.FileName.EndsWith(MarkdownFileExtensions.Source, StringComparison.OrdinalIgnoreCase) ||
+            doc.FileName.EndsWith(MarkdownFileExtensions.Markdown, StringComparison.OrdinalIgnoreCase) ||
+            doc.FileName.EndsWith(MarkdownFileExtensions.Template, StringComparison.OrdinalIgnoreCase));
 
         var templateList = templateDocuments.ToList();
         var sourceList = sourceDocuments.ToList();

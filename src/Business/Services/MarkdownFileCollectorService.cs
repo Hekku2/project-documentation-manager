@@ -8,9 +8,6 @@ namespace ProjectDocumentationManager.Business.Services;
 /// </summary>
 public class MarkdownFileCollectorService(ILogger<MarkdownFileCollectorService> logger) : IMarkdownFileCollectorService
 {
-    private const string TemplateFileExtension = ".mdext";
-    private const string SourceFileExtension = ".mdsrc";
-    private const string MarkdownFileExtension = ".md";
 
 
     public async Task<IEnumerable<MarkdownDocument>> CollectAllMarkdownFilesAsync(string directoryPath, CancellationToken cancellationToken = default)
@@ -19,11 +16,11 @@ public class MarkdownFileCollectorService(ILogger<MarkdownFileCollectorService> 
 
         logger.LogDebug("Collecting all markdown files (.md, .mdsrc, and .mdext) from directory: {DirectoryPath}", directoryPath);
 
-        var allFiles = await CollectFilesByExtensionAsync(directoryPath, [MarkdownFileExtension, TemplateFileExtension, SourceFileExtension], cancellationToken);
+        var allFiles = await CollectFilesByExtensionAsync(directoryPath, [MarkdownFileExtensions.Markdown, MarkdownFileExtensions.Template, MarkdownFileExtensions.Source], cancellationToken);
 
-        var markdownFiles = allFiles.Where(f => f.FileName.EndsWith(MarkdownFileExtension));
-        var templateFiles = allFiles.Where(f => f.FileName.EndsWith(TemplateFileExtension));
-        var sourceFiles = allFiles.Where(f => f.FileName.EndsWith(SourceFileExtension));
+        var markdownFiles = allFiles.Where(f => f.FileName.EndsWith(MarkdownFileExtensions.Markdown));
+        var templateFiles = allFiles.Where(f => f.FileName.EndsWith(MarkdownFileExtensions.Template));
+        var sourceFiles = allFiles.Where(f => f.FileName.EndsWith(MarkdownFileExtensions.Source));
 
         logger.LogInformation("Collected {TotalCount} markdown files ({MarkdownCount} .md, {TemplateCount} .mdext, {SourceCount} .mdsrc) from: {DirectoryPath}",
             allFiles.Count(), markdownFiles.Count(), templateFiles.Count(), sourceFiles.Count(), directoryPath);
