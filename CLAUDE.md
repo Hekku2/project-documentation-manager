@@ -21,11 +21,12 @@ This is a C# console application for managing project documentation through mark
 
 ## Project Structure
 
-The solution follows a standard .NET structure with clear separation of concerns:
-- `src/Console/` - Main console application with CLI commands using Spectre.Console
-- `src/Business/` - Core business logic for markdown processing and file operations
-- `test/Business.Tests/` - Unit tests for business logic services
-- `test/Console.Tests/` - Unit tests for console commands
+The solution follows a simplified single-project architecture with all components consolidated:
+- `src/Console/` - Main console application containing all models, services, commands, and utilities
+  - `Commands/` - CLI command implementations (`CombineCommand`, `ValidateCommand`)
+  - `Models/` - Data models (`MarkdownDocument`, `ValidationResult`, `ValidationIssue`)
+  - `Services/` - Core business logic services for markdown processing and file operations
+- `test/Console.Tests/` - Unit tests for all components (services, commands, utilities)
 - `test/Console.AcceptanceTests/` - End-to-end acceptance tests with test data
 - `doc/` - Design documentation and project structure
 - `example-projects/` - Sample projects demonstrating markdown template features
@@ -39,9 +40,6 @@ dotnet build
 
 # Build console project specifically
 dotnet build src/Console/Console.csproj
-
-# Build business logic project
-dotnet build src/Business/Business.csproj
 ```
 
 ### Running
@@ -66,10 +64,7 @@ project-docs validate --input ./example-projects/basic-features
 # Run all tests
 dotnet test
 
-# Run business logic tests specifically
-dotnet test test/Business.Tests/Business.Tests.csproj
-
-# Run console command tests
+# Run console tests specifically  
 dotnet test test/Console.Tests/Console.Tests.csproj
 
 # Run acceptance tests
@@ -101,19 +96,19 @@ The console application uses **Spectre.Console.Cli** for command-line interface:
 - Commands: `CombineCommand` (processes templates) and `ValidateCommand` (validates templates)
 - **File System Abstraction**: `IFileSystemService` abstracts file system operations from commands for better testability
 
-### Business Logic Architecture
-The `Business` project contains the core markdown processing functionality:
+### Consolidated Architecture
+All components are consolidated within the Console project:
 - **Services Layer**: `IMarkdownFileCollectorService`, `IMarkdownCombinationService`, `IMarkdownDocumentFileWriterService`
-- **Models**: `MarkdownDocument` for representing markdown files with filename, path, and content
+- **Models**: `MarkdownDocument`, `ValidationResult`, `ValidationIssue` in `ProjectDocumentationManager.Console.Models`
 - **Template System**: Processes `.mdext` template files with `.mdsrc` source inclusions
 - **File Processing**: Collects, combines, and writes processed markdown documentation
 - **Validation**: Validates template syntax and source file references
+- **File System Abstraction**: `IFileSystemService` enables testable file operations throughout the application
 
 ### Dependency Injection & Configuration
 The application uses Microsoft.Extensions.Hosting for DI container:
-- Services registered in `Program.CreateDefaultBuilder()` configuration
-- Business services registered as singleton dependencies
-- Console services (`IFileSystemService`) registered as transient dependencies
+- All markdown processing services registered as singleton dependencies for performance
+- File system service (`IFileSystemService`) registered as transient for better testability
 - Commands registered as transient for Spectre.Console.Cli integration
 - Logging configured with console provider for development feedback
 
@@ -230,8 +225,20 @@ Source files contain reusable markdown content that can be included in templates
 The Console project includes a dedicated file system service abstraction:
 - **`IFileSystemService`**: Interface defining directory operations (`DirectoryExists`, `EnsureDirectoryExists`, `GetFullPath`)
 - **`FileSystemService`**: Implementation wrapping standard .NET file system operations
-- **Purpose**: Enables command testing without real file system dependencies, improves separation of concerns
-- **Testing Strategy**: Commands use mocked service, while service implementation is tested with real file operations
+- **Purpose**: Enables testing without real file system dependencies, improves separation of concerns
+- **Integration**: `MarkdownDocumentFileWriterService` uses `IFileSystemService` for directory operations
+- **Testing Strategy**: Commands and services use mocked file system service in tests, while acceptance tests use real file operations
+
+### Namespace Structure
+All components use the `ProjectDocumentationManager.Console` namespace hierarchy:
+- **`ProjectDocumentationManager.Console.Models`**: Data models (`MarkdownDocument`, `ValidationResult`, `ValidationIssue`)
+- **`ProjectDocumentationManager.Console.Services`**: All service interfaces and implementations
+- **`ProjectDocumentationManager.Console.Commands`**: Spectre.Console CLI command implementations
+- **`ProjectDocumentationManager.Console`**: Root namespace with utilities (`PathUtilities`, `MarkdownFileExtensions`)
+
+## Architecture Notes
+
+**IMPORTANT**: This project was recently refactored from a multi-project solution to a consolidated single-project architecture. All business logic, models, and services that were previously in a separate `Business` project have been moved to the `Console` project. The `Business` project no longer exists. All components now use the `ProjectDocumentationManager.Console.*` namespace hierarchy.
 
 ## important-instruction-reminders
 Do what has been asked; nothing more, nothing less.

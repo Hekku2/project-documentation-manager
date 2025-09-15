@@ -1,15 +1,17 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using NUnit.Framework;
-using ProjectDocumentationManager.Business.Models;
-using ProjectDocumentationManager.Business.Services;
+using NSubstitute;
+using ProjectDocumentationManager.Console.Models;
+using ProjectDocumentationManager.Console.Services;
 
-namespace ProjectDocumentationManager.Business.Tests.Services;
+namespace ProjectDocumentationManager.Console.Tests.Services;
 
 [TestFixture]
 public class MarkdownDocumentFileWriterServiceTests
 {
     private ILogger<MarkdownDocumentFileWriterService> _mockLogger;
+    private IFileSystemService _fileSystemService;
     private MarkdownDocumentFileWriterService _service;
     private string _testOutputFolder;
 
@@ -17,7 +19,8 @@ public class MarkdownDocumentFileWriterServiceTests
     public void SetUp()
     {
         _mockLogger = NullLoggerFactory.Instance.CreateLogger<MarkdownDocumentFileWriterService>();
-        _service = new MarkdownDocumentFileWriterService(_mockLogger);
+        _fileSystemService = new FileSystemService();
+        _service = new MarkdownDocumentFileWriterService(_mockLogger, _fileSystemService);
 
         // Create a temporary directory for testing
         _testOutputFolder = Path.Combine(Path.GetTempPath(), "MarkdownDocumentFileWriterTests", Guid.NewGuid().ToString());
@@ -112,7 +115,7 @@ public class MarkdownDocumentFileWriterServiceTests
         // Arrange
         var documents = new List<MarkdownDocument>
         {
-            new() { FileName = "test.md", FilePath = "/test/test.md", Content = "# Test Content\n\nThis is a test document." }
+            new() { FileName = "test.md", FilePath = Path.Combine("test", "test.md"), Content = "# Test Content\n\nThis is a test document." }
         };
 
         // Act
@@ -132,9 +135,9 @@ public class MarkdownDocumentFileWriterServiceTests
         // Arrange
         var documents = new List<MarkdownDocument>
         {
-            new() { FileName = "doc1.md", FilePath = "/test/doc1.md", Content = "# Document 1\n\nFirst document content." },
-            new() { FileName = "doc2.md", FilePath = "/test/doc2.md", Content = "# Document 2\n\nSecond document content." },
-            new() { FileName = "doc3.md", FilePath = "/test/doc3.md", Content = "# Document 3\n\nThird document content." }
+            new() { FileName = "doc1.md", FilePath = Path.Combine("test", "doc1.md"), Content = "# Document 1\n\nFirst document content." },
+            new() { FileName = "doc2.md", FilePath = Path.Combine("test", "doc2.md"), Content = "# Document 2\n\nSecond document content." },
+            new() { FileName = "doc3.md", FilePath = Path.Combine("test", "doc3.md"), Content = "# Document 3\n\nThird document content." }
         };
 
         // Act
@@ -163,7 +166,7 @@ public class MarkdownDocumentFileWriterServiceTests
         // Arrange
         var documents = new List<MarkdownDocument>
         {
-            new() { FileName = "empty.md", FilePath = "/test/empty.md", Content = null! }
+            new() { FileName = "empty.md", FilePath = Path.Combine("test", "empty.md"), Content = null! }
         };
 
         // Act
@@ -183,7 +186,7 @@ public class MarkdownDocumentFileWriterServiceTests
         // Arrange
         var documents = new List<MarkdownDocument>
         {
-            new() { FileName = "empty.md", FilePath = "/test/empty.md", Content = "" }
+            new() { FileName = "empty.md", FilePath = Path.Combine("test", "empty.md"), Content = "" }
         };
 
         // Act
@@ -203,10 +206,10 @@ public class MarkdownDocumentFileWriterServiceTests
         // Arrange
         var documents = new List<MarkdownDocument>
         {
-            new() { FileName = "valid.md", FilePath = "/test/valid.md", Content = "Valid content" },
-            new() { FileName = "", FilePath = "/test/", Content = "Empty filename content" },
-            new() { FileName = "   ", FilePath = "/test/   ", Content = "Whitespace filename content" },
-            new() { FileName = "another-valid.md", FilePath = "/test/another-valid.md", Content = "Another valid content" }
+            new() { FileName = "valid.md", FilePath = Path.Combine("test", "valid.md"), Content = "Valid content" },
+            new() { FileName = "", FilePath = "test", Content = "Empty filename content" },
+            new() { FileName = "   ", FilePath = Path.Combine("test", "   "), Content = "Whitespace filename content" },
+            new() { FileName = "another-valid.md", FilePath = Path.Combine("test", "another-valid.md"), Content = "Another valid content" }
         };
 
         // Act
@@ -230,7 +233,7 @@ public class MarkdownDocumentFileWriterServiceTests
         var nestedPath = Path.Combine(_testOutputFolder, "nested", "deeply", "nested", "folder");
         var documents = new List<MarkdownDocument>
         {
-            new() { FileName = "test.md", FilePath = "/test/test.md", Content = "Test content in nested folder" }
+            new() { FileName = "test.md", FilePath = Path.Combine("test", "test.md"), Content = "Test content in nested folder" }
         };
 
         // Act
@@ -256,7 +259,7 @@ public class MarkdownDocumentFileWriterServiceTests
 
         var documents = new List<MarkdownDocument>
         {
-            new() { FileName = "existing.md", FilePath = "/test/existing.md", Content = "Updated content" }
+            new() { FileName = "existing.md", FilePath = Path.Combine("test", "existing.md"), Content = "Updated content" }
         };
 
         // Act
@@ -279,7 +282,7 @@ public class MarkdownDocumentFileWriterServiceTests
 
         var documents = new List<MarkdownDocument>
         {
-            new() { FileName = "special.md", FilePath = "/test/special.md", Content = specialContent }
+            new() { FileName = "special.md", FilePath = Path.Combine("test", "special.md"), Content = specialContent }
         };
 
         // Act

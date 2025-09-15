@@ -2,7 +2,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Spectre.Console.Cli;
-using ProjectDocumentationManager.Business.Services;
 using ProjectDocumentationManager.Console.Commands;
 using ProjectDocumentationManager.Console.Services;
 

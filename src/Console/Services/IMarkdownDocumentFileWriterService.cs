@@ -1,6 +1,6 @@
-using ProjectDocumentationManager.Business.Models;
+using ProjectDocumentationManager.Console.Models;
 
-namespace ProjectDocumentationManager.Business.Services;
+namespace ProjectDocumentationManager.Console.Services;
 
 /// <summary>
 /// Service for writing MarkdownDocument collections to files in a specified folder

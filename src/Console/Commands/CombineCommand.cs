@@ -2,7 +2,6 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using Spectre.Console;
 using Spectre.Console.Cli;
-using ProjectDocumentationManager.Business.Services;
 using ProjectDocumentationManager.Console.Services;
 
 namespace ProjectDocumentationManager.Console.Commands;
@@ -38,9 +37,9 @@ public class CombineCommand(
             ansiConsole.MarkupLine($"[green]Collecting markdown files from:[/] {settings.InputFolder}");
             var allDocuments = await collector.CollectAllMarkdownFilesAsync(settings.InputFolder);
 
-            var templateFiles = allDocuments.Where(doc => doc.FileName.EndsWith(".mdext"));
-            var sourceFiles = allDocuments.Where(doc => doc.FileName.EndsWith(".mdsrc"));
-            var markdownFiles = allDocuments.Where(doc => doc.FileName.EndsWith(".md"));
+            var templateFiles = allDocuments.Where(doc => MarkdownFileExtensions.HasExtension(doc.FileName, MarkdownFileExtensions.Template));
+            var sourceFiles = allDocuments.Where(doc => MarkdownFileExtensions.HasExtension(doc.FileName, MarkdownFileExtensions.Source));
+            var markdownFiles = allDocuments.Where(doc => MarkdownFileExtensions.HasExtension(doc.FileName, MarkdownFileExtensions.Markdown));
 
             if (!templateFiles.Any())
             {

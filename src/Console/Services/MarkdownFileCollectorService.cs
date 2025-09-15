@@ -1,17 +1,13 @@
 using Microsoft.Extensions.Logging;
-using ProjectDocumentationManager.Business.Models;
+using ProjectDocumentationManager.Console.Models;
 
-namespace ProjectDocumentationManager.Business.Services;
+namespace ProjectDocumentationManager.Console.Services;
 
 /// <summary>
 /// Service for collecting markdown source and template files from a directory
 /// </summary>
 public class MarkdownFileCollectorService(ILogger<MarkdownFileCollectorService> logger) : IMarkdownFileCollectorService
 {
-    private const string TemplateFileExtension = ".mdext";
-    private const string SourceFileExtension = ".mdsrc";
-    private const string MarkdownFileExtension = ".md";
-
 
     public async Task<IEnumerable<MarkdownDocument>> CollectAllMarkdownFilesAsync(string directoryPath, CancellationToken cancellationToken = default)
     {
@@ -19,11 +15,11 @@ public class MarkdownFileCollectorService(ILogger<MarkdownFileCollectorService> 
 
         logger.LogDebug("Collecting all markdown files (.md, .mdsrc, and .mdext) from directory: {DirectoryPath}", directoryPath);
 
-        var allFiles = await CollectFilesByExtensionAsync(directoryPath, [MarkdownFileExtension, TemplateFileExtension, SourceFileExtension], cancellationToken);
+        var allFiles = await CollectFilesByExtensionAsync(directoryPath, [MarkdownFileExtensions.Markdown, MarkdownFileExtensions.Template, MarkdownFileExtensions.Source], cancellationToken);
 
-        var markdownFiles = allFiles.Where(f => f.FileName.EndsWith(MarkdownFileExtension));
-        var templateFiles = allFiles.Where(f => f.FileName.EndsWith(TemplateFileExtension));
-        var sourceFiles = allFiles.Where(f => f.FileName.EndsWith(SourceFileExtension));
+        var markdownFiles = allFiles.Where(f => MarkdownFileExtensions.HasExtension(f.FileName, MarkdownFileExtensions.Markdown));
+        var templateFiles = allFiles.Where(f => MarkdownFileExtensions.HasExtension(f.FileName, MarkdownFileExtensions.Template));
+        var sourceFiles = allFiles.Where(f => MarkdownFileExtensions.HasExtension(f.FileName, MarkdownFileExtensions.Source));
 
         logger.LogInformation("Collected {TotalCount} markdown files ({MarkdownCount} .md, {TemplateCount} .mdext, {SourceCount} .mdsrc) from: {DirectoryPath}",
             allFiles.Count(), markdownFiles.Count(), templateFiles.Count(), sourceFiles.Count(), directoryPath);
@@ -45,7 +41,7 @@ public class MarkdownFileCollectorService(ILogger<MarkdownFileCollectorService> 
 
             // Stream files instead of materializing all paths
             var filteredFiles = Directory.EnumerateFiles(directoryPath, "*", SearchOption.AllDirectories)
-                .Where(f => extensions.Any(ext => f.EndsWith(ext, StringComparison.OrdinalIgnoreCase)));
+                .Where(f => extensions.Any(ext => MarkdownFileExtensions.HasExtension(f, ext)));
 
             foreach (var filePath in filteredFiles)
             {
@@ -64,18 +60,11 @@ public class MarkdownFileCollectorService(ILogger<MarkdownFileCollectorService> 
         }
         catch (DirectoryNotFoundException ex)
         {
-            logger.LogError(ex, "Directory not found: {DirectoryPath}", directoryPath);
-            throw;
+            throw new DirectoryNotFoundException($"Directory not found: {directoryPath}", ex);
         }
         catch (UnauthorizedAccessException ex)
         {
-            logger.LogError(ex, "Access denied to directory: {DirectoryPath}", directoryPath);
-            throw;
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Unexpected error collecting files from directory: {DirectoryPath}", directoryPath);
-            throw;
+            throw new UnauthorizedAccessException($"Access denied to directory: {directoryPath}", ex);
         }
 
         return documents;
@@ -94,7 +83,7 @@ public class MarkdownFileCollectorService(ILogger<MarkdownFileCollectorService> 
             return new MarkdownDocument
             {
                 FileName = relativePath,
-                FilePath = filePath,
+                FilePath = relativePath,
                 Content = content
             };
         }
@@ -106,7 +95,7 @@ public class MarkdownFileCollectorService(ILogger<MarkdownFileCollectorService> 
             return new MarkdownDocument
             {
                 FileName = relativePath,
-                FilePath = filePath,
+                FilePath = relativePath,
                 Content = string.Empty
             };
         }

@@ -1,4 +1,4 @@
-namespace ProjectDocumentationManager.Business.Models;
+namespace ProjectDocumentationManager.Console.Models;
 
 /// <summary>
 /// Represents a markdown document with its filename, full path, and content
@@ -11,7 +11,7 @@ public class MarkdownDocument
     public required string FileName { get; init; }
 
     /// <summary>
-    /// The full file path of the document (e.g., "/path/to/project/docs/common-features.md")
+    /// The relative file path of the document from the base directory (e.g., "docs/common-features.md")
     /// </summary>
     public required string FilePath { get; init; }
 

@@ -1,4 +1,4 @@
-namespace ProjectDocumentationManager.Business.Models;
+namespace ProjectDocumentationManager.Console.Models;
 
 /// <summary>
 /// Represents the result of a validation operation with errors and warnings

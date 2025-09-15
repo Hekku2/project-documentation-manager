@@ -2,7 +2,6 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using Spectre.Console;
 using Spectre.Console.Cli;
-using ProjectDocumentationManager.Business.Services;
 using ProjectDocumentationManager.Console.Services;
 
 namespace ProjectDocumentationManager.Console.Commands;
@@ -34,9 +33,9 @@ public class ValidateCommand(
             ansiConsole.MarkupLine($"[green]Validating markdown files in:[/] {settings.InputFolder}");
             var allDocuments = await collector.CollectAllMarkdownFilesAsync(settings.InputFolder);
             var docList = allDocuments.ToList();
-            var templateFiles = docList.Where(doc => doc.FileName.EndsWith(".mdext", System.StringComparison.OrdinalIgnoreCase)).ToList();
-            var sourceFiles = docList.Where(doc => doc.FileName.EndsWith(".mdsrc", System.StringComparison.OrdinalIgnoreCase)).ToList();
-            var markdownFiles = docList.Where(doc => doc.FileName.EndsWith(".md", System.StringComparison.OrdinalIgnoreCase)).ToList();
+            var templateFiles = docList.Where(doc => MarkdownFileExtensions.HasExtension(doc.FileName, MarkdownFileExtensions.Template)).ToList();
+            var sourceFiles = docList.Where(doc => MarkdownFileExtensions.HasExtension(doc.FileName, MarkdownFileExtensions.Source)).ToList();
+            var markdownFiles = docList.Where(doc => MarkdownFileExtensions.HasExtension(doc.FileName, MarkdownFileExtensions.Markdown)).ToList();
             if (!templateFiles.Any())
             {
                 ansiConsole.MarkupLine("[yellow]Warning: No markdown template files found[/]");
@@ -78,7 +77,7 @@ public class ValidateCommand(
         }
     }
 
-    private static Table CreateSummaryTable(Business.Models.ValidationResult validationResult, int totalFiles)
+    private static Table CreateSummaryTable(ProjectDocumentationManager.Console.Models.ValidationResult validationResult, int totalFiles)
     {
         // Summary
         var table = new Table();

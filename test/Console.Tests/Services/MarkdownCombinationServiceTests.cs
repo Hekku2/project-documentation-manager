@@ -1,10 +1,10 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using NUnit.Framework;
-using ProjectDocumentationManager.Business.Models;
-using ProjectDocumentationManager.Business.Services;
+using ProjectDocumentationManager.Console.Models;
+using ProjectDocumentationManager.Console.Services;
 
-namespace ProjectDocumentationManager.Business.Tests.Services;
+namespace ProjectDocumentationManager.Console.Tests.Services;
 
 [TestFixture]
 public class MarkdownCombinationServiceTests
@@ -18,6 +18,12 @@ public class MarkdownCombinationServiceTests
         _mockLogger = NullLoggerFactory.Instance.CreateLogger<MarkdownCombinationService>();
         _service = new MarkdownCombinationService(_mockLogger);
     }
+
+    /// <summary>
+    /// Helper method to create cross-platform test file paths
+    /// </summary>
+    private static string TestPath(params string[] pathComponents) =>
+        Path.Combine(pathComponents);
 
     [Test]
     public void BuildDocumentation_WithNullDocuments_ThrowsArgumentNullException()
@@ -47,7 +53,7 @@ public class MarkdownCombinationServiceTests
         // Arrange
         var documents = new List<MarkdownDocument>
         {
-            new() { FileName = "template.mdext", FilePath = "/test/template.mdext", Content = "# Title\n\nThis is regular content without inserts." }
+            new() { FileName = "template.mdext", FilePath = TestPath("test", "template.mdext"), Content = "# Title\n\nThis is regular content without inserts." }
         };
 
         // Act
@@ -68,8 +74,8 @@ public class MarkdownCombinationServiceTests
         // Arrange
         var documents = new List<MarkdownDocument>
         {
-            new() { FileName = "windows-features.mdext", FilePath = "/test/windows-features.mdext", Content = " * windows feature\n <MarkDownExtension operation=\"insert\" file=\"common-features.mdsrc\" />" },
-            new() { FileName = "common-features.mdsrc", FilePath = "/test/common-features.mdsrc", Content = " * common feature" }
+            new() { FileName = "windows-features.mdext", FilePath = TestPath("test", "windows-features.mdext"), Content = " * windows feature\n <MarkDownExtension operation=\"insert\" file=\"common-features.mdsrc\" />" },
+            new() { FileName = "common-features.mdsrc", FilePath = TestPath("test", "common-features.mdsrc"), Content = " * common feature" }
         };
 
         // Act
@@ -303,7 +309,7 @@ public class MarkdownCombinationServiceTests
         var documents = new[]
         {
             new MarkdownDocument { FileName = "template1.mdext", FilePath = "/test/template1.mdext", Content = "# Template 1" },
-            new MarkdownDocument { FileName = "subfolder/template2.mdext", FilePath = "/test/subfolder/template2.mdext", Content = "# Template 2\n<MarkDownExtension operation=\"insert\" file=\"source.mdsrc\" />" },
+            new MarkdownDocument { FileName = Path.Combine("subfolder", "template2.mdext"), FilePath = TestPath("test", "subfolder", "template2.mdext"), Content = "# Template 2\n<MarkDownExtension operation=\"insert\" file=\"source.mdsrc\" />" },
             new MarkdownDocument { FileName = "source.mdsrc", FilePath = "/test/source.mdsrc", Content = "Source content" }
         };
 
@@ -318,7 +324,7 @@ public class MarkdownCombinationServiceTests
 
             // Verify file extensions are changed to .md
             Assert.That(resultList[0].FileName, Is.EqualTo("template1.md"), "First template should have .md extension");
-            Assert.That(resultList[1].FileName, Is.EqualTo("subfolder/template2.md"), "Second template should have .md extension with preserved path");
+            Assert.That(resultList[1].FileName, Is.EqualTo(Path.Combine("subfolder", "template2.md")), "Second template should have .md extension with preserved path");
 
             // Verify content is processed correctly
             Assert.That(resultList[0].Content, Is.EqualTo("# Template 1"), "First template content should be unchanged");
