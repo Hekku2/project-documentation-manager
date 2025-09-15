@@ -1,7 +1,5 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using NUnit.Framework;
-using NSubstitute;
 using MarkdownCompiler.Console.Models;
 using MarkdownCompiler.Console.Services;
 

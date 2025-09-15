@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using NUnit.Framework;
 using MarkdownCompiler.Console.Services;
 
 namespace MarkdownCompiler.Console.Tests.Services;
@@ -95,10 +94,10 @@ public class MarkdownFileCollectorServiceTests
         // Arrange
         var subDir = Path.Combine(_testDirectory, "docs", "templates");
         Directory.CreateDirectory(subDir);
-        
+
         var templateFile = Path.Combine(subDir, "template.mdext");
         var sourceFile = Path.Combine(_testDirectory, "common.mdsrc");
-        
+
         await File.WriteAllTextAsync(templateFile, "# Template content");
         await File.WriteAllTextAsync(sourceFile, "Common content");
 
@@ -115,21 +114,21 @@ public class MarkdownFileCollectorServiceTests
             var sourceDoc = filesList.First(f => f.FileName.EndsWith(".mdsrc"));
 
             // FilePath should be relative path from the base directory
-            Assert.That(templateDoc.FilePath, Is.EqualTo(Path.Combine("docs", "templates", "template.mdext")), 
+            Assert.That(templateDoc.FilePath, Is.EqualTo(Path.Combine("docs", "templates", "template.mdext")),
                 "Template FilePath should be relative path from base directory");
-            Assert.That(sourceDoc.FilePath, Is.EqualTo("common.mdsrc"), 
+            Assert.That(sourceDoc.FilePath, Is.EqualTo("common.mdsrc"),
                 "Source FilePath should be relative path from base directory");
 
             // FileName should also be relative path (as per current implementation)
-            Assert.That(templateDoc.FileName, Is.EqualTo(Path.Combine("docs", "templates", "template.mdext")), 
+            Assert.That(templateDoc.FileName, Is.EqualTo(Path.Combine("docs", "templates", "template.mdext")),
                 "Template FileName should be relative path from base directory");
-            Assert.That(sourceDoc.FileName, Is.EqualTo("common.mdsrc"), 
+            Assert.That(sourceDoc.FileName, Is.EqualTo("common.mdsrc"),
                 "Source FileName should be relative path from base directory");
 
             // FilePath should NOT be absolute paths
-            Assert.That(Path.IsPathRooted(templateDoc.FilePath), Is.False, 
+            Assert.That(Path.IsPathRooted(templateDoc.FilePath), Is.False,
                 "Template FilePath should not be an absolute path");
-            Assert.That(Path.IsPathRooted(sourceDoc.FilePath), Is.False, 
+            Assert.That(Path.IsPathRooted(sourceDoc.FilePath), Is.False,
                 "Source FilePath should not be an absolute path");
         }
     }
@@ -141,14 +140,14 @@ public class MarkdownFileCollectorServiceTests
         var level1Dir = Path.Combine(_testDirectory, "level1");
         var level2Dir = Path.Combine(level1Dir, "level2");
         var level3Dir = Path.Combine(level2Dir, "level3");
-        
+
         Directory.CreateDirectory(level3Dir);
-        
+
         var rootFile = Path.Combine(_testDirectory, "root.md");
         var level1File = Path.Combine(level1Dir, "level1.mdsrc");
         var level2File = Path.Combine(level2Dir, "level2.mdext");
         var level3File = Path.Combine(level3Dir, "level3.md");
-        
+
         await File.WriteAllTextAsync(rootFile, "Root content");
         await File.WriteAllTextAsync(level1File, "Level 1 content");
         await File.WriteAllTextAsync(level2File, "Level 2 content");
@@ -165,9 +164,9 @@ public class MarkdownFileCollectorServiceTests
 
             foreach (var doc in filesList)
             {
-                Assert.That(Path.IsPathRooted(doc.FilePath), Is.False, 
+                Assert.That(Path.IsPathRooted(doc.FilePath), Is.False,
                     $"FilePath '{doc.FilePath}' should not be an absolute path");
-                
+
                 // Verify the relative path structure is preserved
                 if (doc.FileName.Contains("root.md"))
                 {

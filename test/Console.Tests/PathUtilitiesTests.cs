@@ -1,5 +1,3 @@
-using NUnit.Framework;
-
 namespace MarkdownCompiler.Console.Tests;
 
 [TestFixture]
