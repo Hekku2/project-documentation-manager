@@ -26,9 +26,9 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
 
         var templateList = templateDocuments.ToList();
         var sourceDictionary = sourceDocuments.ToDictionary(
-            doc => NormalizePathKey(doc.FileName),
+            doc => PathUtilities.NormalizePathKey(doc.FileName),
              doc => doc.Content,
-             StringComparer.OrdinalIgnoreCase);
+             PathUtilities.FilePathComparer);
 
         logger.LogInformation("Building documentation for {TemplateCount} templates using {SourceCount} source documents",
             templateList.Count, sourceDictionary.Count);
@@ -113,7 +113,7 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
                 if (processedDirectives.Contains(fullDirective))
                     continue;
 
-                var normalizedFileName = NormalizePathKey(fileName);
+                var normalizedFileName = PathUtilities.NormalizePathKey(fileName);
                 if (sourceDictionary.TryGetValue(normalizedFileName, out var sourceContent))
                 {
                     logger.LogDebug("Inserting content from {SourceFileName} into {TemplateFileName}",
@@ -350,9 +350,9 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
 
             var result = new ValidationResult();
             var sourceDictionary = sourceList.ToDictionary(
-                doc => doc.FileName,
+                doc => PathUtilities.NormalizePathKey(doc.FileName),
                 doc => doc.Content,
-                StringComparer.OrdinalIgnoreCase);
+                PathUtilities.FilePathComparer);
 
             if (!string.IsNullOrEmpty(template.Content))
             {
@@ -397,6 +397,4 @@ public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logg
         return combinedResult;
     }
 
-    private static string NormalizePathKey(string path) =>
-        path.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
 }
