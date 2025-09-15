@@ -2,9 +2,9 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using Spectre.Console;
 using Spectre.Console.Cli;
-using ProjectDocumentationManager.Console.Services;
+using MarkdownCompiler.Console.Services;
 
-namespace ProjectDocumentationManager.Console.Commands;
+namespace MarkdownCompiler.Console.Commands;
 
 public class CombineCommand(
     IMarkdownFileCollectorService collector,

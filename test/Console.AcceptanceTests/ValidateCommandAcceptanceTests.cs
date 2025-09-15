@@ -1,6 +1,6 @@
 using System.Runtime;
 
-namespace ProjectDocumentationManager.Console.AcceptanceTests;
+namespace MarkdownCompiler.Console.AcceptanceTests;
 
 [TestFixture]
 [NonParallelizable]

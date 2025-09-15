@@ -1,6 +1,6 @@
-using ProjectDocumentationManager.Console.Models;
+using MarkdownCompiler.Console.Models;
 
-namespace ProjectDocumentationManager.Console.Services;
+namespace MarkdownCompiler.Console.Services;
 
 /// <summary>
 /// Service for writing MarkdownDocument collections to files in a specified folder

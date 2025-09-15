@@ -2,10 +2,10 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using NUnit.Framework;
 using NSubstitute;
-using ProjectDocumentationManager.Console.Models;
-using ProjectDocumentationManager.Console.Services;
+using MarkdownCompiler.Console.Models;
+using MarkdownCompiler.Console.Services;
 
-namespace ProjectDocumentationManager.Console.Tests.Services;
+namespace MarkdownCompiler.Console.Tests.Services;
 
 [TestFixture]
 public class MarkdownDocumentFileWriterServiceTests

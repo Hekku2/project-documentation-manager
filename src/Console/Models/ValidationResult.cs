@@ -1,4 +1,4 @@
-namespace ProjectDocumentationManager.Console.Models;
+namespace MarkdownCompiler.Console.Models;
 
 /// <summary>
 /// Represents the result of a validation operation with errors and warnings

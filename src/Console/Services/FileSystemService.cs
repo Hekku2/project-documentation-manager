@@ -1,4 +1,4 @@
-namespace ProjectDocumentationManager.Console.Services;
+namespace MarkdownCompiler.Console.Services;
 
 /// <summary>
 /// Default implementation of IFileSystemService that wraps standard .NET file system operations

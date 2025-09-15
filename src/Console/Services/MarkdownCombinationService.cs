@@ -1,8 +1,8 @@
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
-using ProjectDocumentationManager.Console.Models;
+using MarkdownCompiler.Console.Models;
 
-namespace ProjectDocumentationManager.Console.Services;
+namespace MarkdownCompiler.Console.Services;
 
 /// <summary>
 /// Service for building documentation by processing template files with insert directives

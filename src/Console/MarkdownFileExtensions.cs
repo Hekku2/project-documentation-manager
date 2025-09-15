@@ -1,4 +1,4 @@
-namespace ProjectDocumentationManager.Console;
+namespace MarkdownCompiler.Console;
 
 /// <summary>
 /// Constants for markdown file extensions used in the project documentation manager

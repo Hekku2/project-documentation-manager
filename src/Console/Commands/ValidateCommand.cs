@@ -2,9 +2,9 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using Spectre.Console;
 using Spectre.Console.Cli;
-using ProjectDocumentationManager.Console.Services;
+using MarkdownCompiler.Console.Services;
 
-namespace ProjectDocumentationManager.Console.Commands;
+namespace MarkdownCompiler.Console.Commands;
 
 public class ValidateCommand(
     IAnsiConsole ansiConsole,
@@ -77,7 +77,7 @@ public class ValidateCommand(
         }
     }
 
-    private static Table CreateSummaryTable(ProjectDocumentationManager.Console.Models.ValidationResult validationResult, int totalFiles)
+    private static Table CreateSummaryTable(MarkdownCompiler.Console.Models.ValidationResult validationResult, int totalFiles)
     {
         // Summary
         var table = new Table();

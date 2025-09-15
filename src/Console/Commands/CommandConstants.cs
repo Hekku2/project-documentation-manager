@@ -1,4 +1,4 @@
-namespace ProjectDocumentationManager.Console.Commands;
+namespace MarkdownCompiler.Console.Commands;
 
 public static class CommandConstants
 {

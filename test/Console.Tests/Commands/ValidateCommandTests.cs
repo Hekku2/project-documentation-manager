@@ -1,10 +1,10 @@
 using NSubstitute;
-using ProjectDocumentationManager.Console.Models;
-using ProjectDocumentationManager.Console.Commands;
-using ProjectDocumentationManager.Console.Services;
+using MarkdownCompiler.Console.Models;
+using MarkdownCompiler.Console.Commands;
+using MarkdownCompiler.Console.Services;
 using Spectre.Console.Cli;
 
-namespace ProjectDocumentationManager.Console.Tests.Commands;
+namespace MarkdownCompiler.Console.Tests.Commands;
 
 [TestFixture]
 public class ValidateCommandTests

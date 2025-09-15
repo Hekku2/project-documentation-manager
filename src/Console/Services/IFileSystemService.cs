@@ -1,4 +1,4 @@
-namespace ProjectDocumentationManager.Console.Services;
+namespace MarkdownCompiler.Console.Services;
 
 /// <summary>
 /// Service for file system operations used by console commands

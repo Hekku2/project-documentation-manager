@@ -1,6 +1,6 @@
 using NUnit.Framework;
 
-namespace ProjectDocumentationManager.Console.Tests;
+namespace MarkdownCompiler.Console.Tests;
 
 [TestFixture]
 public class PathUtilitiesTests

@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
-    <RootNamespace>ProjectDocumentationManager.Console.AcceptanceTests</RootNamespace>
+    <RootNamespace>MarkdownCompiler.Console.AcceptanceTests</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

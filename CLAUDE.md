@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a C# console application for managing project documentation through markdown template processing. The tool processes `.mdext` template files and `.mdsrc` source files to generate combined markdown documentation. It's designed as a command-line tool that can be packaged and distributed as a .NET global tool.
+This is a C# console application for compiling markdown templates and sources into documentation. The tool processes `.mdext` template files and `.mdsrc` source files to generate combined markdown documentation. It's designed as a command-line tool that can be packaged and distributed as a .NET global tool.
 
 ## Technology Stack
 
@@ -52,11 +52,11 @@ dotnet run --project src/Console/Console.csproj -- validate --input ./example-pr
 
 # Install as global tool (after building)
 dotnet pack src/Console/Console.csproj
-dotnet tool install --global --add-source ./src/Console/nupkg ProjectDocumentationManager.Console
+dotnet tool install --global --add-source ./src/Console/nupkg MarkdownCompiler.Console
 
 # Run as global tool
-project-docs combine --input ./example-projects/basic-features --output ./output
-project-docs validate --input ./example-projects/basic-features
+markdown-compiler combine --input ./example-projects/basic-features --output ./output
+markdown-compiler validate --input ./example-projects/basic-features
 ```
 
 ### Testing
@@ -99,7 +99,7 @@ The console application uses **Spectre.Console.Cli** for command-line interface:
 ### Consolidated Architecture
 All components are consolidated within the Console project:
 - **Services Layer**: `IMarkdownFileCollectorService`, `IMarkdownCombinationService`, `IMarkdownDocumentFileWriterService`
-- **Models**: `MarkdownDocument`, `ValidationResult`, `ValidationIssue` in `ProjectDocumentationManager.Console.Models`
+- **Models**: `MarkdownDocument`, `ValidationResult`, `ValidationIssue` in `MarkdownCompiler.Console.Models`
 - **Template System**: Processes `.mdext` template files with `.mdsrc` source inclusions
 - **File Processing**: Collects, combines, and writes processed markdown documentation
 - **Validation**: Validates template syntax and source file references
@@ -230,15 +230,15 @@ The Console project includes a dedicated file system service abstraction:
 - **Testing Strategy**: Commands and services use mocked file system service in tests, while acceptance tests use real file operations
 
 ### Namespace Structure
-All components use the `ProjectDocumentationManager.Console` namespace hierarchy:
-- **`ProjectDocumentationManager.Console.Models`**: Data models (`MarkdownDocument`, `ValidationResult`, `ValidationIssue`)
-- **`ProjectDocumentationManager.Console.Services`**: All service interfaces and implementations
-- **`ProjectDocumentationManager.Console.Commands`**: Spectre.Console CLI command implementations
-- **`ProjectDocumentationManager.Console`**: Root namespace with utilities (`PathUtilities`, `MarkdownFileExtensions`)
+All components use the `MarkdownCompiler.Console` namespace hierarchy:
+- **`MarkdownCompiler.Console.Models`**: Data models (`MarkdownDocument`, `ValidationResult`, `ValidationIssue`)
+- **`MarkdownCompiler.Console.Services`**: All service interfaces and implementations
+- **`MarkdownCompiler.Console.Commands`**: Spectre.Console CLI command implementations
+- **`MarkdownCompiler.Console`**: Root namespace with utilities (`PathUtilities`, `MarkdownFileExtensions`)
 
 ## Architecture Notes
 
-**IMPORTANT**: This project was recently refactored from a multi-project solution to a consolidated single-project architecture. All business logic, models, and services that were previously in a separate `Business` project have been moved to the `Console` project. The `Business` project no longer exists. All components now use the `ProjectDocumentationManager.Console.*` namespace hierarchy.
+**IMPORTANT**: This project was recently refactored from a multi-project solution to a consolidated single-project architecture. All business logic, models, and services that were previously in a separate `Business` project have been moved to the `Console` project. The `Business` project no longer exists. All components now use the `MarkdownCompiler.Console.*` namespace hierarchy.
 
 ## important-instruction-reminders
 Do what has been asked; nothing more, nothing less.
