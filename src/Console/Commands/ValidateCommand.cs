@@ -60,7 +60,7 @@ public class ValidateCommand(
                     ansiConsole.MarkupLine("\n[yellow]Issues found:[/]");
                     foreach (var error in validationResult.Errors)
                     {
-                        ansiConsole.MarkupLine($"[red]- {error.Message}[/]");
+                        ansiConsole.MarkupLine($"[red]Error: {error.Message.EscapeMarkup()}[/]");
                     }
                 }
 

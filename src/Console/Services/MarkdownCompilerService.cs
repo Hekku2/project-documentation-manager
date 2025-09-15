@@ -26,7 +26,7 @@ public class MarkdownCompilerService(ILogger<MarkdownCompilerService> logger) : 
 
         var templateList = templateDocuments.ToList();
         var sourceDictionary = sourceDocuments.ToDictionary(
-            doc => PathUtilities.NormalizePathKey(doc.FileName),
+            doc => PathUtilities.NormalizePathKey(doc.FilePath),
              doc => doc.Content,
              PathUtilities.FilePathComparer);
 
@@ -46,13 +46,26 @@ public class MarkdownCompilerService(ILogger<MarkdownCompilerService> logger) : 
 
         var results = new List<MarkdownDocument>();
 
+        // Add regular markdown files that are not source files
+        var regularMarkdownFiles = documentList.Where(doc =>
+            MarkdownFileExtensions.HasExtension(doc.FileName, MarkdownFileExtensions.Markdown) &&
+            !MarkdownFileExtensions.HasExtension(doc.FileName, MarkdownFileExtensions.Source) &&
+            !MarkdownFileExtensions.HasExtension(doc.FileName, MarkdownFileExtensions.Template));
+
+        foreach (var markdownFile in regularMarkdownFiles)
+        {
+            results.Add(markdownFile);
+            logger.LogDebug("Including regular markdown file: {FileName}", markdownFile.FileName);
+        }
+
+        // Process template files
         foreach (var template in templateList)
         {
             try
             {
-                logger.LogDebug("Processing template: {TemplateFileName}", template.FileName);
+                logger.LogDebug("Processing template: {TemplateFilePath}", template.FilePath);
 
-                var processedContent = ProcessTemplate(template.Content, sourceDictionary, template.FileName);
+                var processedContent = ProcessTemplate(template.Content, sourceDictionary, template.FilePath);
                 var outputFileName = Path.ChangeExtension(template.FileName, MarkdownFileExtensions.Markdown);
                 var resultDocument = new MarkdownDocument
                 {
@@ -84,7 +97,7 @@ public class MarkdownCompilerService(ILogger<MarkdownCompilerService> logger) : 
         return results;
     }
 
-    private string ProcessTemplate(string templateContent, Dictionary<string, string> sourceDictionary, string templateFileName)
+    private string ProcessTemplate(string templateContent, Dictionary<string, string> sourceDictionary, string templateFilePath)
     {
         if (string.IsNullOrEmpty(templateContent))
             return templateContent;
@@ -101,11 +114,11 @@ public class MarkdownCompilerService(ILogger<MarkdownCompilerService> logger) : 
             if (matches.Count == 0)
                 break;
 
-            directiveProcesses = ProcessDirectiveMatches(matches, ref processedContent, sourceDictionary, processedDirectives, templateFileName);
+            directiveProcesses = ProcessDirectiveMatches(matches, ref processedContent, sourceDictionary, processedDirectives, templateFilePath);
             iteration++;
         }
 
-        LogMaxIterationsWarningIfNeeded(iteration, MaxIterations, templateFileName);
+        LogMaxIterationsWarningIfNeeded(iteration, MaxIterations, templateFilePath);
         return processedContent;
     }
 
@@ -115,13 +128,13 @@ public class MarkdownCompilerService(ILogger<MarkdownCompilerService> logger) : 
     }
 
     private bool ProcessDirectiveMatches(MatchCollection matches, ref string processedContent,
-        Dictionary<string, string> sourceDictionary, HashSet<string> processedDirectives, string templateFileName)
+        Dictionary<string, string> sourceDictionary, HashSet<string> processedDirectives, string templateFilePath)
     {
         var anyReplaced = false;
 
         foreach (Match match in matches)
         {
-            if (ProcessSingleDirective(match, ref processedContent, sourceDictionary, processedDirectives, templateFileName))
+            if (ProcessSingleDirective(match, ref processedContent, sourceDictionary, processedDirectives, templateFilePath))
             {
                 anyReplaced = true;
             }
@@ -131,7 +144,7 @@ public class MarkdownCompilerService(ILogger<MarkdownCompilerService> logger) : 
     }
 
     private bool ProcessSingleDirective(Match match, ref string processedContent,
-        Dictionary<string, string> sourceDictionary, HashSet<string> processedDirectives, string templateFileName)
+        Dictionary<string, string> sourceDictionary, HashSet<string> processedDirectives, string templateFilePath)
     {
         var fullDirective = match.Value;
         var fileName = match.Groups[1].Value.Trim();
@@ -142,8 +155,14 @@ public class MarkdownCompilerService(ILogger<MarkdownCompilerService> logger) : 
             return false;
         }
 
-        var normalizedFileName = PathUtilities.NormalizePathKey(fileName);
-        string replacementContent = GetReplacementContent(normalizedFileName, sourceDictionary, templateFileName);
+        // Resolve relative path based on template location
+        var templateDir = Path.GetDirectoryName(templateFilePath) ?? string.Empty;
+        var resolvedPath = string.IsNullOrEmpty(templateDir)
+            ? fileName
+            : Path.GetRelativePath(".", Path.Combine(templateDir, fileName));
+
+        var normalizedFileName = PathUtilities.NormalizePathKey(resolvedPath);
+        string replacementContent = GetReplacementContent(normalizedFileName, sourceDictionary, templateFilePath);
 
         processedContent = processedContent.Replace(fullDirective, replacementContent);
         processedDirectives.Add(fullDirective);
@@ -209,12 +228,13 @@ public class MarkdownCompilerService(ILogger<MarkdownCompilerService> logger) : 
                 ValidateDuplicateDirective(fullDirective, fileName, line, lineNumber, templateDocument, processedDirectives, result);
 
                 // Track directives for potential circular reference detection
-                currentDirectives.Add(fileName);
+                var templateDir = Path.GetDirectoryName(templateDocument.FilePath) ?? string.Empty;
+                var resolvedPath = string.IsNullOrEmpty(templateDir)
+                    ? fileName
+                    : Path.GetRelativePath(".", Path.Combine(templateDir, fileName));
+                currentDirectives.Add(resolvedPath);
             }
         }
-
-        // Check for potential circular references by validating nested directives
-        ValidateCircularReferences(templateDocument.FileName, currentDirectives, sourceDictionary, result, new HashSet<string>());
     }
 
     private void ValidateMalformedDirectives(string line, int lineNumber, MarkdownDocument templateDocument, ValidationResult result)
@@ -290,11 +310,18 @@ public class MarkdownCompilerService(ILogger<MarkdownCompilerService> logger) : 
 
     private static bool ValidateSourceFileExists(string fileName, string line, int lineNumber, MarkdownDocument templateDocument, Dictionary<string, string> sourceDictionary, ValidationResult result)
     {
-        if (sourceDictionary.ContainsKey(fileName)) return true;
+        // Resolve relative path based on template location
+        var templateDir = Path.GetDirectoryName(templateDocument.FilePath) ?? string.Empty;
+        var resolvedPath = string.IsNullOrEmpty(templateDir)
+            ? fileName
+            : Path.GetRelativePath(".", Path.Combine(templateDir, fileName));
+
+        var normalizedFileName = PathUtilities.NormalizePathKey(resolvedPath);
+        if (sourceDictionary.ContainsKey(normalizedFileName)) return true;
 
         result.Errors.Add(new ValidationIssue
         {
-            Message = $"Source document not found: '{fileName}'",
+            Message = $"Source document not found: '{fileName}' (resolved to: '{normalizedFileName}')",
             DirectivePath = fileName,
             SourceFile = templateDocument.FilePath,
             LineNumber = lineNumber,
@@ -318,50 +345,15 @@ public class MarkdownCompilerService(ILogger<MarkdownCompilerService> logger) : 
         }
     }
 
-    private void ValidateCircularReferences(string currentFileName, HashSet<string> currentDirectives,
-        Dictionary<string, string> sourceDictionary, ValidationResult result, HashSet<string> visitedFiles)
-    {
-        if (visitedFiles.Contains(currentFileName))
-        {
-            result.Warnings.Add(new ValidationIssue
-            {
-                Message = $"Potential circular reference detected involving file: '{currentFileName}'",
-                DirectivePath = currentFileName,
-                SourceFile = currentFileName
-            });
-            return;
-        }
-
-        visitedFiles.Add(currentFileName);
-
-        foreach (var directive in currentDirectives)
-        {
-            if (sourceDictionary.TryGetValue(directive, out var sourceContent))
-            {
-                var nestedMatches = InsertDirectiveRegex.Matches(sourceContent);
-                var nestedDirectives = new HashSet<string>();
-
-                foreach (Match match in nestedMatches)
-                {
-                    var nestedFileName = match.Groups[1].Value.Trim();
-                    nestedDirectives.Add(nestedFileName);
-                }
-
-                if (nestedDirectives.Count > 0)
-                {
-                    ValidateCircularReferences(directive, nestedDirectives, sourceDictionary, result, new HashSet<string>(visitedFiles));
-                }
-            }
-        }
-    }
-
     public ValidationResult Validate(IEnumerable<MarkdownDocument> documents)
     {
         if (documents == null)
             throw new ArgumentNullException(nameof(documents));
 
         var documentList = documents.ToList();
-        var templateDocuments = documentList.Where(doc => MarkdownFileExtensions.HasExtension(doc.FileName, MarkdownFileExtensions.Template));
+        var templateDocuments = documentList.Where(doc =>
+            MarkdownFileExtensions.HasExtension(doc.FileName, MarkdownFileExtensions.Template) ||
+            MarkdownFileExtensions.HasExtension(doc.FileName, MarkdownFileExtensions.Source));
         var sourceDocuments = documentList.Where(doc =>
             MarkdownFileExtensions.HasExtension(doc.FileName, MarkdownFileExtensions.Source) ||
             MarkdownFileExtensions.HasExtension(doc.FileName, MarkdownFileExtensions.Markdown) ||
@@ -375,11 +367,11 @@ public class MarkdownCompilerService(ILogger<MarkdownCompilerService> logger) : 
 
         foreach (var template in templateList)
         {
-            logger.LogDebug("Validating template: {TemplateFileName}", template.FileName);
+            logger.LogDebug("Validating template: {TemplateFileName}", template.FilePath);
 
             var result = new ValidationResult();
             var sourceDictionary = sourceList.ToDictionary(
-                doc => PathUtilities.NormalizePathKey(doc.FileName),
+                doc => PathUtilities.NormalizePathKey(doc.FilePath),
                 doc => doc.Content,
                 PathUtilities.FilePathComparer);
 
@@ -391,7 +383,7 @@ public class MarkdownCompilerService(ILogger<MarkdownCompilerService> logger) : 
             if (validationResult.IsValid)
             {
                 combinedResult.ValidFilesCount++;
-                logger.LogDebug("Template {TemplateFileName} is valid", template.FileName);
+                logger.LogDebug("Template {TemplateFileName} is valid", template.FilePath);
             }
 
             // Add template filename context to errors and warnings

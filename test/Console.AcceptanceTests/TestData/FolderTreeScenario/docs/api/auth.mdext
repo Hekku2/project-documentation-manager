@@ -1,0 +1,14 @@
+<MarkDownExtension operation="insert" file="../../shared/headers/api-header.mdsrc" />
+
+## Authentication
+
+This API uses Bearer token authentication. Include your API token in the Authorization header.
+
+<MarkDownExtension operation="insert" file="../../shared/snippets/warning-blocks.mdsrc" />
+
+### Getting Your Token
+1. Log in to your account
+2. Navigate to API Settings
+3. Generate a new token
+
+<MarkDownExtension operation="insert" file="../../shared/footers/common-footer.mdsrc" />

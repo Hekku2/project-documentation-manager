@@ -1,0 +1,10 @@
+# API Documentation
+
+This section provides comprehensive information about our REST API endpoints.
+
+## Quick Navigation
+- [Authentication](#authentication)
+- [Rate Limiting](#rate-limiting)
+- [Error Handling](#error-handling)
+
+---
