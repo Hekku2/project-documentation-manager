@@ -91,7 +91,7 @@ public class MarkdownFileCollectorService(ILogger<MarkdownFileCollectorService> 
             return new MarkdownDocument
             {
                 FileName = relativePath,
-                FilePath = filePath,
+                FilePath = relativePath,
                 Content = content
             };
         }
@@ -103,7 +103,7 @@ public class MarkdownFileCollectorService(ILogger<MarkdownFileCollectorService> 
             return new MarkdownDocument
             {
                 FileName = relativePath,
-                FilePath = filePath,
+                FilePath = relativePath,
                 Content = string.Empty
             };
         }

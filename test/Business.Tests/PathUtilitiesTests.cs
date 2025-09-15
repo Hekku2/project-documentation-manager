@@ -35,7 +35,7 @@ public class PathUtilitiesTests
     }
 
     [Test]
-    public void NormalizePathKey_WithUnixStylePath_ReturnsOnlyFilename()
+    public void NormalizePathKey_WithUnixStylePath_PreservesFullPath()
     {
         // Arrange
         var unixPath = "/home/user/documents/file.md";
@@ -44,11 +44,11 @@ public class PathUtilitiesTests
         var result = PathUtilities.NormalizePathKey(unixPath);
 
         // Assert
-        Assert.That(result, Is.EqualTo("file.md"));
+        Assert.That(result, Is.EqualTo("/home/user/documents/file.md"));
     }
 
     [Test]
-    public void NormalizePathKey_WithWindowsStylePath_ReturnsOnlyFilename()
+    public void NormalizePathKey_WithWindowsStylePath_NormalizesToPlatformSeparators()
     {
         // Arrange
         var windowsPath = @"C:\Users\User\Documents\file.md";
@@ -56,12 +56,13 @@ public class PathUtilitiesTests
         // Act
         var result = PathUtilities.NormalizePathKey(windowsPath);
 
-        // Assert
-        Assert.That(result, Is.EqualTo("file.md"));
+        // Assert - Should normalize separators but preserve full path
+        var expectedPath = $"C:{Path.DirectorySeparatorChar}Users{Path.DirectorySeparatorChar}User{Path.DirectorySeparatorChar}Documents{Path.DirectorySeparatorChar}file.md";
+        Assert.That(result, Is.EqualTo(expectedPath));
     }
 
     [Test]
-    public void NormalizePathKey_WithMixedSeparators_ReturnsOnlyFilename()
+    public void NormalizePathKey_WithMixedSeparators_NormalizesToPlatformSeparators()
     {
         // Arrange
         var mixedPath = @"C:\Users/User\Documents/file.md";
@@ -69,12 +70,13 @@ public class PathUtilitiesTests
         // Act
         var result = PathUtilities.NormalizePathKey(mixedPath);
 
-        // Assert
-        Assert.That(result, Is.EqualTo("file.md"));
+        // Assert - Should normalize all separators to platform-specific
+        var expectedPath = $"C:{Path.DirectorySeparatorChar}Users{Path.DirectorySeparatorChar}User{Path.DirectorySeparatorChar}Documents{Path.DirectorySeparatorChar}file.md";
+        Assert.That(result, Is.EqualTo(expectedPath));
     }
 
     [Test]
-    public void NormalizePathKey_WithRelativePath_ReturnsOnlyFilename()
+    public void NormalizePathKey_WithRelativePath_PreservesRelativePath()
     {
         // Arrange
         var relativePath = Path.Combine("subfolder", "nested", "file.md");
@@ -82,12 +84,12 @@ public class PathUtilitiesTests
         // Act
         var result = PathUtilities.NormalizePathKey(relativePath);
 
-        // Assert
-        Assert.That(result, Is.EqualTo("file.md"));
+        // Assert - Should preserve the relative path structure
+        Assert.That(result, Is.EqualTo(relativePath));
     }
 
     [Test]
-    public void NormalizePathKey_WithTrailingSlash_ReturnsEmpty()
+    public void NormalizePathKey_WithTrailingSlash_PreservesPath()
     {
         // Arrange
         var pathWithTrailingSlash = "/home/user/documents/";
@@ -95,12 +97,13 @@ public class PathUtilitiesTests
         // Act
         var result = PathUtilities.NormalizePathKey(pathWithTrailingSlash);
 
-        // Assert
-        Assert.That(result, Is.EqualTo(""));
+        // Assert - Should preserve the path with normalized separators
+        var expectedPath = $"/home/user/documents/";
+        Assert.That(result, Is.EqualTo(expectedPath));
     }
 
     [Test]
-    public void NormalizePathKey_WithComplexFilename_PreservesFilenameCharacters()
+    public void NormalizePathKey_WithComplexPath_PreservesFullPath()
     {
         // Arrange
         var complexPath = @"/home/user/My Documents/file-name_v2.final.md";
@@ -109,11 +112,11 @@ public class PathUtilitiesTests
         var result = PathUtilities.NormalizePathKey(complexPath);
 
         // Assert
-        Assert.That(result, Is.EqualTo("file-name_v2.final.md"));
+        Assert.That(result, Is.EqualTo("/home/user/My Documents/file-name_v2.final.md"));
     }
 
     [Test]
-    public void NormalizePathKey_WithUnicodeCharacters_PreservesUnicode()
+    public void NormalizePathKey_WithUnicodeCharacters_PreservesFullPath()
     {
         // Arrange
         var unicodePath = @"/home/user/documents/файл.md";
@@ -122,11 +125,11 @@ public class PathUtilitiesTests
         var result = PathUtilities.NormalizePathKey(unicodePath);
 
         // Assert
-        Assert.That(result, Is.EqualTo("файл.md"));
+        Assert.That(result, Is.EqualTo("/home/user/documents/файл.md"));
     }
 
     [Test]
-    public void NormalizePathKey_WithSpacesInFilename_PreservesSpaces()
+    public void NormalizePathKey_WithSpacesInPath_PreservesFullPath()
     {
         // Arrange
         var pathWithSpaces = @"/home/user/documents/my file name.md";
@@ -135,19 +138,19 @@ public class PathUtilitiesTests
         var result = PathUtilities.NormalizePathKey(pathWithSpaces);
 
         // Assert
-        Assert.That(result, Is.EqualTo("my file name.md"));
+        Assert.That(result, Is.EqualTo("/home/user/documents/my file name.md"));
     }
 
     [Test]
-    public void NormalizePathKey_ConsistentBehaviorAcrossPlatforms()
+    public void NormalizePathKey_ConsistentSeparatorNormalization()
     {
         // Arrange
         var testCases = new[]
         {
-            (@"C:\folder\file.md", "file.md"),
-            ("/folder/file.md", "file.md"),
-            (@"C:\folder/subfolder\file.md", "file.md"),
-            (Path.Combine("relative", "path", "file.md"), "file.md"),
+            (@"C:\folder\file.md", $"C:{Path.DirectorySeparatorChar}folder{Path.DirectorySeparatorChar}file.md"),
+            ("/folder/file.md", "/folder/file.md"),
+            (@"C:\folder/subfolder\file.md", $"C:{Path.DirectorySeparatorChar}folder{Path.DirectorySeparatorChar}subfolder{Path.DirectorySeparatorChar}file.md"),
+            (Path.Combine("relative", "path", "file.md"), Path.Combine("relative", "path", "file.md")),
             ("just-filename.md", "just-filename.md")
         };
 

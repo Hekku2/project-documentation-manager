@@ -88,4 +88,104 @@ public class MarkdownFileCollectorServiceTests
             Assert.That(files.Count(f => f.FileName.EndsWith(".md", StringComparison.OrdinalIgnoreCase)), Is.GreaterThanOrEqualTo(1));
         }
     }
+
+    [Test]
+    public async Task CollectAllMarkdownFilesAsync_Should_Set_FilePath_As_Relative_Path()
+    {
+        // Arrange
+        var subDir = Path.Combine(_testDirectory, "docs", "templates");
+        Directory.CreateDirectory(subDir);
+        
+        var templateFile = Path.Combine(subDir, "template.mdext");
+        var sourceFile = Path.Combine(_testDirectory, "common.mdsrc");
+        
+        await File.WriteAllTextAsync(templateFile, "# Template content");
+        await File.WriteAllTextAsync(sourceFile, "Common content");
+
+        // Act
+        var allFiles = await _service.CollectAllMarkdownFilesAsync(_testDirectory);
+        var filesList = allFiles.ToList();
+
+        // Assert
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(filesList, Has.Count.EqualTo(2), "Should collect both files");
+
+            var templateDoc = filesList.First(f => f.FileName.EndsWith(".mdext"));
+            var sourceDoc = filesList.First(f => f.FileName.EndsWith(".mdsrc"));
+
+            // FilePath should be relative path from the base directory
+            Assert.That(templateDoc.FilePath, Is.EqualTo(Path.Combine("docs", "templates", "template.mdext")), 
+                "Template FilePath should be relative path from base directory");
+            Assert.That(sourceDoc.FilePath, Is.EqualTo("common.mdsrc"), 
+                "Source FilePath should be relative path from base directory");
+
+            // FileName should also be relative path (as per current implementation)
+            Assert.That(templateDoc.FileName, Is.EqualTo(Path.Combine("docs", "templates", "template.mdext")), 
+                "Template FileName should be relative path from base directory");
+            Assert.That(sourceDoc.FileName, Is.EqualTo("common.mdsrc"), 
+                "Source FileName should be relative path from base directory");
+
+            // FilePath should NOT be absolute paths
+            Assert.That(Path.IsPathRooted(templateDoc.FilePath), Is.False, 
+                "Template FilePath should not be an absolute path");
+            Assert.That(Path.IsPathRooted(sourceDoc.FilePath), Is.False, 
+                "Source FilePath should not be an absolute path");
+        }
+    }
+
+    [Test]
+    public async Task CollectAllMarkdownFilesAsync_With_NestedStructure_Should_Maintain_Relative_Paths()
+    {
+        // Arrange
+        var level1Dir = Path.Combine(_testDirectory, "level1");
+        var level2Dir = Path.Combine(level1Dir, "level2");
+        var level3Dir = Path.Combine(level2Dir, "level3");
+        
+        Directory.CreateDirectory(level3Dir);
+        
+        var rootFile = Path.Combine(_testDirectory, "root.md");
+        var level1File = Path.Combine(level1Dir, "level1.mdsrc");
+        var level2File = Path.Combine(level2Dir, "level2.mdext");
+        var level3File = Path.Combine(level3Dir, "level3.md");
+        
+        await File.WriteAllTextAsync(rootFile, "Root content");
+        await File.WriteAllTextAsync(level1File, "Level 1 content");
+        await File.WriteAllTextAsync(level2File, "Level 2 content");
+        await File.WriteAllTextAsync(level3File, "Level 3 content");
+
+        // Act
+        var allFiles = await _service.CollectAllMarkdownFilesAsync(_testDirectory);
+        var filesList = allFiles.ToList();
+
+        // Assert
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(filesList, Has.Count.EqualTo(4), "Should collect all 4 files");
+
+            foreach (var doc in filesList)
+            {
+                Assert.That(Path.IsPathRooted(doc.FilePath), Is.False, 
+                    $"FilePath '{doc.FilePath}' should not be an absolute path");
+                
+                // Verify the relative path structure is preserved
+                if (doc.FileName.Contains("root.md"))
+                {
+                    Assert.That(doc.FilePath, Is.EqualTo("root.md"));
+                }
+                else if (doc.FileName.Contains("level1.mdsrc"))
+                {
+                    Assert.That(doc.FilePath, Is.EqualTo(Path.Combine("level1", "level1.mdsrc")));
+                }
+                else if (doc.FileName.Contains("level2.mdext"))
+                {
+                    Assert.That(doc.FilePath, Is.EqualTo(Path.Combine("level1", "level2", "level2.mdext")));
+                }
+                else if (doc.FileName.Contains("level3.md"))
+                {
+                    Assert.That(doc.FilePath, Is.EqualTo(Path.Combine("level1", "level2", "level3", "level3.md")));
+                }
+            }
+        }
+    }
 }

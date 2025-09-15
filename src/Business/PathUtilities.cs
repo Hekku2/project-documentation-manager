@@ -23,29 +23,18 @@ public static class PathUtilities
 
     /// <summary>
     /// Normalizes a path by converting all directory separators to the platform-specific separator
-    /// and extracting just the filename for comparison purposes
+    /// for consistent cross-platform path comparison
     /// </summary>
     /// <param name="path">The path to normalize</param>
-    /// <returns>The normalized filename for use as a dictionary key</returns>
+    /// <returns>The normalized path for use as a dictionary key</returns>
     public static string NormalizePathKey(string path)
     {
         if (string.IsNullOrWhiteSpace(path))
             return string.Empty;
 
+        // Normalize all separators to the platform-specific separator
         // Handle both Windows and Unix style separators regardless of platform
-        // Find the last occurrence of either separator type
-        var lastSlash = path.LastIndexOf('/');
-        var lastBackslash = path.LastIndexOf('\\');
-        var lastSeparator = Math.Max(lastSlash, lastBackslash);
-
-        // If no separators found, the whole string is the filename
-        if (lastSeparator < 0)
-            return path;
-
-        // Extract everything after the last separator
-        var fileName = path.Substring(lastSeparator + 1);
-        
-        // Normalize any remaining separators in the filename (edge case)
-        return fileName.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+        return path.Replace('\\', Path.DirectorySeparatorChar)
+                  .Replace('/', Path.DirectorySeparatorChar);
     }
 }
