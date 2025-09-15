@@ -15,7 +15,7 @@ public static class Program
         .ConfigureServices((context, services) =>
         {
             services.AddSingleton<IMarkdownFileCollectorService, MarkdownFileCollectorService>();
-            services.AddSingleton<IMarkdownCombinationService, MarkdownCombinationService>();
+            services.AddSingleton<IMarkdownCompilerService, MarkdownCompilerService>();
             services.AddSingleton<IMarkdownDocumentFileWriterService, MarkdownDocumentFileWriterService>();
             services.AddTransient<IFileSystemService, FileSystemService>();
         })

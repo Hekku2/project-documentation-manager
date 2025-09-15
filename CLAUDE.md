@@ -98,10 +98,10 @@ The console application uses **Spectre.Console.Cli** for command-line interface:
 
 ### Consolidated Architecture
 All components are consolidated within the Console project:
-- **Services Layer**: `IMarkdownFileCollectorService`, `IMarkdownCombinationService`, `IMarkdownDocumentFileWriterService`
+- **Services Layer**: `IMarkdownFileCollectorService`, `IMarkdownCompilerService`, `IMarkdownDocumentFileWriterService`
 - **Models**: `MarkdownDocument`, `ValidationResult`, `ValidationIssue` in `MarkdownCompiler.Console.Models`
 - **Template System**: Processes `.mdext` template files with `.mdsrc` source inclusions
-- **File Processing**: Collects, combines, and writes processed markdown documentation
+- **File Processing**: Collects, compiles, and writes processed markdown documentation
 - **Validation**: Validates template syntax and source file references
 - **File System Abstraction**: `IFileSystemService` enables testable file operations throughout the application
 
@@ -114,7 +114,7 @@ The application uses Microsoft.Extensions.Hosting for DI container:
 
 ### File Processing Pipeline
 1. **Collection**: `IMarkdownFileCollectorService` recursively finds `.mdext` and `.mdsrc` files
-2. **Combination**: `IMarkdownCombinationService` processes template syntax and includes source content  
+2. **Compilation**: `IMarkdownCompilerService` processes template syntax and includes source content  
 3. **Writing**: `IMarkdownDocumentFileWriterService` outputs processed markdown files
 4. **Validation**: Template syntax validation and source file reference checking
 

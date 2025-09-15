@@ -11,7 +11,7 @@ public class CombineCommandTests
 {
     private CombineCommand _command = null!;
     private IMarkdownFileCollectorService _collector = null!;
-    private IMarkdownCombinationService _combiner = null!;
+    private IMarkdownCompilerService _compiler = null!;
     private IMarkdownDocumentFileWriterService _writer = null!;
     private Spectre.Console.IAnsiConsole _ansiConsole = null!;
     private IFileSystemService _fileSystemService = null!;
@@ -22,11 +22,11 @@ public class CombineCommandTests
     public void Setup()
     {
         _collector = Substitute.For<IMarkdownFileCollectorService>();
-        _combiner = Substitute.For<IMarkdownCombinationService>();
+        _compiler = Substitute.For<IMarkdownCompilerService>();
         _writer = Substitute.For<IMarkdownDocumentFileWriterService>();
         _ansiConsole = Substitute.For<Spectre.Console.IAnsiConsole>();
         _fileSystemService = Substitute.For<IFileSystemService>();
-        _command = new CombineCommand(_collector, _combiner, _writer, _ansiConsole, _fileSystemService);
+        _command = new CombineCommand(_collector, _compiler, _writer, _ansiConsole, _fileSystemService);
 
         _testInputFolder = "/test/input/folder";
         _testOutputFolder = "/test/output/folder";
@@ -100,10 +100,10 @@ public class CombineCommandTests
         _collector.CollectAllMarkdownFilesAsync(_testInputFolder)
             .Returns(Task.FromResult((IEnumerable<MarkdownDocument>)[templateDoc, sourceDoc]));
 
-        _combiner.BuildDocumentation(Arg.Any<IEnumerable<MarkdownDocument>>())
+        _compiler.CompileDocuments(Arg.Any<IEnumerable<MarkdownDocument>>())
             .Returns(processedFiles);
 
-        _combiner.Validate(Arg.Any<IEnumerable<MarkdownDocument>>())
+        _compiler.Validate(Arg.Any<IEnumerable<MarkdownDocument>>())
             .Returns(validResult);
 
         var settings = new CombineCommand.Settings
@@ -140,7 +140,7 @@ public class CombineCommandTests
         _collector.CollectAllMarkdownFilesAsync(_testInputFolder)
             .Returns(Task.FromResult((IEnumerable<MarkdownDocument>)[templateDoc, sourceDoc]));
 
-        _combiner.Validate(Arg.Any<IEnumerable<MarkdownDocument>>())
+        _compiler.Validate(Arg.Any<IEnumerable<MarkdownDocument>>())
             .Returns(invalidResult);
 
         var settings = new CombineCommand.Settings
@@ -176,10 +176,10 @@ public class CombineCommandTests
         _collector.CollectAllMarkdownFilesAsync(_testInputFolder)
             .Returns(Task.FromResult((IEnumerable<MarkdownDocument>)[templateDoc, sourceDoc]));
 
-        _combiner.BuildDocumentation(Arg.Any<IEnumerable<MarkdownDocument>>())
+        _compiler.CompileDocuments(Arg.Any<IEnumerable<MarkdownDocument>>())
             .Returns(processedFiles);
 
-        _combiner.Validate(Arg.Any<IEnumerable<MarkdownDocument>>())
+        _compiler.Validate(Arg.Any<IEnumerable<MarkdownDocument>>())
             .Returns(validResult);
 
         var settings = new CombineCommand.Settings

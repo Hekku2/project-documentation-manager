@@ -8,7 +8,7 @@ namespace MarkdownCompiler.Console.Commands;
 
 public class CombineCommand(
     IMarkdownFileCollectorService collector,
-    IMarkdownCombinationService combiner,
+    IMarkdownCompilerService compiler,
     IMarkdownDocumentFileWriterService writer,
     IAnsiConsole ansiConsole,
     IFileSystemService fileSystemService) : AsyncCommand<CombineCommand.Settings>
@@ -48,7 +48,7 @@ public class CombineCommand(
             }
 
             ansiConsole.MarkupLine($"Found {templateFiles.Count()} template files, {sourceFiles.Count()} source files, and {markdownFiles.Count()} markdown files");
-            var validationResult = combiner.Validate(allDocuments);
+            var validationResult = compiler.Validate(allDocuments);
 
             if (!validationResult.IsValid)
             {
@@ -60,11 +60,11 @@ public class CombineCommand(
                 return CommandConstants.CommandError;
             }
 
-            var processedDocuments = combiner.BuildDocumentation(allDocuments);
+            var processedDocuments = compiler.CompileDocuments(allDocuments);
             fileSystemService.EnsureDirectoryExists(settings.OutputFolder);
             await writer.WriteDocumentsToFolderAsync(processedDocuments, settings.OutputFolder);
 
-            ansiConsole.MarkupLine($"[green]✓ Markdown combination completed![/]");
+            ansiConsole.MarkupLine($"[green]✓ Markdown compilation completed![/]");
             ansiConsole.MarkupLine($"Output location: [blue]{fileSystemService.GetFullPath(settings.OutputFolder)}[/]");
 
             return CommandConstants.CommandOk;

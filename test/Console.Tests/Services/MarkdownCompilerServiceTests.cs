@@ -7,16 +7,16 @@ using MarkdownCompiler.Console.Services;
 namespace MarkdownCompiler.Console.Tests.Services;
 
 [TestFixture]
-public class MarkdownCombinationServiceTests
+public class MarkdownCompilerServiceTests
 {
-    private ILogger<MarkdownCombinationService> _mockLogger;
-    private MarkdownCombinationService _service;
+    private ILogger<MarkdownCompilerService> _mockLogger;
+    private MarkdownCompilerService _service;
 
     [SetUp]
     public void SetUp()
     {
-        _mockLogger = NullLoggerFactory.Instance.CreateLogger<MarkdownCombinationService>();
-        _service = new MarkdownCombinationService(_mockLogger);
+        _mockLogger = NullLoggerFactory.Instance.CreateLogger<MarkdownCompilerService>();
+        _service = new MarkdownCompilerService(_mockLogger);
     }
 
     /// <summary>
@@ -26,21 +26,21 @@ public class MarkdownCombinationServiceTests
         Path.Combine(pathComponents);
 
     [Test]
-    public void BuildDocumentation_WithNullDocuments_ThrowsArgumentNullException()
+    public void CompileDocuments_WithNullDocuments_ThrowsArgumentNullException()
     {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            _service.BuildDocumentation(null!));
+            _service.CompileDocuments(null!));
     }
 
     [Test]
-    public void BuildDocumentation_WithEmptyDocuments_ReturnsEmptyList()
+    public void CompileDocuments_WithEmptyDocuments_ReturnsEmptyList()
     {
         // Arrange
         var documents = new List<MarkdownDocument>();
 
         // Act
-        var result = _service.BuildDocumentation(documents);
+        var result = _service.CompileDocuments(documents);
 
         // Assert
         Assert.That(result, Is.Not.Null);
@@ -48,7 +48,7 @@ public class MarkdownCombinationServiceTests
     }
 
     [Test]
-    public void BuildDocumentation_WithTemplateWithoutInserts_ReturnsUnchangedTemplate()
+    public void CompileDocuments_WithTemplateWithoutInserts_ReturnsUnchangedTemplate()
     {
         // Arrange
         var documents = new List<MarkdownDocument>
@@ -57,7 +57,7 @@ public class MarkdownCombinationServiceTests
         };
 
         // Act
-        var result = _service.BuildDocumentation(documents).ToList();
+        var result = _service.CompileDocuments(documents).ToList();
 
         // Assert
         Assert.That(result, Has.Count.EqualTo(1));
@@ -69,7 +69,7 @@ public class MarkdownCombinationServiceTests
     }
 
     [Test]
-    public void BuildDocumentation_WithBasicInsert_ReplacesInsertDirective()
+    public void CompileDocuments_WithBasicInsert_ReplacesInsertDirective()
     {
         // Arrange
         var documents = new List<MarkdownDocument>
@@ -79,7 +79,7 @@ public class MarkdownCombinationServiceTests
         };
 
         // Act
-        var result = _service.BuildDocumentation(documents).ToList();
+        var result = _service.CompileDocuments(documents).ToList();
 
         // Assert
         Assert.That(result, Has.Count.EqualTo(1));
@@ -91,7 +91,7 @@ public class MarkdownCombinationServiceTests
     }
 
     [Test]
-    public void BuildDocumentation_WithMultipleInserts_ReplacesAllDirectives()
+    public void CompileDocuments_WithMultipleInserts_ReplacesAllDirectives()
     {
         // Arrange
         var documents = new List<MarkdownDocument>
@@ -103,7 +103,7 @@ public class MarkdownCombinationServiceTests
         };
 
         // Act
-        var result = _service.BuildDocumentation(documents).ToList();
+        var result = _service.CompileDocuments(documents).ToList();
 
         // Assert
         Assert.That(result, Has.Count.EqualTo(1));
@@ -115,7 +115,7 @@ public class MarkdownCombinationServiceTests
     }
 
     [Test]
-    public void BuildDocumentation_WithMultipleTemplates_ProcessesAllTemplates()
+    public void CompileDocuments_WithMultipleTemplates_ProcessesAllTemplates()
     {
         // Arrange
         var documents = new List<MarkdownDocument>
@@ -126,7 +126,7 @@ public class MarkdownCombinationServiceTests
         };
 
         // Act
-        var result = _service.BuildDocumentation(documents).ToList();
+        var result = _service.CompileDocuments(documents).ToList();
 
         // Assert
         Assert.That(result, Has.Count.EqualTo(2));
@@ -139,7 +139,7 @@ public class MarkdownCombinationServiceTests
     }
 
     [Test]
-    public void BuildDocumentation_WithMissingSourceDocument_ReplacesWithComment()
+    public void CompileDocuments_WithMissingSourceDocument_ReplacesWithComment()
     {
         // Arrange
         var documents = new List<MarkdownDocument>
@@ -148,7 +148,7 @@ public class MarkdownCombinationServiceTests
         };
 
         // Act
-        var result = _service.BuildDocumentation(documents).ToList();
+        var result = _service.CompileDocuments(documents).ToList();
 
         // Assert
         Assert.That(result, Has.Count.EqualTo(1));
@@ -157,7 +157,7 @@ public class MarkdownCombinationServiceTests
     }
 
     [Test]
-    public void BuildDocumentation_WithNestedInserts_ProcessesRecursively()
+    public void CompileDocuments_WithNestedInserts_ProcessesRecursively()
     {
         // Arrange
         var documents = new List<MarkdownDocument>
@@ -168,7 +168,7 @@ public class MarkdownCombinationServiceTests
         };
 
         // Act
-        var result = _service.BuildDocumentation(documents).ToList();
+        var result = _service.CompileDocuments(documents).ToList();
 
         // Assert
         Assert.That(result, Has.Count.EqualTo(1));
@@ -180,7 +180,7 @@ public class MarkdownCombinationServiceTests
     }
 
     [Test]
-    public void BuildDocumentation_WithCaseInsensitiveFilenames_MatchesCorrectly()
+    public void CompileDocuments_WithCaseInsensitiveFilenames_MatchesCorrectly()
     {
         // Arrange
         var documents = new List<MarkdownDocument>
@@ -190,7 +190,7 @@ public class MarkdownCombinationServiceTests
         };
 
         // Act
-        var result = _service.BuildDocumentation(documents).ToList();
+        var result = _service.CompileDocuments(documents).ToList();
 
         // Assert
         Assert.That(result, Has.Count.EqualTo(1));
@@ -198,7 +198,7 @@ public class MarkdownCombinationServiceTests
     }
 
     [Test]
-    public void BuildDocumentation_WithInsertDirectiveWithSpaces_ProcessesCorrectly()
+    public void CompileDocuments_WithInsertDirectiveWithSpaces_ProcessesCorrectly()
     {
         // Arrange
         var documents = new List<MarkdownDocument>
@@ -208,7 +208,7 @@ public class MarkdownCombinationServiceTests
         };
 
         // Act
-        var result = _service.BuildDocumentation(documents).ToList();
+        var result = _service.CompileDocuments(documents).ToList();
 
         // Assert
         Assert.That(result, Has.Count.EqualTo(1));
@@ -216,7 +216,7 @@ public class MarkdownCombinationServiceTests
     }
 
     [Test]
-    public void BuildDocumentation_WithDuplicateInserts_ReplacesAllOccurrences()
+    public void CompileDocuments_WithDuplicateInserts_ReplacesAllOccurrences()
     {
         // Arrange
         var documents = new List<MarkdownDocument>
@@ -226,7 +226,7 @@ public class MarkdownCombinationServiceTests
         };
 
         // Act
-        var result = _service.BuildDocumentation(documents).ToList();
+        var result = _service.CompileDocuments(documents).ToList();
 
         // Assert
         Assert.That(result, Has.Count.EqualTo(1));
@@ -235,7 +235,7 @@ public class MarkdownCombinationServiceTests
     }
 
     [Test]
-    public void BuildDocumentation_WithEmptySourceContent_InsertsEmptyString()
+    public void CompileDocuments_WithEmptySourceContent_InsertsEmptyString()
     {
         // Arrange
         var documents = new List<MarkdownDocument>
@@ -245,7 +245,7 @@ public class MarkdownCombinationServiceTests
         };
 
         // Act
-        var result = _service.BuildDocumentation(documents).ToList();
+        var result = _service.CompileDocuments(documents).ToList();
 
         // Assert
         Assert.That(result, Has.Count.EqualTo(1));
@@ -254,11 +254,11 @@ public class MarkdownCombinationServiceTests
 
 
     [Test]
-    public void BuildDocumentation_Should_Log_Source_Documents_Without_Errors()
+    public void CompileDocuments_Should_Log_Source_Documents_Without_Errors()
     {
         // Arrange
-        var logger = NullLoggerFactory.Instance.CreateLogger<MarkdownCombinationService>();
-        var service = new MarkdownCombinationService(logger);
+        var logger = NullLoggerFactory.Instance.CreateLogger<MarkdownCompilerService>();
+        var service = new MarkdownCompilerService(logger);
 
         var documents = new[]
         {
@@ -271,7 +271,7 @@ public class MarkdownCombinationServiceTests
         // Act & Assert - Should not throw any exceptions
         Assert.DoesNotThrow(() =>
         {
-            var result = service.BuildDocumentation(documents);
+            var result = service.CompileDocuments(documents);
             var resultList = result.ToList(); // Force enumeration
 
             // Verify the functionality still works correctly
@@ -282,7 +282,7 @@ public class MarkdownCombinationServiceTests
     }
 
     [Test]
-    public void BuildDocumentation_Should_Handle_Empty_Source_Documents_Without_Errors()
+    public void CompileDocuments_Should_Handle_Empty_Source_Documents_Without_Errors()
     {
         // Arrange
         var documents = new[]
@@ -293,7 +293,7 @@ public class MarkdownCombinationServiceTests
         // Act & Assert - Should not throw any exceptions
         Assert.DoesNotThrow(() =>
         {
-            var result = _service.BuildDocumentation(documents);
+            var result = _service.CompileDocuments(documents);
             var resultList = result.ToList(); // Force enumeration
 
             // Verify the functionality still works correctly
@@ -303,7 +303,7 @@ public class MarkdownCombinationServiceTests
     }
 
     [Test]
-    public void BuildDocumentation_Should_Change_Mdext_Extension_To_Md()
+    public void CompileDocuments_Should_Change_Mdext_Extension_To_Md()
     {
         // Arrange
         var documents = new[]
@@ -314,7 +314,7 @@ public class MarkdownCombinationServiceTests
         };
 
         // Act
-        var result = _service.BuildDocumentation(documents);
+        var result = _service.CompileDocuments(documents);
         var resultList = result.ToList();
 
         // Assert
@@ -333,7 +333,7 @@ public class MarkdownCombinationServiceTests
     }
 
     [Test]
-    public void BuildDocumentation_Should_Change_Extension_To_Md_Even_On_Processing_Error()
+    public void CompileDocuments_Should_Change_Extension_To_Md_Even_On_Processing_Error()
     {
         // Arrange
         var documents = new[]
@@ -342,7 +342,7 @@ public class MarkdownCombinationServiceTests
         };
 
         // Act
-        var result = _service.BuildDocumentation(documents);
+        var result = _service.CompileDocuments(documents);
         var resultList = result.ToList();
 
         // Assert
@@ -801,7 +801,7 @@ Missing file
     }
 
     [Test]
-    public void BuildDocumentation_WithMdAndMdextFilesAsInsertSources_ProcessesAllFileTypesCorrectly()
+    public void CompileDocuments_WithMdAndMdextFilesAsInsertSources_ProcessesAllFileTypesCorrectly()
     {
         // Arrange - This test verifies that .md, .mdsrc, and .mdext files are all supported as insert sources
         var documents = new List<MarkdownDocument>
@@ -814,7 +814,7 @@ Missing file
         };
 
         // Act
-        var result = _service.BuildDocumentation(documents).ToList();
+        var result = _service.CompileDocuments(documents).ToList();
 
         // Assert - All file types (.md, .mdsrc, .mdext) are treated as valid source files for inserts
         using (Assert.EnterMultipleScope())

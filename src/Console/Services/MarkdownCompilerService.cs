@@ -5,14 +5,14 @@ using MarkdownCompiler.Console.Models;
 namespace MarkdownCompiler.Console.Services;
 
 /// <summary>
-/// Service for building documentation by processing template files with insert directives
+/// Service for compiling markdown templates and sources into documentation
 /// </summary>
-public class MarkdownCombinationService(ILogger<MarkdownCombinationService> logger) : IMarkdownCombinationService
+public class MarkdownCompilerService(ILogger<MarkdownCompilerService> logger) : IMarkdownCompilerService
 {
     private static readonly Regex InsertDirectiveRegex = new(@"<MarkDownExtension\s+operation=""insert""\s+file=""([^""]*)""\s*/>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     private static readonly Regex AnyMarkdownExtensionRegex = new(@"<MarkDownExtension[^>]*>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-    public IEnumerable<MarkdownDocument> BuildDocumentation(IEnumerable<MarkdownDocument> documents)
+    public IEnumerable<MarkdownDocument> CompileDocuments(IEnumerable<MarkdownDocument> documents)
     {
         if (documents == null)
             throw new ArgumentNullException(nameof(documents));

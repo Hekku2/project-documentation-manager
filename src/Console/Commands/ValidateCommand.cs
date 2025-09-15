@@ -9,7 +9,7 @@ namespace MarkdownCompiler.Console.Commands;
 public class ValidateCommand(
     IAnsiConsole ansiConsole,
     IMarkdownFileCollectorService collector,
-    IMarkdownCombinationService combiner,
+    IMarkdownCompilerService compiler,
     IFileSystemService fileSystemService) : AsyncCommand<ValidateCommand.Settings>
 {
     public class Settings : CommandSettings
@@ -44,7 +44,7 @@ public class ValidateCommand(
 
             ansiConsole.MarkupLine($"Found {templateFiles.Count()} template files, {sourceFiles.Count()} source files, and {markdownFiles.Count()} markdown files");
 
-            var validationResult = combiner.Validate(allDocuments);
+            var validationResult = compiler.Validate(allDocuments);
             var totalFiles = templateFiles.Count();
 
             var table = CreateSummaryTable(validationResult, totalFiles);
